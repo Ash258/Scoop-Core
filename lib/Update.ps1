@@ -226,48 +226,47 @@ function Update-App {
     $bucket = $install.bucket
     if ($null -eq $bucket) { $bucket = 'main' }
 
+    # Check dependencies
+    if (!$Independent) {
+        $man = if ($url) { $url } else { $app }
+        $deps = @(deps $man $architecture) | Where-Object { !(installed $_) }
+        $deps | ForEach-Object { install_app $_ $architecture $Global $Suggested $SkipCache (!$SkipHashCheck) }
+    }
+
+    $version = latest_version $App $bucket $url
+    if ($version -eq 'nightly') {
+        $version = nightly_version (Get-Date) $Quiet
+        $SkipHashCheck = $true
+    }
+
+    # TODO: Could this ever happen?
+    if (!$Force -and ($oldVersion -eq $version)) {
+        if (!$quiet) { Write-UserMessage -Message "The Latest version of '$App' ($version) is already installed." -Warning }
+        return
+    }
+
+    # TODO:???
+    # TODO: Case when bucket no longer have this application?
+    if (!$version) {
+        Write-UserMessage -Message "No manifest available for '$App'" -Err
+        return
+    }
+
+    $manifest = manifest $App $bucket $url
+
+    Write-UserMessage "Updating '$App' ($oldVersion -> $version)"
+
+    #region Workaround of #2220
+    # Remove and replace whole region after proper implementation
+    Write-Host 'Downloading new version'
+
+
     exit
 
 
 
-
-
-
-    if (!$independent) {
-        # check dependencies
-        $man = if ($url) { $url } else { $app }
-        $deps = @(deps $man $architecture) | Where-Object { !(installed $_) }
-        $deps | ForEach-Object { install_app $_ $architecture $global $suggested $use_cache $check_hash }
-    }
-
-    $version = latest_version $app $bucket $url
-    $is_nightly = $version -eq 'nightly'
-    if ($is_nightly) {
-        $version = nightly_version $(get-date) $quiet
-        $check_hash = $false
-    }
-
-    if (!$force -and ($old_version -eq $version)) {
-        if (!$quiet) {
-            warn "The latest version of '$app' ($version) is already installed."
-        }
-        return
-    }
-    if (!$version) {
-        # installed from a custom bucket/no longer supported
-        error "No manifest available for '$app'."
-        return
-    }
-
-    $manifest = manifest $app $bucket $url
-
-    write-host "Updating '$app' ($old_version -> $version)"
-
-    #region Workaround of #2220
-    # Remove and replace whole region after proper fix
-    Write-Host "Downloading new version"
     if (Test-Aria2Enabled) {
-        dl_with_cache_aria2 $app $version $manifest $architecture $cachedir $manifest.cookie $true $check_hash
+        dl_with_cache_aria2 $App $version $manifest $architecture $cachedir $manifest.cookie $true $check_hash
     } else {
         $urls = url $manifest $architecture
 
@@ -297,7 +296,7 @@ function Update-App {
     $check_hash = $false
     #endregion Workaround of #2220
 
-    $result = Uninstall-ScoopApplication -App $app -Global:$global
+    $result = Uninstall-ScoopApplication -App $App -Global:$Global
     if ($result -eq $false) { return }
 
     # Rename current version to .old if same version is installed

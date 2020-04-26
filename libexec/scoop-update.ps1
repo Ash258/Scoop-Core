@@ -84,10 +84,9 @@ if (!$apps) {
         }
     }
 
-    $suggested = @{};
-    # $outdated is a list of ($app, $global) tuples
     foreach ($_ in $outdatedApplications) {
-        Update-App -App $_[0] -Global:$_[1] -Suggested $suggested -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
+        # $outdated is a list of ($app, $global) tuples
+        Update-App -App $_[0] -Global:$_[1] -Suggested @{} -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
     }
 }
 

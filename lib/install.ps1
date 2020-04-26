@@ -14,6 +14,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
 
     if(!$manifest) {
+        # TODO: Stop-ScoopExecution Try catch throw needed
         abort "Couldn't find manifest for '$app'$(if($url) { " at the URL $url" })."
     }
 
