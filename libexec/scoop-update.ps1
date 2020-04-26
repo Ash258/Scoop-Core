@@ -13,144 +13,37 @@
 #   -s, --skip                Skip hash validation (use with caution!)
 #   -q, --quiet               Hide extraneous messages
 
-'core', 'shortcuts', 'psmodules', 'decompress', 'manifest', 'buckets', 'versions', 'getopt', 'depends', 'git', 'install', 'uninstall' | ForEach-Object {
+'core', 'shortcuts', 'psmodules', 'decompress', 'manifest', 'buckets', 'versions', 'getopt', 'depends', 'git', 'install',
+'uninstall', 'Update' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
 
 reset_aliases
 
-$opt, $apps, $err = getopt $args 'gfiksq:' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
-if ($err) { "scoop update: $err"; exit 1 }
+$opt, $apps, $err = getopt $args 'gfiksq' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
+# TODO: Stop-ScoopExecution
+if ($err) { Write-UserMessage -Message "scoop update: $err"; exit 1 }
+
+# Flags/Parameters
 $global = $opt.g -or $opt.global
 $force = $opt.f -or $opt.force
-$check_hash = !($opt.s -or $opt.skip)
-$use_cache = !($opt.k -or $opt.'no-cache')
+$checkHash = !($opt.s -or $opt.skip)
+$useCache = !($opt.k -or $opt.'no-cache')
 $quiet = $opt.q -or $opt.quiet
 $independent = $opt.i -or $opt.independent
 
-# load config
-$configRepo = get_config SCOOP_REPO
-if (!$configRepo) {
-    $configRepo = "https://github.com/lukesampson/scoop"
-    set_config SCOOP_REPO $configRepo | Out-Null
-}
+# TODO: Remove
+$check_hash = $checkHash
+$use_cache = $useCache
 
-# Find current update channel from config
-$configBranch = get_config SCOOP_BRANCH
-if (!$configBranch) {
-    $configBranch = "master"
-    set_config SCOOP_BRANCH $configBranch | Out-Null
-}
 
-if(($PSVersionTable.PSVersion.Major) -lt 5) {
-    # check powershell version
-    # should be deleted after Oct 1, 2019
-    If ((Get-Date).ToUniversalTime() -ge "2019-10-01") {
-        Write-Output "PowerShell 5 or later is required to run Scoop."
-        Write-Output "Upgrade PowerShell: https://docs.microsoft.com/en-us/powershell/scripting/setup/installing-windows-powershell"
-        break
-    } else {
-        Write-Output "Scoop is going to stop supporting old version of PowerShell."
-        Write-Output "Please upgrade to PowerShell 5 or later version before Oct 1, 2019 UTC."
-        Write-Output "Guideline: https://docs.microsoft.com/en-us/powershell/scripting/setup/installing-windows-powershell"
-    }
-}
 
-function update_scoop() {
-    # check for git
-    if(!(Test-CommandAvailable git)) { abort "Scoop uses Git to update itself. Run 'scoop install git' and try again." }
 
-    write-host "Updating Scoop..."
-    $last_update = $(last_scoop_update)
-    if ($null -eq $last_update) {$last_update = [System.DateTime]::Now}
-    $last_update = $last_update.ToString('s')
-    $show_update_log = get_config 'show_update_log' $true
-    $currentdir = fullpath $(versiondir 'scoop' 'current')
-    if (!(test-path "$currentdir\.git")) {
-        $newdir = fullpath $(versiondir 'scoop' 'new')
 
-        # get git scoop
-        git_clone -q $configRepo --branch $configBranch --single-branch "`"$newdir`""
 
-        # check if scoop was successful downloaded
-        if (!(test-path "$newdir")) {
-            abort 'Scoop update failed.'
-        }
 
-        # replace non-git scoop with the git version
-        Remove-Item -r -force $currentdir -ea stop
-        Move-Item $newdir $currentdir
-    } else {
-        Push-Location $currentdir
 
-        $previousCommit = Invoke-Expression 'git rev-parse HEAD'
-        $currentRepo = Invoke-Expression "git config remote.origin.url"
-        $currentBranch = Invoke-Expression "git branch"
 
-        $isRepoChanged = !($currentRepo -match $configRepo)
-        $isBranchChanged = !($currentBranch -match "\*\s+$configBranch")
-
-        # Change remote url if the repo is changed
-        if ($isRepoChanged) {
-            Invoke-Expression "git config remote.origin.url '$configRepo'"
-        }
-
-        # Fetch and reset local repo if the repo or the branch is changed
-        if ($isRepoChanged -or $isBranchChanged) {
-            # Reset git fetch refs, so that it can fetch all branches (GH-3368)
-            Invoke-Expression "git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'"
-            # fetch remote branch
-            git_fetch --force origin "refs/heads/`"$configBranch`":refs/remotes/origin/$configBranch" -q
-            # checkout and track the branch
-            git_checkout -B $configBranch -t origin/$configBranch -q
-            # reset branch HEAD
-            Invoke-Expression "git reset --hard origin/$configBranch -q"
-        } else {
-            git_pull -q
-        }
-
-        $res = $lastexitcode
-        if ($show_update_log) {
-            Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'"
-        }
-
-        Pop-Location
-        if ($res -ne 0) {
-            abort 'Update failed.'
-        }
-    }
-
-    if ((Get-LocalBucket) -notcontains 'main') {
-        info "The main bucket of Scoop has been separated to 'https://github.com/ScoopInstaller/Main'"
-        info "Adding main bucket..."
-        add_bucket 'main'
-    }
-
-    ensure_scoop_in_path
-    shim "$currentdir\bin\scoop.ps1" $false
-
-    Get-LocalBucket | ForEach-Object {
-        write-host "Updating '$_' bucket..."
-
-        $loc = Find-BucketDirectory $_ -Root
-        # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
-        if (($_ -eq 'main') -and !(Test-Path "$loc\.git")) {
-            rm_bucket 'main'
-            add_bucket 'main'
-        }
-
-        Push-Location $loc
-        $previousCommit = (Invoke-Expression 'git rev-parse HEAD')
-        git_pull -q
-        if ($show_update_log) {
-            Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'"
-        }
-        Pop-Location
-    }
-
-    set_config lastupdate ([System.DateTime]::Now.ToString('o')) | Out-Null
-    success 'Scoop was updated successfully!'
-}
 
 function update($app, $global, $quiet = $false, $independent, $suggested, $use_cache = $true, $check_hash = $true) {
     $old_version = current_version $app $global
@@ -257,32 +150,25 @@ function update($app, $global, $quiet = $false, $independent, $suggested, $use_c
 }
 
 if (!$apps) {
-    if ($global) {
-        "scoop update: --global is invalid when <app> is not specified."; exit 1
-    }
-    if (!$use_cache) {
-        "scoop update: --no-cache is invalid when <app> is not specified."; exit 1
-    }
-    update_scoop
+    # TODO: Stop-ScoopExecution
+    if ($global) { Write-UserMessage -Message 'scoop update: --global is invalid when <app> is not specified.'; exit 1 }
+    if (!$use_cache) { Write-UserMessage -Message "scoop update: --no-cache is invalid when <app> is not specified."; exit 1 }
+    Update-Scoop
 } else {
-    if ($global -and !(is_admin)) {
-        'ERROR: You need admin rights to update global apps.'; exit 1
-    }
+    if ($global -and !(is_admin)) { Write-UserMessage -Message 'You need admin rights to update global apps.' -Error; exit 1 }
 
-    if (is_scoop_outdated) {
-        update_scoop
-    }
-    $outdated = @()
-    $apps_param = $apps
+    if (is_scoop_outdated) { Update-Scoop }
+    $outdatedApplications = @()
+    $outdated = $outdatedApplications
+    $applicationsParam = $apps
 
-    if ($apps_param -eq '*') {
+    if ($applicationsParam -eq '*') {
         $apps = applist (installed_apps $false) $false
-        if ($global) {
-            $apps += applist (installed_apps $true) $true
-        }
+        if ($global) { $apps += applist (installed_apps $true) $true }
     } else {
         $apps = Confirm-InstallationStatus $apps_param -Global:$global
     }
+
     if ($apps) {
         $apps | ForEach-Object {
             ($app, $global) = $_

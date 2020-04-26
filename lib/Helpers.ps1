@@ -18,25 +18,30 @@ function Write-UserMessage {
         Same as -Severity warning
     .PARAMETER Err
         Same as -Severity Error
+    .PARAMETER Success
+        Same as -Severity Success
     #>
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromRemainingArguments, Position = 0)]
         [String[]] $Message,
-        [ValidateSet('Message', 'Info', 'Warning', 'Error')]
+        [ValidateSet('Message', 'Info', 'Warning', 'Error', 'Success')]
         [String] $Severity = 'Message',
         [Switch] $Output,
         [Switch] $Info,
         [Switch] $Warning,
-        [Switch] $Err
+        [Switch] $Err,
+        [Switch] $Success
     )
     if ($Info) { $Severity = 'Info' }
     if ($Warning) { $Severity = 'Warning' }
     if ($Err) { $Severity = 'Error' }
+    if ($Success) { $Severity = 'Success' }
 
     switch ($Severity) {
         'Info' { $sev = 'INFO '; $color = 'DarkGray' }
         'Warning' { $sev = 'WARN '; $color = 'DarkYellow' }
         'Error' { $sev = 'ERROR '; $color = 'DarkRed' }
+        'Success' { $sev = ''; $color = 'DarkGreen' }
         default { $sev = ''; $color = 'White'; $Output = $true }
     }
 
