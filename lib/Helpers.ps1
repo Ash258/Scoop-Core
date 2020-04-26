@@ -20,6 +20,8 @@ function Write-UserMessage {
         Same as -Severity Error
     .PARAMETER Success
         Same as -Severity Success
+    .PARAMETER Success
+        Specifies the output will not contains severity prefix.
     #>
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromRemainingArguments, Position = 0)]
@@ -30,7 +32,9 @@ function Write-UserMessage {
         [Switch] $Info,
         [Switch] $Warning,
         [Switch] $Err,
-        [Switch] $Success
+        [Switch] $Success,
+        [Switch] $SkipSeverity,
+        [System.ConsoleColor] $Color = 'White'
     )
     if ($Info) { $Severity = 'Info' }
     if ($Warning) { $Severity = 'Warning' }
@@ -38,17 +42,26 @@ function Write-UserMessage {
     if ($Success) { $Severity = 'Success' }
 
     switch ($Severity) {
-        'Info' { $sev = 'INFO '; $color = 'DarkGray' }
-        'Warning' { $sev = 'WARN '; $color = 'DarkYellow' }
-        'Error' { $sev = 'ERROR '; $color = 'DarkRed' }
-        'Success' { $sev = ''; $color = 'DarkGreen' }
-        default { $sev = ''; $color = 'White'; $Output = $true }
+        'Info' { $sev = 'INFO '; $foreColor = 'DarkGray' }
+        'Warning' { $sev = 'WARN '; $foreColor = 'DarkYellow' }
+        'Error' { $sev = 'ERROR '; $foreColor = 'DarkRed' }
+        'Success' { $sev = ''; $foreColor = 'DarkGreen' }
+        default {
+            $sev = ''
+            $foreColor = 'White'
+            if ($Color) {
+                $foreColor = $Color
+            } else {
+                $Output = $true
+            }
+        }
     }
 
-    $display = ($Message -replace '^', "$Sev") -join "`r`n"
+    $m = if ($SkipSeverity) { $Message } else { $Message -replace '^', "$Sev" }
+    $display = $m -join "`r`n"
     if ($Output) {
         Write-Output $display
     } else {
-        Write-Host $display -ForegroundColor $color
+        Write-Host $display -ForegroundColor $foreColor
     }
 }

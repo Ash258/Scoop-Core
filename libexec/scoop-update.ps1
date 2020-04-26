@@ -32,175 +32,63 @@ $useCache = !($opt.k -or $opt.'no-cache')
 $quiet = $opt.q -or $opt.quiet
 $independent = $opt.i -or $opt.independent
 
-# TODO: Remove
-$check_hash = $checkHash
-$use_cache = $useCache
-
-
-
-
-
-
-
-
-
-
-function update($app, $global, $quiet = $false, $independent, $suggested, $use_cache = $true, $check_hash = $true) {
-    $old_version = current_version $app $global
-    $old_manifest = installed_manifest $app $old_version $global
-    $install = install_info $app $old_version $global
-
-    # re-use architecture, bucket and url from first install
-    $architecture = ensure_architecture $install.architecture
-    $url = $install.url
-    $bucket = $install.bucket
-    if ($null -eq $bucket) {
-        $bucket = 'main'
-    }
-
-    if (!$independent) {
-        # check dependencies
-        $man = if ($url) { $url } else { $app }
-        $deps = @(deps $man $architecture) | Where-Object { !(installed $_) }
-        $deps | ForEach-Object { install_app $_ $architecture $global $suggested $use_cache $check_hash }
-    }
-
-    $version = latest_version $app $bucket $url
-    $is_nightly = $version -eq 'nightly'
-    if ($is_nightly) {
-        $version = nightly_version $(get-date) $quiet
-        $check_hash = $false
-    }
-
-    if (!$force -and ($old_version -eq $version)) {
-        if (!$quiet) {
-            warn "The latest version of '$app' ($version) is already installed."
-        }
-        return
-    }
-    if (!$version) {
-        # installed from a custom bucket/no longer supported
-        error "No manifest available for '$app'."
-        return
-    }
-
-    $manifest = manifest $app $bucket $url
-
-    write-host "Updating '$app' ($old_version -> $version)"
-
-    #region Workaround of #2220
-    # Remove and replace whole region after proper fix
-    Write-Host "Downloading new version"
-    if (Test-Aria2Enabled) {
-        dl_with_cache_aria2 $app $version $manifest $architecture $cachedir $manifest.cookie $true $check_hash
-    } else {
-        $urls = url $manifest $architecture
-
-        foreach ($url in $urls) {
-            dl_with_cache $app $version $url $null $manifest.cookie $true
-
-            if ($check_hash) {
-                $manifest_hash = hash_for_url $manifest $url $architecture
-                $source = fullpath (cache_path $app $version $url)
-                $ok, $err = check_hash $source $manifest_hash $(show_app $app $bucket)
-
-                if (!$ok) {
-                    error $err
-                    if (test-path $source) {
-                        # rm cached file
-                        Remove-Item -force $source
-                    }
-                    if ($url.Contains('sourceforge.net')) {
-                        Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
-                    }
-                    abort $(new_issue_msg $app $bucket "hash check failed")
-                }
-            }
-        }
-    }
-    # There is no need to check hash again while installing
-    $check_hash = $false
-    #endregion Workaround of #2220
-
-    $result = Uninstall-ScoopApplication -App $app -Global:$global
-    if ($result -eq $false) { return }
-
-    # Rename current version to .old if same version is installed
-    if ($force -and ($old_version -eq $version)) {
-        $dir = versiondir $app $old_version $global
-
-        if (!(Test-Path "$dir/../_$version.old")) {
-            Move-Item "$dir" "$dir/../_$version.old"
-        } else {
-            $i = 1
-            While (Test-Path "$dir/../_$version.old($i)") {
-                $i++
-            }
-            Move-Item "$dir" "$dir/../_$version.old($i)"
-        }
-    }
-
-    if ($install.url) {
-        $app = $install.url
-    } elseif ($bucket) {
-        $app = "$bucket/$app"
-    }
-
-    install_app $app $architecture $global $suggested $use_cache $check_hash
-}
-
 if (!$apps) {
     # TODO: Stop-ScoopExecution
     if ($global) { Write-UserMessage -Message 'scoop update: --global is invalid when <app> is not specified.'; exit 1 }
-    if (!$use_cache) { Write-UserMessage -Message "scoop update: --no-cache is invalid when <app> is not specified."; exit 1 }
+    if (!$useCache) { Write-UserMessage -Message 'scoop update: --no-cache is invalid when <app> is not specified.'; exit 1 }
+
     Update-Scoop
 } else {
-    if ($global -and !(is_admin)) { Write-UserMessage -Message 'You need admin rights to update global apps.' -Error; exit 1 }
+    # TODO: Stop-ScoopExecution
+    if ($global -and !(is_admin)) { Write-UserMessage -Message 'You need admin rights to update global apps.' -Err; exit 1 }
 
     if (is_scoop_outdated) { Update-Scoop }
     $outdatedApplications = @()
-    $outdated = $outdatedApplications
     $applicationsParam = $apps
 
     if ($applicationsParam -eq '*') {
         $apps = applist (installed_apps $false) $false
         if ($global) { $apps += applist (installed_apps $true) $true }
     } else {
-        $apps = Confirm-InstallationStatus $apps_param -Global:$global
+        $apps = Confirm-InstallationStatus $applicationsParam -Global:$global
     }
 
     if ($apps) {
-        $apps | ForEach-Object {
+        foreach ($_ in $apps) {
             ($app, $global) = $_
             $status = app_status $app $global
             if ($force -or $status.outdated) {
-                if(!$status.hold) {
-                    $outdated += applist $app $global
-                    write-host -f yellow ("$app`: $($status.version) -> $($status.latest_version){0}" -f ('',' (global)')[$global])
+                if ($status.hold) {
+                    Write-UserMessage "'$app' is held to version $($status.version)"
                 } else {
-                    warn "'$app' is held to version $($status.version)"
+                    $outdatedApplications += applist $app $global
+                    $globText = if ($global) { ' (global)' } else { '' }
+                    Write-UserMessage -Message "${app}: $($status.version) -> $($status.latest_version)$globText" -Warning -SkipSeverity
                 }
-            } elseif ($apps_param -ne '*') {
-                write-host -f green "$app`: $($status.version) (latest version)"
+            } elseif ($applicationsParam -ne '*') {
+                Write-UserMessage -Message "${app}: $($status.version) (latest available version)" -Color Green
             }
         }
 
-        if ($outdated -and (Test-Aria2Enabled)) {
-            warn "Scoop uses 'aria2c' for multi-connection downloads."
-            warn "Should it cause issues, run 'scoop config aria2-enabled false' to disable it."
+        if ($outdatedApplications -and (Test-Aria2Enabled)) {
+            Write-UserMessage -Message 'Scoop uses ''aria2c'' for multi-conneciton downloads.',
+                'In case of issues with downloading, run ''scoop config aria2-enabled $false'' to disable aria2.' -Warning
         }
-        if ($outdated.Length -gt 1) {
-            write-host -f DarkCyan "Updating $($outdated.Length) outdated apps:"
-        } elseif ($outdated.Length -eq 0) {
-            write-host -f Green "Latest versions for all apps are installed! For more information try 'scoop status'"
+
+        $c = $outdatedApplications.Count
+        if ($c -eq 0) {
+            Write-UserMessage -Message 'Latest versions for all apps are installed! For more information try ''scoop status''' -Color Green
         } else {
-            write-host -f DarkCyan "Updating one outdated app:"
+            $a = pluralize $c 'app' 'apps'
+            Write-UserMessage -Message "Updating $c outdated ${a}:" -Color DarkCyan
         }
     }
 
     $suggested = @{};
     # $outdated is a list of ($app, $global) tuples
-    $outdated | ForEach-Object { update @_ $quiet $independent $suggested $use_cache $check_hash }
+    foreach ($_ in $outdatedApplications) {
+        Update-App -App $_[0] -Global:$_[1] -Suggested $suggested -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
+    }
 }
 
 exit 0

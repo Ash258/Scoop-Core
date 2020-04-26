@@ -180,25 +180,58 @@ function Update-Scoop {
 
     Get-LocalBucket | Update-ScoopLocalBucket
 
-    set_config 'lastupdate' [System.DateTime]::Now.ToString('o') | Out-Null
+    set_config 'lastupdate' ([System.DateTime]::Now.ToString('o')) | Out-Null
     Write-UserMessage -Message 'Scoop was updated successfully!' -Success
 }
 
 
-function Update-ScoopApplication {
-    param($app, $global, $quiet = $false, $independent, $suggested, $use_cache = $true, $check_hash = $true)
+function Update-App {
+    <#
+    .SYNOPSIS
+        Update scoop installed application
+    .PARAMETER App
+        Specifies the application name.
+    .PARAMETER Global
+        Specifies globally installe application.
+    .PARAMETER Quiet
+        Specifies supressing more verbose output.
+    .PARAMETER Independent
+        Specifies to not update dependent applications.
+    .PARAMETER Suggested
+        Specifies applications to be shown to user as suggestions after update.
+    .PARAMETER SkipCache
+        Specifies to skip use of download cache.
+    .PARAMETER SkipHashCheck
+        Specifies to not verify downloaded files using hash comparison.
+    #>
+    [CmdletBinding()]
+    param(
+        [String] $App,
+        [Switch] $Global,
+        [Switch] $Quiet,
+        [Switch] $Independent,
+        $Suggested,
+        [Switch] $SkipCache,
+        [Switch] $SkipHashCheck
+    )
 
-    $old_version = current_version $app $global
-    $old_manifest = installed_manifest $app $old_version $global
-    $install = install_info $app $old_version $global
+    $oldVersion = current_version $App $Global
+    $old_version = $old_version
+    $old_manifest = installed_manifest $App $oldVersion $Global
+    $install = install_info $App $oldVersion $Global
 
-    # re-use architecture, bucket and url from first install
+    # Re-use architecture, bucket and url from first install
     $architecture = ensure_architecture $install.architecture
     $url = $install.url
     $bucket = $install.bucket
-    if ($null -eq $bucket) {
-        $bucket = 'main'
-    }
+    if ($null -eq $bucket) { $bucket = 'main' }
+
+    exit
+
+
+
+
+
 
     if (!$independent) {
         # check dependencies
