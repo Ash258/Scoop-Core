@@ -3,12 +3,9 @@ param($cmd)
 
 Set-StrictMode -off
 
-'core', 'git', 'buckets' | ForEach-Object {
+'core', 'git', 'buckets', 'commands' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
-
-# TODO: ???
-. (relpath '..\lib\commands')
 
 reset_aliases
 

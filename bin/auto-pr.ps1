@@ -76,11 +76,11 @@ Optional options:
     exit 0
 }
 
-if (!(scoop which hub)) {
-    Write-Host "Please install hub 'scoop install hub'" -ForegroundColor Yellow
+if (!(Get-Command -Name 'hub' -CommandType Application -ErrorAction SilentlyContinue)) {
+    # TODO: Stop-ScoopExecution
+    Write-UserMessage -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.' -Warning
     exit 1
 }
-
 
 function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
