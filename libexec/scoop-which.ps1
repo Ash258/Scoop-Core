@@ -31,7 +31,7 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
 
     # Expand relative path
     if ($exePath -and ![System.IO.Path]::IsPathRooted($exePath)) {
-        $exePath = Split-Path $path | Join-Path -ChildPath $exePath | Resolve-Path
+        $exePath = Split-Path $gcm.Path | Join-Path -ChildPath $exePath | Resolve-Path
     } else {
         $exePath = $gcm.Path
     }
