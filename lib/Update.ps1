@@ -219,6 +219,7 @@ function Update-App {
     $oldManifest = installed_manifest $App $oldVersion $Global
     $install = install_info $App $oldVersion $Global
 
+    # Old variables
     $check_hash = !$SkipHashCheck
     $use_cache = !$SkipCache
     $old_version = $old_version
@@ -258,7 +259,7 @@ function Update-App {
 
     $manifest = manifest $App $bucket $url
 
-    Write-UserMessage "Updating '$App' ($oldVersion -> $version)"
+    Write-UserMessage -Message "Updating '$App' ($oldVersion -> $version)"
 
     #region Workaround of #2220
     # Remove and replace whole region after proper implementation
