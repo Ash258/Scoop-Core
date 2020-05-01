@@ -93,7 +93,7 @@ function Update-ScoopCorePull {
 
     $res = $LASTEXITCODE
     if ($SHOW_UPDATE_LOG) {
-        Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'"
+        Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'" | Where-Object { $_ -notlike '*`[scoop skip]`*' }
     }
 
     Pop-Location
@@ -121,7 +121,7 @@ function Update-ScoopLocalBucket {
             git_pull -q
 
             if ($SHOW_UPDATE_LOG) {
-                Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'"
+                Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'" | Where-Object { $_ -notlike '*`[scoop skip]`*' }
             }
             Pop-Location
         }
