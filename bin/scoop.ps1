@@ -3,7 +3,7 @@ param($cmd)
 
 Set-StrictMode -Off
 
-'core', 'git', 'buckets', 'commands' | ForEach-Object {
+'core', 'buckets', 'commands' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
 
