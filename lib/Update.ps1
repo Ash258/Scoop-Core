@@ -43,7 +43,7 @@ function Update-ScoopCoreClone {
 
     # Replace non-git scoop with the git version
     Remove-Item $TargetDirectory -ErrorAction Stop -Force -Recurse
-    Rename-Item $newDir $TargetDirectory
+    Move-Item $newDir $TargetDirectory
 }
 
 function Update-ScoopCorePull {
