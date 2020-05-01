@@ -2,6 +2,7 @@
     . "$PSScriptRoot\$_.ps1"
 }
 
+# TODO: Change
 $DEFAULT_UPDATE_REPO = 'https://github.com/lukesampson/scoop'
 $DEFAULT_UPDATE_BRANCH = 'master'
 # TODO: CONFIG adopt refactor
