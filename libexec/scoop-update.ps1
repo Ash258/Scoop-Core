@@ -85,6 +85,7 @@ if (!$apps) {
     }
 
     foreach ($_ in $outdatedApplications) {
+        # TODO: Try catch
         # $outdated is a list of ($app, $global) tuples
         Update-App -App $_[0] -Global:$_[1] -Suggested @{} -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
     }

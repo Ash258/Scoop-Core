@@ -1,4 +1,4 @@
-'core', 'git', 'buckets' | ForEach-Object {
+'core', 'git', 'buckets', 'install' | ForEach-Object {
     . "$PSScriptRoot\$_.ps1"
 }
 
@@ -216,9 +216,13 @@ function Update-App {
     )
 
     $oldVersion = current_version $App $Global
-    $old_version = $old_version
-    $old_manifest = installed_manifest $App $oldVersion $Global
+    $oldManifest = installed_manifest $App $oldVersion $Global
     $install = install_info $App $oldVersion $Global
+
+    $check_hash = !$SkipHashCheck
+    $use_cache = !$SkipCache
+    $old_version = $old_version
+    $old_manifest = $oldManifest
 
     # Re-use architecture, bucket and url from first install
     $architecture = ensure_architecture $install.architecture
@@ -260,65 +264,58 @@ function Update-App {
     # Remove and replace whole region after proper implementation
     Write-Host 'Downloading new version'
 
-
-    exit
-
-
-
     if (Test-Aria2Enabled) {
-        dl_with_cache_aria2 $App $version $manifest $architecture $cachedir $manifest.cookie $true $check_hash
+        dl_with_cache_aria2 $App $version $manifest $architecture $SCOOP_CACHE_DIRECTORY $manifest.cookie $true (!$SkipHashCHeck)
     } else {
         $urls = url $manifest $architecture
 
         foreach ($url in $urls) {
-            dl_with_cache $app $version $url $null $manifest.cookie $true
+            dl_with_cache $App $version $url $null $manifest.cookie $true
 
-            if ($check_hash) {
+            if (!$SkipHashCheck) {
                 $manifest_hash = hash_for_url $manifest $url $architecture
-                $source = fullpath (cache_path $app $version $url)
-                $ok, $err = check_hash $source $manifest_hash $(show_app $app $bucket)
+                # TODO: Get rid of fullpath
+                $source = fullpath (cache_path $App $version $url)
+                $ok, $err = check_hash $source $manifest_hash (show_app $App $bucket)
 
                 if (!$ok) {
-                    error $err
-                    if (test-path $source) {
-                        # rm cached file
-                        Remove-Item -force $source
+                    Write-UserMessage -Message $err -Err
+
+                    # Remove cached file
+                    if (Test-Path $source) { Remove-Item $source -Force }
+                    if ($url -like '*sourceforge.net*') {
+                        Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
                     }
-                    if ($url.Contains('sourceforge.net')) {
-                        Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
-                    }
-                    abort $(new_issue_msg $app $bucket "hash check failed")
+                    # TODO: Stop-ScoopExecution
+                    abort (new_issue_msg $App $bucket 'hash check failed')
                 }
             }
         }
     }
+
     # There is no need to check hash again while installing
-    $check_hash = $false
+    $SkipHashCheck = $true
     #endregion Workaround of #2220
 
     $result = Uninstall-ScoopApplication -App $App -Global:$Global
     if ($result -eq $false) { return }
 
     # Rename current version to .old if same version is installed
-    if ($force -and ($old_version -eq $version)) {
-        $dir = versiondir $app $old_version $global
+    if ($Force -and ($oldVersion -eq $version)) {
+        $dir = versiondir $App $oldVersion $Global
 
-        if (!(Test-Path "$dir/../_$version.old")) {
-            Move-Item "$dir" "$dir/../_$version.old"
-        } else {
+        $old = "$dir/../_$version.old"
+        if (Test-Path $old -PathType Container) {
             $i = 1
-            While (Test-Path "$dir/../_$version.old($i)") {
-                $i++
-            }
-            Move-Item "$dir" "$dir/../_$version.old($i)"
+            while (Test-Path "$old($i)") { ++$i }
+            Move-Item $dir "$old($i)"
+        } else {
+            Move-Item $dir $old
         }
     }
 
-    if ($install.url) {
-        $app = $install.url
-    } elseif ($bucket) {
-        $app = "$bucket/$app"
-    }
+    $toUpdate = if ($install.url) { $install.url } else { "$bucket/$App" }
 
-    install_app $app $architecture $global $suggested $use_cache $check_hash
+    # TODO: Try catch
+    install_app $toUpdate $architecture $Global $Suggested (!$SkipCache) (!$SkipHashCheck)
 }
