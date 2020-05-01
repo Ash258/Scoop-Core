@@ -11,8 +11,8 @@ If you have a question regarding Scoop overall, feel free to head into the commu
 
 You can contribute to core codebase these ways:
 
-1. [Implement new features](https://github.com/lukesampson/scoop/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Aenhancement)
-1. [Fix bugs](https://github.com/lukesampson/scoop/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Abug)
+1. [Implement new features](https://github.com/Ash258/Scoop-Core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Aenhancement)
+1. [Fix bugs](https://github.com/Ash258/Scoop-Core/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Abug)
 1. Identify and report reproducible steps of issues
 
 Scoop's core codebase started moving towards standard/preferred PowerShell code style.
@@ -37,7 +37,7 @@ function old_f {
 }
 ```
 
-See [Decompress module](https://github.com/lukesampson/scoop/blob/1caaed8f3d51d141c6cafe7dc690b7dc08802702/lib/decompress.ps1) for specific example.
+See [Decompress module](https://github.com/Ash258/Scoop-Core/blob/1caaed8f3d51d141c6cafe7dc690b7dc08802702/lib/decompress.ps1) for specific example.
 
 ### General code sins to avoid and restrictions to follow
 
@@ -71,7 +71,7 @@ All official buckets are community-driven, and everyone can add, update, and edi
 Pull-Requests are warmly welcomed.
 The next few lines will guide you on how to write manifests, which pass our standards without any problems.
 
-❗ If you haven't read the Wiki, please do it now. You can visit the [Scoop Wiki](https://github.com/lukesampson/scoop/wiki/App-Manifests) or the [exprimental external documentaion](https://scoop.netlify.com/concepts/#app-manifests) ❗
+❗ If you haven't read the Wiki, please do it now. You can visit the [exprimental external documentation](https://scoop-docs.now.sh/docs/concepts/App-Manifests.html) ❗
 
 The Wiki gives you a fundamental insight into how manifests should look like and how everything works together.
 
@@ -86,7 +86,7 @@ A small overview of guidelines that you need to follow when writing manifests. (
     - `description`
     - `license`
 1. Write readable/extendable code inside script blocks
-1. [Test your auto-updates](https://github.com/lukesampson/scoop/wiki/App-Manifest-Autoupdate) before publishing a Pull-Request
+1. [Test your auto-updates](https://scoop-docs.now.sh/docs/concepts/App-Manifest-Autoupdate.html) before publishing a Pull-Request
 1. Always inspect if the vendor of the application provides checksums for artifacts
 
 ### Manifest format
@@ -103,8 +103,6 @@ All manifests name under official buckets should meet these conventions.
 
 1. All characters should be lowercased
 1. `-` is used as a separator when the application name contains space
-
-<!-- @ScoopInstaller/maintainers Anything else? -->
 
 #### Description
 
@@ -157,8 +155,8 @@ The best order of all properties as follows:
 You can specify `post_install`, `pre_install`, and `installer.script` blocks, which could be an array (or a simple string) with PowerShell code.
 For these blocks, use the syntax as you would generally write PowerShell scripts (Follow PSScriptAnalyzer rules; See: [core codebase](#core-codebase)).
 
-How script blocks should **NOT** look like: <https://github.com/lukesampson/scoop/blob/fa6ccc9471a29bf621c80a507d387a371293de75/bucket/jetbrains-toolbox.json#L32>
-You can compare it with [refactored version](https://github.com/lukesampson/scoop-extras/blob/781a2128150505b4cd00ed4854a7af4160c0e772/bucket/jetbrains-toolbox.json#L12-L24) to see significant differences in readability.
+How script blocks should **NOT** look like: <https://github.com/Ash258/Scoop-Core/blob/fa6ccc9471a29bf621c80a507d387a371293de75/bucket/jetbrains-toolbox.json#L32>
+You can compare it with [refactored version](https://github.com/Ash258/scoop-extras/blob/781a2128150505b4cd00ed4854a7af4160c0e772/bucket/jetbrains-toolbox.json#L12-L24) to see significant differences in readability.
 
 ### Autoupdates
 
@@ -174,6 +172,6 @@ The last step that should be done before submitting a Pull-Request is to run the
 [.editorconfig]: ../.editorconfig
 [checkver]: ../bin/checkver.ps1
 [formatjson]: ../bin/formatjson.ps1
-[Show-DeprecatedWarning]: https://github.com/lukesampson/scoop/blob/6141e46d6ae74b3ccf65e02a1c3fc92e1b4d3e7a/lib/core.ps1#L22-L36
+[Show-DeprecatedWarning]: https://github.com/Ash258/Scoop-Core/blob/6141e46d6ae74b3ccf65e02a1c3fc92e1b4d3e7a/lib/core.ps1#L22-L36
 [approved-verbs]: https://docs.microsoft.com/en-us/powershell/developer/cmdlet/approved-verbs-for-windows-powershell-commands
 [commits]: https://www.conventionalcommits.org/en/v1.0.0-beta.4/#specification
