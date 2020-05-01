@@ -9,7 +9,7 @@ function Write-UserMessage {
         Specifies the message to be displayed to user.
     .PARAMETER Severity
         Specifies the severity of the message.
-        Could be Message, Info, Warning, Error
+        Could be Message, Info, Warning, Error, Success
     .PARAMETER Output
         Specifies the Write-Output cmdlet is used instead of Write-Host
     .PARAMETER Info
@@ -20,7 +20,7 @@ function Write-UserMessage {
         Same as -Severity Error
     .PARAMETER Success
         Same as -Severity Success
-    .PARAMETER Success
+    .PARAMETER SkipSeverity
         Specifies the output will not contains severity prefix.
     #>
     param(
@@ -58,7 +58,7 @@ function Write-UserMessage {
         }
     }
 
-    $m = if ($SkipSeverity) { $Message } else { $Message -replace '^', "$Sev" }
+    $m = if ($SkipSeverity) { $Message } else { $Message -replace '^', "$sev" }
     $display = $m -join "`r`n"
     if ($Output) {
         Write-Output $display
