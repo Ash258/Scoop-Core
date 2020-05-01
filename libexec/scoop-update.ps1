@@ -13,8 +13,7 @@
 #   -s, --skip                Skip hash validation (use with caution!)
 #   -q, --quiet               Hide extraneous messages
 
-'core', 'shortcuts', 'psmodules', 'decompress', 'manifest', 'buckets', 'versions', 'getopt', 'depends', 'git', 'install',
-'uninstall', 'Update' | ForEach-Object {
+'depends', 'getopt', 'manifest', 'uninstall', 'Update', 'versions' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
 
