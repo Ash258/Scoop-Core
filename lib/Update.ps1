@@ -6,6 +6,7 @@ $DEFAULT_UPDATE_REPO = 'https://github.com/lukesampson/scoop'
 $DEFAULT_UPDATE_BRANCH = 'master'
 # TODO: CONFIG adopt refactor
 $SHOW_UPDATE_LOG = get_config 'show_update_log' $true
+$GIT_CMD_LOG = "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' --grep='\[scoop\|shovel skip\]' --invert-grep"
 
 function Update-ScoopCoreClone {
     <#
@@ -93,7 +94,7 @@ function Update-ScoopCorePull {
 
     $res = $LASTEXITCODE
     if ($SHOW_UPDATE_LOG) {
-        Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'" | Where-Object { $_ -notlike '*`[scoop skip]`*' }
+        Invoke-Expression "$GIT_CMD_LOG '$previousCommit..HEAD'"
     }
 
     Pop-Location
@@ -121,7 +122,7 @@ function Update-ScoopLocalBucket {
             git_pull -q
 
             if ($SHOW_UPDATE_LOG) {
-                Invoke-Expression "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' '$previousCommit..HEAD'" | Where-Object { $_ -notlike '*`[scoop skip]`*' }
+                Invoke-Expression "$GIT_CMD_LOG '$previousCommit..HEAD'"
             }
             Pop-Location
         }
@@ -162,10 +163,11 @@ function Update-Scoop {
     $lastUpdate = $lastUpdate.ToString('s')
 
     # Clone new installation or pull changes
+    $par = @{ 'Repo' = $configRepo; 'Branch' = $configBranch; 'TargetDirectory' = $currentDir }
     if (!(Test-Path "$currentDir\.git" -PathType Container)) {
-        Update-ScoopCoreClone -Repo $configRepo -Branch $configBranch -TargetDirectory $currentDir
+        Update-ScoopCoreClone @par
     } else {
-        Update-ScoopCorePull -Repo $configRepo -Branch $configBranch -TargetDirectory $currentDir
+        Update-ScoopCorePull @par
     }
 
     # Update buckets
