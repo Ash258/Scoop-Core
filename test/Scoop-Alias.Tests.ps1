@@ -19,4 +19,15 @@ describe 'Add-Alias' -Tag 'Scoop' {
             Invoke-Expression $aliasFile | Should -Be 'hello, world!'
         }
     }
+
+    context 'alias exists' {
+        it 'does not change existing alias' {
+            $aliasFile = "$shimdir\scoop-cosiTest.ps1"
+            New-Item $aliasFile -Type File | Out-NUll
+            $aliasFile | Should -Exist
+
+            Add-Alias 'cosiTest' 'test' | Should -Throw
+            $aliasFile | Should -FileContentMatch ''
+        }
+    }
 }
