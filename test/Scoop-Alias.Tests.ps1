@@ -26,5 +26,7 @@ describe 'Add-Alias' -Tag 'Scoop' {
             { Add-Alias -Name 'cosi' -Command '' } | Should -Throw
         }
     }
-
 }
+
+# TODO: Remove alias test
+# TODO: Proper scoop installation tests without mocks
