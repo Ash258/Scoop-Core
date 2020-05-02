@@ -165,10 +165,10 @@ function Update-Scoop {
 
     # Clone new installation or pull changes
     $par = @{ 'Repo' = $configRepo; 'Branch' = $configBranch; 'TargetDirectory' = $currentDir }
-    if (!(Test-Path "$currentDir\.git" -PathType Container)) {
-        Update-ScoopCoreClone @par
-    } else {
+    if (Test-Path "$currentDir\.git" -PathType Container) {
         Update-ScoopCorePull @par
+    } else {
+        Update-ScoopCoreClone @par
     }
 
     # Update buckets
