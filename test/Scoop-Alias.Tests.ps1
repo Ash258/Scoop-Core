@@ -2,10 +2,8 @@
 
 describe 'Add-Alias' -Tag 'Scoop' {
     BeforeAll {
-        mock shimdir { "$env:TEMP\shim" }
-        # TODO: Proper config
-        mock set_config { }
-        mock get_config { @{ } }
+        mock shimdir { "$env:TMP\Scoopshim" }
+        mock load_cfg { }
 
         $shimdir = shimdir
         New-Item $shimdir -ItemType Directory -Force | Out-Null
@@ -21,12 +19,12 @@ describe 'Add-Alias' -Tag 'Scoop' {
         }
     }
 
-    context 'alias exists' {
-        it 'does not change existing alias' {
-            $aliasFile = "$shimdir\scoop-cosiTest.ps1"
-
-            $aliasFile | Should -Exist
-            $aliasFile | Should -FileContentMatch '"hello, world!"'
+    context 'invalid alias definition' {
+        it 'require needed parameters' {
+            { Add-Alias } | Should -Throw
+            { Add-Alias -Name 'cosi' } | Should -Throw
+            { Add-Alias -Name 'cosi' -Command '' } | Should -Throw
         }
     }
+
 }
