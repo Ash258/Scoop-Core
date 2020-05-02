@@ -2,7 +2,7 @@
 
 describe 'Add-Alias' -Tag 'Scoop' {
     BeforeAll {
-        mock shimdir { 'TestDrive:\shim' }
+        mock shimdir { "$env:TEMP\shim" }
         mock set_config { }
         mock get_config { @{ } }
 
