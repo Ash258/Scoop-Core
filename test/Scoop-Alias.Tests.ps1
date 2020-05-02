@@ -3,14 +3,14 @@
 reset_aliases
 
 describe 'Add-Alias' -Tag 'Scoop' {
-    BeforeAll {
-        mock shimdir { 'TestDrive:\shim' }
-        mock set_config { }
-        mock get_config { @{ } }
+    # BeforeAll {
+    mock shimdir { 'TestDrive:\shim' }
+    mock set_config { }
+    mock get_config { @{ } }
 
-        $shimdir = shimdir
-        New-Item $shimdir -ItemType Directory -Force | Out-Null
-    }
+    $shimdir = shimdir
+    New-Item $shimdir -ItemType Directory -Force | Out-Null
+    # }
 
     context 'alias does not exist' {
         it 'creates a new alias' {
