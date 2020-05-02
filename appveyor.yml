@@ -1,8 +1,7 @@
 version: "{build}-{branch}"
+image: Visual Studio 2019
 build: off
 deploy: off
-clone_depth: 49
-image: Visual Studio 2019
 environment:
   scoop: C:\projects\scoop
   scoop_home: C:\projects\scoop
@@ -11,7 +10,7 @@ environment:
   innounp: '%scoop_helpers%\innounp\innounp.exe'
   matrix:
     - PowerShell: 5
-    - PowerShell: 6
+    - PowerShell: 7
 cache:
   - '%USERPROFILE%\Documents\WindowsPowerShell\Modules -> appveyor.yml, test\bin\*.ps1'
   - C:\projects\helpers  -> appveyor.yml, test\bin\*.ps1
@@ -27,7 +26,7 @@ for:
       - ps: . "$env:SCOOP_HOME\test\bin\test.ps1"
   - matrix:
       only:
-        - PowerShell: 6
+        - PowerShell: 7
     install:
       - pwsh: . "$env:SCOOP_HOME\test\bin\init.ps1"
     test_script:
