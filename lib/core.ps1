@@ -129,10 +129,20 @@ function warn($msg) {  write-host "WARN  $msg" -f darkyellow }
 function info($msg) {  write-host "INFO  $msg" -f darkgray }
 function message($msg) { write-host "$msg" }
 
+function Test-ScoopDebugEnabled {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $configDebug = (get_config 'debug' $false) -eq [bool]::TrueString
+    $envDebug = $env:SCOOP_DEBUG
+    $envDebug = ([bool] $envDebug) -or (($envDebug -eq [bool]::TrueString) -or ($envDebug -eq 1))
+
+    return $configDebug -or $envDebug
+}
+
 function debug($obj) {
-    if((get_config 'debug' $false) -ine 'true' -and $env:SCOOP_DEBUG -ine 'true') {
-        return
-    }
+    if (Test-ScoopDebugEnabled) { return }
 
     $prefix = "DEBUG[$(Get-Date -UFormat %s)]"
     $param = $MyInvocation.Line.Replace($MyInvocation.InvocationName, '').Trim()

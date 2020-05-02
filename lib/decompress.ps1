@@ -78,7 +78,12 @@ function Expand-7zipArchive {
         "Skip" { $ArgList += "-aos" }
         "Rename" { $ArgList += "-aou" }
     }
-    $Status = Invoke-ExternalCommand $7zPath $ArgList -LogPath $LogPath
+
+    try {
+        $Status = Invoke-ExternalCommand $7zPath $ArgList -LogPath $LogPath
+    } catch [System.Management.Automation.ParameterBindingException] {
+        Write-UserMessage -Message '''7zip'' is not installed or cannot be used' -Err
+    }
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -189,7 +194,11 @@ function Expand-InnoArchive {
     if ($Switches) {
         $ArgList += (-split $Switches)
     }
-    $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $ArgList -LogPath $LogPath
+    try {
+        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $ArgList -LogPath $LogPath
+    } catch [System.Management.Automation.ParameterBindingException] {
+        Write-UserMessage -Message '''innounp'' is not installed or cannot be used' -Err
+    }
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -278,7 +287,11 @@ function Expand-DarkArchive {
     if ($Switches) {
         $ArgList += (-split $Switches)
     }
-    $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Dark) $ArgList -LogPath $LogPath
+    try {
+        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Dark) $ArgList -LogPath $LogPath
+    } catch [System.Management.Automation.ParameterBindingException] {
+        Write-UserMessage -Message '''dark'' is not installed or cannot be used' -Err
+    }
     if (!$Status) {
         abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
     }
@@ -291,6 +304,7 @@ function Expand-DarkArchive {
     }
 }
 
+#region Deprecated
 function extract_7zip($path, $to, $removal) {
     Show-DeprecatedWarning $MyInvocation 'Expand-7zipArchive'
     Expand-7zipArchive -Path $path -DestinationPath $to -Removal:$removal @args
@@ -310,3 +324,4 @@ function extract_zip($path, $to, $removal) {
     Show-DeprecatedWarning $MyInvocation 'Expand-ZipArchive'
     Expand-ZipArchive -Path $path -DestinationPath $to -Removal:$removal
 }
+#endregion Deprecated

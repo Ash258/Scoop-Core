@@ -1,4 +1,3 @@
-
 function Write-UserMessage {
     <#
     .SYNOPSIS

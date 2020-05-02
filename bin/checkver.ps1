@@ -193,6 +193,7 @@ while ($in_progress -gt 0) {
     $ver = ''
 
     $page = $ev.SourceEventArgs.Result
+    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-page.html" $page -Encoding Ascii }
     $err = $ev.SourceEventArgs.Error
     if ($json.checkver.script) {
         $page = $json.checkver.script -join "`r`n" | Invoke-Expression

@@ -2,10 +2,10 @@
 TODO
  - clean up
 #>
-. "$psscriptroot\..\lib\json.ps1"
 
-. "$psscriptroot/core.ps1"
-. "$psscriptroot/json.ps1"
+'core', 'json' | ForEach-Object {
+    . "$PSScriptRoot\$_.ps1"
+}
 
 function find_hash_in_rdf([String] $url, [String] $basename) {
     $data = $null
@@ -14,12 +14,14 @@ function find_hash_in_rdf([String] $url, [String] $basename) {
         $wc = New-Object Net.Webclient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        [xml]$data = $wc.downloadstring($url)
+        $data = $wc.downloadstring($url)
     } catch [system.net.webexception] {
         write-host -f darkred $_
         write-host -f darkred "URL $url is not valid"
         return $null
     }
+    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-rdf.html" $data -Encoding Ascii }
+    $data = [xml] $data
 
     # Find file content
     $digest = $data.RDF.Content | Where-Object { [String]$_.about -eq $basename }
@@ -49,6 +51,7 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
         write-host -f darkred "URL $url is not valid"
         return
     }
+    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-txt.html" $hashfile -Encoding Ascii }
 
     if ($regex.Length -eq 0) {
         $regex = '^([a-fA-F0-9]+)$'
@@ -102,6 +105,8 @@ function find_hash_in_json([String] $url, [Hashtable] $substitutions, [String] $
         write-host -f darkred "URL $url is not valid"
         return
     }
+    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-json.html" $json -Encoding Ascii }
+
     $hash = json_path $json $jsonpath $substitutions
     if(!$hash) {
         $hash = json_path_legacy $json $jsonpath $substitutions
@@ -116,12 +121,15 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
         $wc = New-Object Net.Webclient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $xml = [xml]$wc.downloadstring($url)
+        $xml = $wc.downloadstring($url)
     } catch [system.net.webexception] {
         write-host -f darkred $_
         write-host -f darkred "URL $url is not valid"
         return
     }
+
+    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-xml.html" $xml -Encoding Ascii }
+    $xml = [xml] $xml
 
     # Replace placeholders
     if ($substitutions) {

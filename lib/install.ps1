@@ -220,13 +220,14 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
         "--max-connection-per-server=$(get_config 'aria2-max-connection-per-server' 5)"
         "--min-split-size=$(get_config 'aria2-min-split-size' '5M')"
         "--console-log-level=warn"
-        "--enable-color=false"
+        "--enable-color=true"
         "--no-conf=true"
         "--follow-metalink=true"
         "--metalink-preferred-protocol=https"
         "--min-tls-version=TLSv1.2"
         "--stop-with-process=$PID"
         "--continue"
+        "--summary-interval 0"
     )
 
     if($cookies) {
@@ -282,23 +283,10 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
         # build aria2 command
         $aria2 = "& '$(Get-HelperPath -Helper Aria2)' $($options -join ' ')"
 
+        Write-Debug $aria2
         # handle aria2 console output
         Write-Host "Starting download with aria2 ..."
-        $prefix = "Download: "
-        Invoke-Expression $aria2 | ForEach-Object {
-            if([String]::IsNullOrWhiteSpace($_)) {
-                # skip blank lines
-                return
-            }
-            Write-Host $prefix -NoNewline
-            if($_.StartsWith('(OK):')) {
-                Write-Host $_ -f Green
-            } elseif($_.StartsWith('[') -and $_.EndsWith(']')) {
-                Write-Host $_ -f Cyan
-            } else {
-                Write-Host $_ -f Gray
-            }
-        }
+        Invoke-Expression $aria2
 
         if($lastexitcode -gt 0) {
             error "Download failed! (Error $lastexitcode) $(aria_exit_code $lastexitcode)"
