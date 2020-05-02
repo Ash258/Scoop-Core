@@ -25,7 +25,7 @@ describe 'Add-Alias' -Tag 'Scoop' {
             $aliasFile = "$shimdir\scoop-cosiTest.ps1"
             $aliasFile | Should -Exist
 
-            Add-Alias 'cosiTest' 'test' | Should -Throw
+            { Add-Alias 'cosiTest' 'test' } | Should -Throw
             $aliasFile | Should -FileContentMatch '"hello, world!"'
         }
     }
