@@ -14,10 +14,10 @@ describe 'Add-Alias' -Tag 'Scoop' {
 
     context 'alias does nott exist' {
         it 'creates a new alias' {
-            $aliasFile = "$shimdir\scoop-test.ps1"
+            $aliasFile = "$shimdir\scoop-rm.ps1"
             $aliasFile | Should -Not -Exist
 
-            Add-Alias -Name 'test' -Command '"hello, world!"'
+            Add-Alias -Name 'rm' -Command '"hello, world!"'
             Invoke-Expression $aliasFile | Should -Be "hello, world!"
         }
     }
