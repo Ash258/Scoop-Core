@@ -225,7 +225,7 @@ function Update-App {
     # Old variables
     $check_hash = !$SkipHashCheck
     $use_cache = !$SkipCache
-    $old_version = $old_version
+    $old_version = $oldVersion
     $old_manifest = $oldManifest
 
     # Re-use architecture, bucket and url from first install
