@@ -15,8 +15,8 @@ describe 'Add-Alias' -Tag 'Scoop' {
             $aliasFile = "$shimdir\scoop-cosiTest.ps1"
             $aliasFile | Should -Not -Exist
 
-            # Add-Alias -Name 'cosiTest' -Command '"hello, world!"'
-            # Invoke-Expression $aliasFile | Should -Be "hello, world!"
+            Add-Alias -Name 'cosiTest' -Command '"hello, world!"'
+            Invoke-Expression $aliasFile | Should -Be "hello, world!"
         }
     }
 }
