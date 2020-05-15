@@ -2,6 +2,23 @@
     . "$PSScriptRoot\$_.ps1"
 }
 
+# TODO: Refactor
+function pre_uninstall($manifest, $arch) {
+    $pre = arch_specific 'pre_uninstall' $manifest $arch
+    if ($pre) {
+        Write-UserMessage -Message 'Running pre-uninstall script...'
+        Invoke-Expression (@($pre) -join "`r`n")
+    }
+}
+
+function post_uninstall($manifest, $arch) {
+    $post = arch_specific 'post_uninstall' $manifest $arch
+    if ($post) {
+        Write-UserMessage -Message 'Running post-uninstall script...'
+        Invoke-Expression (@($post) -join "`r`n")
+    }
+}
+
 function Uninstall-ScoopApplication {
     <#
     .SYNOPSIS
@@ -55,7 +72,10 @@ function Uninstall-ScoopApplication {
     $install = install_info $App $version $Global
     $architecture = $install.architecture
 
+    pre_uninstall $manifest $architecture
     run_uninstaller $manifest $architecture $dir
+    post_uninstall $manifest $architecture
+
     rm_shims $manifest $Global $architecture
     rm_startmenu_shortcuts $manifest $Global $architecture
 
