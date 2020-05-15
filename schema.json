@@ -163,9 +163,17 @@
                     "description": "PowerShell commands to be executed after 'installer' is invoked and after persist/binaries and shortcuts creation.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
+                "pre_uninstall": {
+                    "description": "PowerShell commands to be executed before 'uninstaller' is invoked.",
+                    "$ref": "#/definitions/stringOrArrayOfStrings"
+                },
                 "uninstaller": {
                     "description": "Specify the process of application uninstallation.",
                     "$ref": "#/definitions/uninstaller"
+                },
+                "post_uninstall": {
+                    "description": "PowerShell commands to be executed after 'uninstaller' is invoked.",
+                    "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "bin": {
                     "description": "Specify executables to be available in PATH.",
@@ -559,9 +567,17 @@
             "description": "PowerShell commands to be executed after 'installer' is invoked and after persist/binaries and shortcuts creation.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
+        "pre_uninstall": {
+            "description": "PowerShell commands to be executed before 'uninstaller' is invoked.",
+            "$ref": "#/definitions/stringOrArrayOfStrings"
+        },
         "uninstaller": {
             "description": "Specify the process of application uninstallation.",
             "$ref": "#/definitions/uninstaller"
+        },
+        "post_uninstall": {
+            "description": "PowerShell commands to be executed after 'uninstaller' is invoked.",
+            "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "psmodule": {
             "description": "Specify PowerShell module installation",
