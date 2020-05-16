@@ -23,7 +23,7 @@
         },
         {
             "path": "../../Shim",
-            "name": "Supporting/Validator",
+            "name": "Supporting/Shim",
         },
         {
             "path": "../../GithubActions",

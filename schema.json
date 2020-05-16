@@ -1,20 +1,28 @@
 {
     "$id": "http://scoop.sh/draft/schema#",
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Application manifest schema definition for Scoop Installer.",
     "type": "object",
+    "title": "Application manifest schema definition for Shovel Installer.",
     "additionalProperties": false,
     "required": [
-        "version"
+        "version",
+        "description",
+        "homepage",
+        "license"
     ],
     "definitions": {
         "licenseIdentifiers": {
             "description": "SPDX license identifier",
             "type": "string",
             "examples": [
+                "Freeware",
+                "Public Domain",
+                "Proprietary",
+                "Shareware",
+                "Unknown",
+                "Unlicense",
                 "Apache-2.0",
                 "BSD-3-Clause",
-                "Freeware",
                 "GPL-2.0-only",
                 "GPL-2.0-or-later",
                 "GPL-3.0-only",
@@ -27,12 +35,7 @@
                 "LGPL-3.0-only",
                 "LGPL-3.0-or-later",
                 "MIT",
-                "MS-PL",
-                "Proprietary",
-                "Public Domain",
-                "Shareware",
-                "Unknown",
-                "Unlicense"
+                "MS-PL"
             ]
         },
         "jsonPathExpression": {
@@ -43,7 +46,7 @@
         "hashPattern": {
             "description": "Validates all supported format of hash property",
             "type": "string",
-            "pattern": "^([a-fA-F0-9]{64}|(sha1|sha256|sha512|md5):([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{128}))$"
+            "pattern": "^([a-fA-F\\d]{64}|(sha1|sha256|sha512|md5):([a-fA-F\\d]{32}|[a-fA-F\\d]{40}|[a-fA-F\\d]{64}|[a-fA-F\\d]{128}))$"
         },
         "hash": {
             "description": "File hash used for verification of downloaded file.",
