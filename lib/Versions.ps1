@@ -57,11 +57,9 @@ function Get-InstalledVersion {
         if (Test-Path $appPath -PathType Container) {
             # TODO: Keep only scoop-install.json
             $arr = @((Get-ChildItem "$appPath\*\install.json"), (Get-ChildItem "$appPath\*\scoop-install.json"))
-            $result = ($arr | Sort-Object -Property LastWriteTimeUtc).Directory.Name -ne 'current'
+            $versions = @(($arr | Sort-Object -Property LastWriteTimeUtc).Directory.Name)
+            $result = $versions | Where-Object { $_ -ne 'current' } | Where-Object { $_ -notlike '_*.old*' }
         }
-
-        # Edge case when there is only 'current'
-        if ($result -is [bool]) { $result = @() }
 
         return $result
     }
@@ -91,8 +89,10 @@ function Select-CurrentVersion {
 
         if (Test-Path "$appPath\current" -PathType Container) {
             $currentVersion = (installed_manifest $AppName 'current' $Global).version
+            # Get version from link target in case of nightly
+            if ($currentVersion -eq 'nightly') { $currentVersion = ((Get-Item "$appPath\current").Target | Get-Item).BaseName }
         } else {
-            $installedVersion = Get-InstalledVersion -AppName $AppName -Global:$Global
+            $installedVersion = @(Get-InstalledVersion -AppName $AppName -Global:$Global)
             $currentVersion = if ($installedVersion) { $installedVersion[-1] } else { $null }
         }
 
