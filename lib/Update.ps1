@@ -217,7 +217,7 @@ function Update-App {
         [Switch] $SkipHashCheck
     )
 
-    $oldVersion = current_version $App $Global
+    $oldVersion = Select-CurrentVersion -AppName $App -Global:$Global
     $oldManifest = installed_manifest $App $oldVersion $Global
     $install = install_info $App $oldVersion $Global
 
@@ -240,7 +240,7 @@ function Update-App {
         $deps | ForEach-Object { install_app $_ $architecture $Global $Suggested $SkipCache (!$SkipHashCheck) }
     }
 
-    $version = latest_version $App $bucket $url
+    $version = Get-LatestVersion -AppName $App -Bucket $bucket -Uri $url
     if ($version -eq 'nightly') {
         $version = nightly_version (Get-Date) $Quiet
         $SkipHashCheck = $true

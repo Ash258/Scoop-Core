@@ -62,7 +62,7 @@ function Uninstall-ScoopApplication {
     $dir = versiondir $App $version $Global
     $persist_dir = persistdir $App $Global
 
-    message "Uninstalling '$App' ($version)"
+    Write-UserMessage -Message "Uninstalling '$App' ($version)"
 
     try {
         Test-Path $dir -ErrorAction Stop | Out-Null
@@ -104,7 +104,7 @@ function Uninstall-ScoopApplication {
             }
         }
 
-        @(versions $App $Global) | ForEach-Object {
+        @(Get-InstalledVersion -AppName $App -Global:$Global) | ForEach-Object {
             message "Removing older version ($_)."
 
             $dir = versiondir $app $_ $Global
@@ -118,7 +118,7 @@ function Uninstall-ScoopApplication {
             }
         }
 
-        if (@(versions $App $Global).length -eq 0) {
+        if (@(Get-InstalledVersion -AppName $App -Global:$Global).Length -eq 0) {
             $appdir = appdir $App $Global
             try {
                 # if last install failed, the directory seems to be locked and this

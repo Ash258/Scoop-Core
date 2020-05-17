@@ -51,8 +51,7 @@ if ($apps) {
     $apps | Sort-Object @sortSplat | Where-Object { !$query -or ($_.name -match $query) } | ForEach-Object {
         $app = $_.name
         $global = $_.global
-        $ver = current_version $app $global
-
+        $ver = Select-CurrentVersion -AppName $app -Global:$global
 
         $install_info = install_info $app $ver $global
         Write-Host "  $app " -NoNewline

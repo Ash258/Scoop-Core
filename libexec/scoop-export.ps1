@@ -2,10 +2,9 @@
 # Summary: Exports (an importable) list of installed apps
 # Help: Lists all installed apps.
 
-. "$PSScriptRoot\..\lib\core.ps1"
-. "$PSScriptRoot\..\lib\versions.ps1"
-. "$PSScriptRoot\..\lib\manifest.ps1"
-. "$PSScriptRoot\..\lib\buckets.ps1"
+'core', 'versions', 'manifest', 'buckets' | ForEach-Object {
+    . "$PSScriptRoot\..\lib\$_.ps1"
+}
 
 reset_aliases
 $def_arch = default_architecture
@@ -20,7 +19,7 @@ if ($apps) {
     $apps | Sort-Object { $_.name } | Where-Object { !$query -or ($_.name -match $query) } | ForEach-Object {
         $app = $_.name
         $global = $_.global
-        $ver = current_version $app $global
+        $ver = Select-CurrentVersion -AppName $app -Global:$global
         $global_display = $null; if ($global) { $global_display = ' *global*' }
 
         $install_info = install_info $app $ver $global

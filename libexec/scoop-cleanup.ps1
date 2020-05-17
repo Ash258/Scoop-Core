@@ -25,11 +25,10 @@ if (!$apps) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; 
 if ($global -and !(is_admin)) { Write-UserMessage -Message 'ERROR: you need admin rights to cleanup global apps' -Err; exit 1 }
 
 function cleanup($app, $global, $verbose, $cache) {
-    $current_version = current_version $app $global
-    if ($cache) {
-        Remove-Item "$cachedir\$app#*" -Exclude "$app#$current_version#*"
-    }
-    $versions = versions $app $global | Where-Object { $_ -ne $current_version -and $_ -ne 'current' }
+    $currentVersion = Select-CurrentVerison -AppName $app -Global:$global
+    if ($cache) { Remove-Item "$cachedir\$app#*" -Exclude "$app#$currentVersion#*" }
+
+    $versions = Get-InstalledVersion -AppName $app -Global:$global | Where-Object { $_ -ne $currentVersion }
     if (!$versions) {
         if ($verbose) { Write-UserMessage -Message "$app is already clean" -Success }
         return

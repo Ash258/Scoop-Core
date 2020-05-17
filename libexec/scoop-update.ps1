@@ -31,6 +31,7 @@ $useCache = !($opt.k -or $opt.'no-cache')
 $quiet = $opt.q -or $opt.quiet
 $independent = $opt.i -or $opt.independent
 
+$exitCode = 0
 if (!$apps) {
     # TODO: Stop-ScoopExecution
     if ($global) { Write-UserMessage -Message 'scoop update: --global is invalid when <app> is not specified.'; exit 1 }
@@ -85,11 +86,16 @@ if (!$apps) {
         }
     }
 
-    foreach ($_ in $outdatedApplications) {
+    foreach ($app in $outdatedApplications) {
         # TODO: Try catch
         # $outdated is a list of ($app, $global) tuples
-        Update-App -App $_[0] -Global:$_[1] -Suggested @{ } -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
+        try {
+            Update-App -App $app[0] -Global:$app[1] -Suggested @{ } -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
+        } catch {
+            Write-UserMessage -Message $_.Exception.Message -Err
+            $exitCode = 3
+        }
     }
 }
 
-exit 0
+exit $exitCode

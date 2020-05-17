@@ -58,7 +58,8 @@ function Get-InstalledVersion {
             # TODO: Keep only scoop-install.json
             $arr = @((Get-ChildItem "$appPath\*\install.json"), (Get-ChildItem "$appPath\*\scoop-install.json"))
             $versions = @(($arr | Sort-Object -Property LastWriteTimeUtc).Directory.Name)
-            $result = $versions | Where-Object { $_ -ne 'current' } | Where-Object { $_ -notlike '_*.old*' }
+            Write-Host $versions -f magenta
+            $result = $versions | Where-Object { $_ -ne 'current' }
         }
 
         return $result

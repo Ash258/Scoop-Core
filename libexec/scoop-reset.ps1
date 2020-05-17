@@ -42,7 +42,7 @@ $apps | ForEach-Object {
         return
     }
 
-    if ($null -eq $version) { $version = current_version $app $global }
+    if ($null -eq $version) { $version = Select-CurrentVersion -AppName $app -Global:$global }
 
     $manifest = installed_manifest $app $version $global
     # if this is null we know the version they're resetting to
@@ -59,7 +59,7 @@ $apps | ForEach-Object {
         return
     }
 
-    Write-UserMessage "Resetting $app ($version)."
+    Write-UserMessage -Message "Resetting $app ($version)."
 
     $dir = resolve-path (versiondir $app $version $global)
     $original_dir = $dir
