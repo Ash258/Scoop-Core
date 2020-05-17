@@ -462,7 +462,7 @@
         "version": {
             "description": "Specify application's version.",
             "type": "string",
-            "pattern": "^[\\w.\\-_]+$"
+            "pattern": "^[\\w.\\-+_]+$"
         },
         "description": {
             "description": "Specify the brief description of application.",
