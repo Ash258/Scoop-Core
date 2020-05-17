@@ -58,7 +58,6 @@ function Get-InstalledVersion {
             # TODO: Keep only scoop-install.json
             $arr = @((Get-ChildItem "$appPath\*\install.json"), (Get-ChildItem "$appPath\*\scoop-install.json"))
             $versions = @(($arr | Sort-Object -Property LastWriteTimeUtc).Directory.Name)
-            Write-Host $versions -f magenta
             $result = $versions | Where-Object { $_ -ne 'current' }
         }
 
@@ -164,10 +163,10 @@ function Compare-Version {
 
             # If some parts of versions have '.', compare them with delimiter '.'
             if (($splitReferenceVersion[$i] -match '\.') -or ($splitDifferenceVersion[$i] -match '\.')) {
-                $Result = Compare-Version -ReferenceVersion $splitReferenceVersion[$i] -DifferenceVersion $splitDifferenceVersion[$i] -Delimiter '.'
+                $result = Compare-Version -ReferenceVersion $splitReferenceVersion[$i] -DifferenceVersion $splitDifferenceVersion[$i] -Delimiter '.'
                 # If the parts are equal, continue to next part, otherwise return
-                if ($Result -ne 0) {
-                    return $Result
+                if ($result -ne 0) {
+                    return $result
                 } else {
                     continue
                 }
@@ -211,7 +210,6 @@ function Split-Version {
 
         return ($Version -split [Regex]::Escape($Delimiter) -ne '' | ForEach-Object { if ($_ -match '^\d+$') { [Long] $_ } else { $_ } })
     }
-
 }
 
 #region Deprecated
