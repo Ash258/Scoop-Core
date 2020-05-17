@@ -58,7 +58,7 @@ function Uninstall-ScoopApplication {
         return $false
     }
 
-    $version = current_version $App $Global
+    $version = Select-CurrentVersion -AppName $App -Global:$Global
     $dir = versiondir $App $version $Global
     $persist_dir = persistdir $App $Global
 
