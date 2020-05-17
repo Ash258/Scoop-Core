@@ -1,4 +1,4 @@
-'core', 'autoupdate' | ForEach-Object {
+'core', 'autoupdate', 'buckets' | ForEach-Object {
     . "$PSScriptRoot\$_.ps1"
 }
 
