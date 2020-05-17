@@ -201,6 +201,7 @@ function Split-Version {
     #>
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
+        [AllowEmptyString()]
         [String] $Version,
         [String] $Delimiter = '-'
     )
