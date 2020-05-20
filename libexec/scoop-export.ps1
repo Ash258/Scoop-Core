@@ -1,6 +1,5 @@
 # Usage: scoop export > filename
 # Summary: Exports (an importable) list of installed apps
-# Help: Lists all installed apps.
 
 'core', 'Versions', 'manifest', 'buckets' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
