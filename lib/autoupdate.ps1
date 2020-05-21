@@ -440,6 +440,8 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
 
             New-Item $appOldPath -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
             Copy-Item $path $manifestOldPath
+
+            # TODO: Remove checkver, autoupdate
         }
 
         $json | ConvertToPrettyJson | Out-UTF8File -Path $path
