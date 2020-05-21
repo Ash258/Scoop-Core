@@ -362,6 +362,7 @@ function get_version_substitutions([String] $version, [Hashtable] $customMatches
 
 function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $matches) {
     Write-Host -f DarkCyan "Autoupdating $app"
+    $oldVersion = $json.version
     $has_changes = $false
     $has_errors = $false
     [Bool]$valid = $true
@@ -428,10 +429,15 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
         # write file
         Write-Host -f DarkGreen "Writing updated $app manifest"
 
-        $path = join-path $dir "$app.json"
+        $path = Join-Path $dir "$app.json"
 
-        $file_content = $json | ConvertToPrettyJson
-        [System.IO.File]::WriteAllLines($path, $file_content)
+        # Archive older version
+        if ($json.autoupdate.archive) {
+            New-Item "$dir\old\$app" -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
+            Copy-Item $path "$dir\old\$app\$oldVersion.json"
+        }
+
+        $json | ConvertToPrettyJson | Out-UTF8File -Path $path
 
         # notes
         if ($json.autoupdate.note) {
