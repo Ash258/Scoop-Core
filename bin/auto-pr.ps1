@@ -159,11 +159,8 @@ if ($SpecialSnowflakes) {
     }
 }
 
-hub diff --name-only | ForEach-Object {
-    $manifest = $_
-    if (!$manifest.EndsWith('.json')) {
-        return
-    }
+foreach ($manifest in (hub diff --name-only)) {
+    if (!$manifest.EndsWith('.json')) { continue }
 
     $app = ([System.IO.Path]::GetFileNameWithoutExtension($manifest))
     $json = parse_json $manifest
@@ -177,11 +174,27 @@ hub diff --name-only | ForEach-Object {
         Write-Host "Creating update $app ($version) ..." -ForegroundColor DarkCyan
         execute "hub add $manifest"
 
+        # Archiving
+        $bucketRoot = if ($Dir.EndsWith('bucket')) { Split-Path $Dir -Parent } else { $Dir }
+        $oldAppPath = Join-Path $Dir "old\$app"
+        $oldVersionManifest = execute 'hub ls-files --others --exclude-standard' | Where-Object { $_ -like "bucket/old/$app/*" }
+
+        $archived = $false
+        if ($oldVersionManifest -and ($json.autoupdate.archive)) {
+            execute "hub add $oldVersionManifest"
+            $oldVersion = (Join-Path $bucketRoot $oldVersionManifest | Get-Item).BaseName
+            $archived = $true
+        }
+
         # detect if file was staged, because it's not when only LF or CRLF have changed
         $status = execute 'hub status --porcelain -uno'
         $status = $status | Where-Object { $_ -match "M\s{2}.*$app.json" }
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith("$app.json")) {
-            execute "hub commit -m '${app}: Update to version $version'"
+            if ($archived) {
+                execute "hub commit -m '${app}: Update to version $version' -m 'Archive version $oldVersion'"
+            } else {
+                execute "hub commit -m '${app}: Update to version $version'"
+            }
         } else {
             Write-Host "Skipping $app because only LF/CRLF changes were detected ..." -ForegroundColor Yellow
         }

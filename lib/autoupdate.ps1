@@ -432,9 +432,14 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
         $path = Join-Path $dir "$app.json"
 
         # Archive older version
+        # TODO: Handle workspace manifests
         if ($json.autoupdate.archive) {
-            New-Item "$dir\old\$app" -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
-            Copy-Item $path "$dir\old\$app\$oldVersion.json"
+            $appOldPath = Join-Path $dir "old\$app"
+            $manifestOldPath = Join-Path $appOldPath "$oldVersion.json"
+            Write-UserMessage -Message "Archiving manifest with version $oldVersion to $manifestOldPath" -Info
+
+            New-Item $appOldPath -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
+            Copy-Item $path $manifestOldPath
         }
 
         $json | ConvertToPrettyJson | Out-UTF8File -Path $path
