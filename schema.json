@@ -418,6 +418,10 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+                "archive": {
+                    "description": "Specifies to archive previous version of manifest into bucket/old/<app>/<version>",
+                    "type": "boolean"
+                },
                 "note": {
                     "description": "Specify message printed to user after autoupdate.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
