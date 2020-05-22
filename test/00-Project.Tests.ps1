@@ -3,11 +3,8 @@ $repo_dir = (Get-Item $MyInvocation.MyCommand.Path).Directory.Parent.FullName
 $repo_files = @( Get-ChildItem $repo_dir -file -recurse -force )
 
 $project_file_exclusions = @(
-    $([regex]::Escape($repo_dir) + '(\\|/).git(\\|/).*$'),
-    '.sublime-workspace$',
-    '.DS_Store$',
-    'supporting(\\|/)validator(\\|/)packages(\\|/)*',
-    'supporting(\\|/)shimexe(\\|/)packages(\\|/)*'
+    ([regex]::Escape($repo_dir) + '(\\|/).git(\\|/).*$'),
+    'supporting(\\|/)*'
 )
 
 Describe 'Project code' {
