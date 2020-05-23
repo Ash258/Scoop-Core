@@ -142,9 +142,7 @@ function Invoke-Check {
             next $appName $_.Exception.Message
         }
 
-        $selectSplat = if ($reverse) { @{ 'Last' = 1 }
-        } else { @{ 'First' = 1 }
-        }
+        $selectSplat = if ($reverse) { @{ 'Last' = 1 } } else { @{ 'First' = 1 } }
         $match = $regex.Matches($page) | Select-Object @selectSplat
 
         if ($match -and $match.Success) {
