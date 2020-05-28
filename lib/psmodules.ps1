@@ -1,5 +1,9 @@
-$modulesdir = "$scoopdir\modules"
-$SCOOP_MODULE_DIRECTORY = $modulesdir
+'core' | ForEach-Object {
+    . "$PSScriptRoot\$_.ps1"
+}
+
+$SCOOP_MODULE_DIRECTORY = "$SCOOP_ROOT_DIRECTORY\modules"
+$modulesdir = $SCOOP_MODULE_DIRECTORY
 
 function install_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule

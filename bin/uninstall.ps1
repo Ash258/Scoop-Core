@@ -11,7 +11,7 @@ param(
     [bool] $purge
 )
 
-'core', 'install', 'shortcuts', 'versions', 'manifest', 'uninstall' | ForEach-Object {
+'core', 'install', 'shortcuts', 'Versions', 'manifest', 'uninstall' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
 

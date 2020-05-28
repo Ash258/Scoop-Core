@@ -1,4 +1,4 @@
-'core', 'manifest', 'install', 'shortcuts', 'psmodules', 'versions' | ForEach-Object {
+'core', 'manifest', 'install', 'shortcuts', 'psmodules', 'Versions' | ForEach-Object {
     . "$PSScriptRoot\$_.ps1"
 }
 
