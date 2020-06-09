@@ -1,7 +1,7 @@
 # Usage: scoop status
 # Summary: Show status and check for new app versions
 
-'core', 'manifest', 'buckets', 'Versions', 'depends', 'git' | ForEach-Object {
+'core', 'manifest', 'buckets', 'Versions', 'depends', 'Git' | ForEach-Object {
     . "$PSScriptRoot\..\lib\$_.ps1"
 }
 

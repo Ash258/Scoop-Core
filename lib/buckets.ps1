@@ -1,4 +1,4 @@
-'core', 'git' | ForEach-Object {
+'core', 'Git' | ForEach-Object {
     . "$PSScriptRoot\$_.ps1"
 }
 
