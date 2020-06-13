@@ -89,16 +89,17 @@ function add_bucket($name, $repo) {
         exit 0
     }
 
-    write-host 'Checking repo... ' -nonewline
-    $out = git_ls_remote $repo 2>&1
+    Write-Host 'Checking repo... ' -nonewline
+    $out = Invoke-GitCmd -Command 'ls-remote' -Argument """$repo""" -Proxy 2>&1
     if ($lastexitcode -ne 0) {
         abort "'$repo' doesn't look like a valid git repository`n`nError given:`n$out"
     }
-    write-host 'ok'
+    Write-Host 'ok'
 
-    ensure $bucketsdir > $null
+    ensure $bucketsdir | Out-Null
     $dir = ensure $dir
-    git_clone "$repo" "`"$dir`"" -q
+    Invoke-GitCmd -Command 'clone' -Argument '-q', """$repo""", """$dir""" -Proxy
+
     Write-UserMessage -Message "The $name bucket was added successfully." -Success
 }
 
@@ -118,14 +119,12 @@ function new_issue_msg($app, $bucket, $title, $body) {
     $bucket_path = "$bucketsdir\$bucket"
 
     if (Test-path $bucket_path) {
-        Push-Location $bucket_path
-        $remote = Invoke-Expression "git config --get remote.origin.url"
+        $remote = Invoke-GitCmd -Repository $bucket_path -Command 'config' -Argument '--get', 'remote.origin.url'
         # Support ssh and http syntax
         # git@PROVIDER:USER/REPO.git
         # https://PROVIDER/USER/REPO.git
         $remote -match '(@|:\/\/)(?<provider>.+)[:/](?<user>.*)\/(?<repo>.*)(\.git)?$' | Out-Null
         $url = "https://$($Matches.Provider)/$($Matches.User)/$($Matches.Repo)"
-        Pop-Location
     }
 
     if (!$url) { return 'Please contact the bucket maintainer!' }

@@ -27,10 +27,6 @@ function Invoke-GitCmd {
     $preAction = if ($Repository) { '-C', """$Repository""" } else { @() }
 
     switch ($Command) {
-        'Clone' { $action = 'clone' }
-        'Checkout' { $action = 'checkout' }
-        'Fetch' { $action = 'fetch' }
-        'Ls-Remote' { $action = 'ls-remote' }
         'CurrentCommit' {
             $action = 'rev-parse'
             $Argument = $Argument + @('HEAD')
