@@ -104,8 +104,8 @@ function Update-ScoopLocalBucket {
         foreach ($b in $Bucket) {
             Write-UserMessage -Message "Updating '$b' bucket..." -Output
             $loc = Find-BucketDirectory $b -Root
-
             $g = Join-Path $loc '.git'
+
             # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
             if (($b -eq 'main') -and !(Test-Path $g -PathType Container)) {
                 rm_bucket 'main'
