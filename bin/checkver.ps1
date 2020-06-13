@@ -98,9 +98,9 @@ function Invoke-Check {
     $page = $Event.SourceEventArgs.Result
     $err = $Event.SourceEventArgs.Error
 
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-page.html" $page -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-page.html' | Out-UTF8Content -Content $page }
     if ($json.checkver.script) { $page = $json.checkver.script -join "`r`n" | Invoke-Expression }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-page-script.html" $page -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-page-script.html' | Out-UTF8Content -Content $page }
 
     if ($err) { next $appName "$($err.Message)`r`nURL $url is not valid" }
     if (!$regex -and $replace) { next $appName "'replace' requires 're' or 'regex'" }

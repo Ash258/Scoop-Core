@@ -80,11 +80,23 @@ function Write-UserMessage {
 }
 
 function Out-UTF8File {
+    <#
+    .SYNOPSIS
+        Write UTF8 (no-bom) file.
+    .DESCRIPTION
+        Use Set-Content -encoding utf8 on pwsh and WriteAllLines on powershell.
+    .PARAMETER Path
+        Specifies filename to be written.
+    .PARAMETER Content
+        Specifies content of to be written to file.
+    #>
+    [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
-        [Alias('Path')]
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Value')]
         $Content
     )
     process {
@@ -93,6 +105,32 @@ function Out-UTF8File {
         } else {
             [System.IO.File]::WriteAllLines($File, ($Content -join "`r`n"))
         }
+    }
+}
+
+function Out-UTF8Content {
+    <#
+    .SYNOPSIS
+        Write UTF8 (no-bom) file.
+    .DESCRIPTION
+        Use Set-Content -encoding utf8 on pwsh and WriteAllLines on powershell.
+        Takes File as pipeline instead of content.
+    .PARAMETER Path
+        Specifies filename to be written.
+    .PARAMETER Content
+        Specifies content to be written to file.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Path')]
+        [System.IO.FileInfo] $File,
+        [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        $Content
+    )
+
+    process {
+        Out-UTF8File -File $File -Content $Content
     }
 }
 

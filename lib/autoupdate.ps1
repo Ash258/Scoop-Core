@@ -20,7 +20,7 @@ function find_hash_in_rdf([String] $url, [String] $basename) {
         write-host -f darkred "URL $url is not valid"
         return $null
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-rdf.html" $data -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-rdf.html' | Out-UTF8Content -Content $data }
     $data = [xml] $data
 
     # Find file content
@@ -33,12 +33,12 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     $hashfile = $null
 
     $templates = @{
-        '$md5'      = '([a-fA-F0-9]{32})';
-        '$sha1'     = '([a-fA-F0-9]{40})';
-        '$sha256'   = '([a-fA-F0-9]{64})';
-        '$sha512'   = '([a-fA-F0-9]{128})';
-        '$checksum' = '([a-fA-F0-9]{32,128})';
-        '$base64'   = '([a-zA-Z0-9+\/=]{24,88})';
+        '$md5'      = '([a-fA-F0-9]{32})'
+        '$sha1'     = '([a-fA-F0-9]{40})'
+        '$sha256'   = '([a-fA-F0-9]{64})'
+        '$sha512'   = '([a-fA-F0-9]{128})'
+        '$checksum' = '([a-fA-F0-9]{32,128})'
+        '$base64'   = '([a-zA-Z0-9+\/=]{24,88})'
     }
 
     try {
@@ -51,20 +51,18 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
         write-host -f darkred "URL $url is not valid"
         return
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-txt.html" $hashfile -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-txt.html' | Out-UTF8Content -Content $hashfile }
 
-    if ($regex.Length -eq 0) {
-        $regex = '^([a-fA-F0-9]+)$'
-    }
+    if ($regex.Length -eq 0) { $regex = '^([a-fA-F0-9]+)$' }
 
     $regex = substitute $regex $templates $false
     $regex = substitute $regex $substitutions $true
-    debug $regex
-    if ($hashfile -match $regex) {
-        $hash = $matches[1] -replace '\s', ''
-    }
 
-    # convert base64 encoded hash values
+    debug $regex
+
+    if ($hashfile -match $regex) { $hash = $matches[1] -replace '\s', '' }
+
+    # Convert base64 encoded hash values
     if ($hash -match '^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$') {
         $base64 = $matches[0]
         if (!($hash -match '^[a-fA-F0-9]+$') -and $hash.length -notin @(32, 40, 64, 128)) {
@@ -105,12 +103,13 @@ function find_hash_in_json([String] $url, [Hashtable] $substitutions, [String] $
         write-host -f darkred "URL $url is not valid"
         return
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-json.html" $json -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-json.html' | Out-UTF8Content -Content $json }
 
     $hash = json_path $json $jsonpath $substitutions
     if (!$hash) {
         $hash = json_path_legacy $json $jsonpath $substitutions
     }
+
     return format_hash $hash
 }
 
@@ -128,13 +127,11 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
         return
     }
 
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-xml.html" $xml -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-xml.html' | Out-UTF8Content -Content $xml }
     $xml = [xml] $xml
 
     # Replace placeholders
-    if ($substitutions) {
-        $xpath = substitute $xpath $substitutions
-    }
+    if ($substitutions) { $xpath = substitute $xpath $substitutions }
 
     # Find all `significant namespace declarations` from the XML file
     $nsList = $xml.SelectNodes("//namespace::*[not(. = ../../namespace::*)]")
@@ -146,6 +143,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
 
     # Getting hash from XML, using XPath
     $hash = $xml.SelectSingleNode($xpath, $nsmgr).'#text'
+
     return format_hash $hash
 }
 
@@ -336,15 +334,15 @@ function get_version_substitutions([String] $version, [Hashtable] $customMatches
     $firstPart = $version.Split('-') | Select-Object -first 1
     $lastPart = $version.Split('-') | Select-Object -last 1
     $versionVariables = @{
-        '$version'           = $version;
-        '$underscoreVersion' = ($version -replace "\.", "_");
-        '$dashVersion'       = ($version -replace "\.", "-");
-        '$cleanVersion'      = ($version -replace "\.", "");
-        '$majorVersion'      = $firstPart.Split('.') | Select-Object -first 1;
-        '$minorVersion'      = $firstPart.Split('.') | Select-Object -skip 1 -first 1;
-        '$patchVersion'      = $firstPart.Split('.') | Select-Object -skip 2 -first 1;
-        '$buildVersion'      = $firstPart.Split('.') | Select-Object -skip 3 -first 1;
-        '$preReleaseVersion' = $lastPart;
+        '$version'           = $version
+        '$underscoreVersion' = ($version -replace "\.", "_")
+        '$dashVersion'       = ($version -replace "\.", "-")
+        '$cleanVersion'      = ($version -replace "\.", "")
+        '$majorVersion'      = $firstPart.Split('.') | Select-Object -first 1
+        '$minorVersion'      = $firstPart.Split('.') | Select-Object -skip 1 -first 1
+        '$patchVersion'      = $firstPart.Split('.') | Select-Object -skip 2 -first 1
+        '$buildVersion'      = $firstPart.Split('.') | Select-Object -skip 3 -first 1
+        '$preReleaseVersion' = $lastPart
     }
     if ($version -match "(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)") {
         $versionVariables.Set_Item('$matchHead', $matches['head'])
