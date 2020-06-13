@@ -11,7 +11,7 @@ reset_aliases
 
 if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
     Write-UserMessage -Message 'Current Scoop (soon to be Shovel) version:' -Output
-    Invoke-GitCmd -Command 'UpdateLog' -Repository (versiondir 'scoop' 'current')
+    Invoke-GitCmd -Command 'VersionLog' -Repository (versiondir 'scoop' 'current')
     Write-UserMessage -Message ''
 
     Get-LocalBucket | ForEach-Object {
@@ -19,7 +19,7 @@ if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
 
         if (Join-Path $b '.git' | Test-Path -PathType Container) {
             Write-UserMessage -Message "'$_' bucket:" -Output
-            Invoke-GitCmd -Command 'UpdateLog' -Repository $b
+            Invoke-GitCmd -Command 'VersionLog' -Repository $b
             Write-UserMessage -Message ''
         }
     }

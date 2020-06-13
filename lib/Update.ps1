@@ -7,7 +7,6 @@ $DEFAULT_UPDATE_REPO = 'https://github.com/lukesampson/scoop'
 $DEFAULT_UPDATE_BRANCH = 'master'
 # TODO: CONFIG adopt refactor
 $SHOW_UPDATE_LOG = get_config 'show_update_log' $true
-$GIT_CMD_LOG = "git --no-pager log --no-decorate --format='tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset' --grep='\[scoop\|shovel skip\]' --invert-grep"
 
 function Update-ScoopCoreClone {
     <#
@@ -20,7 +19,6 @@ function Update-ScoopCoreClone {
     .PARAMETER TargetDirectory
         Specifies the final directory of scoop installation.
     #>
-    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [String] $Repo,
@@ -34,7 +32,7 @@ function Update-ScoopCoreClone {
 
     $newDir = versiondir 'scoop' 'new'
 
-    git_clone -q --single-branch --branch $Branch $Repo "`"$newDir`""
+    Invoke-GitCmd -Command 'clone' -Argument '-q', '--single-branch', '--branch', """$Branch""", $Repo, """$newDir""" -Proxy
 
     # TODO: Stop-ScoopExecution
     # Check if scoop was successful downloaded
@@ -56,7 +54,6 @@ function Update-ScoopCorePull {
     .PARAMETER Branch
         Specifies the git branch to be cloned.
     #>
-    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [String] $TargetDirectory,
@@ -66,71 +63,63 @@ function Update-ScoopCorePull {
         [String] $Branch
     )
 
-    # Push-Location $TargetDirectory
-
     $target = @{ 'Repository' = $TargetDirectory }
 
-    $previousCommit = Invoke-Expression 'git rev-parse HEAD'
-    $currentRepo = Invoke-Expression 'git config remote.origin.url'
-    $currentBranch = Invoke-Expression 'git branch --show-current'
+    $previousCommit = Invoke-GitCmd @target -Command 'CurrentCommit'
+    $currentRepo = Invoke-GitCmd @target -Command 'config' -Argument 'remote.origin.url'
+    $currentBranch = Invoke-GitCmd @target -Command 'branch' -Argument '--show-current'
 
-    exit
     $isRepoChanged = !($currentRepo -eq $Repo)
     $isBranchChanged = !($currentBranch -eq $Branch)
 
     # Change remote url if the repo is changed
-    if ($isRepoChanged) { Invoke-Expression "git config remote.origin.url '$Repo'" }
+    if ($isRepoChanged) { Invoke-GitCmd @target -Cmd 'config' -Argument 'remote.origin.url', """$Repo""" }
 
     # Fetch and reset local repo if the repo or the branch is changed
     if ($isRepoChanged -or $isBranchChanged) {
+        Write-UserMessage -Message "Switching to $Repo ($Branch)" -Info
         # Reset git fetch refs, so that it can fetch all branches (GH-3368)
-        Invoke-Expression 'git config remote.origin.fetch ''+refs/heads/*:refs/remotes/origin/*'''
+        Invoke-GitCmd @target -Command 'config' -Argument 'remote.origin.fetch', '"+refs/heads/*:refs/remotes/origin/*"'
         # Fetch remote branch
-        git_fetch -q --force origin "refs/heads/`"$Branch`":refs/remotes/origin/$Branch"
+        Invoke-GitCmd @target -Command 'fetch' -Argument '-q', '--force', 'origin', """refs/heads/${Branch}:refs/remotes/origin/$Branch""" -Proxy
         # Checkout and track the branch
-        git_checkout -q -B $Branch -t origin/$Branch
+        Invoke-GitCmd @target -Command 'checkout' -Argument '-q', '-B', """$Branch""", '-t', """origin/$Branch""" -Proxy
         # Reset branch HEAD
-        Invoke-Expression "git reset -q --hard origin/$Branch"
+        Invoke-GitCmd @target -Command 'reset' -Argument '-q', '--hard', """origin/$Branch"""
     } else {
-        git_pull -q
+        Invoke-GitCmd @target -Command 'Update' -Argument '-q' -Proxy
     }
 
     $res = $LASTEXITCODE
-    if ($SHOW_UPDATE_LOG) {
-        Invoke-Expression "$GIT_CMD_LOG '$previousCommit..HEAD'"
-    }
+    if ($SHOW_UPDATE_LOG) { Invoke-GitCmd @target -Command 'UpdateLog' -Argument """$previousCommit..HEAD""" }
 
-    Pop-Location
     # TODO: Stop-ScoopExecution
     if ($res -ne 0) { abort 'Update failed.' }
 }
 
 function Update-ScoopLocalBucket {
-    [CmdletBinding()]
     param([Parameter(Mandatory, ValueFromPipeline)] [String[]] $Bucket)
 
     process {
         foreach ($b in $Bucket) {
-            Write-UserMessage -Message "Updating '$b' bucket..."
+            Write-UserMessage -Message "Updating '$b' bucket..." -Output
             $loc = Find-BucketDirectory $b -Root
 
+            $g = Join-Path $loc '.git'
             # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
-            if (($b -eq 'main') -and !(Test-Path "$loc\.git" -PathType Container)) {
+            if (($b -eq 'main') -and !(Test-Path $g -PathType Container)) {
                 rm_bucket 'main'
                 add_bucket 'main'
             }
 
             # Skip not git repositories
-            if (!(Test-Path "$loc\.git")) { continue }
+            if (!(Test-Path $g)) { continue }
 
-            Push-Location $loc
-            $previousCommit = Invoke-Expression 'git rev-parse HEAD'
-            git_pull -q
+            $target = @{ 'Repository' = $loc }
+            $previousCommit = Invoke-GitCmd @target -Command 'CurrentCommit'
+            Invoke-GitCmd @target -Command 'Update' -Argument '-q' -Proxy
 
-            if ($SHOW_UPDATE_LOG) {
-                Invoke-Expression "$GIT_CMD_LOG '$previousCommit..HEAD'"
-            }
-            Pop-Location
+            if ($SHOW_UPDATE_LOG) { Invoke-GitCmd @target -Command 'UpdateLog' -Argument """$previousCommit..HEAD""" }
         }
     }
 }
@@ -140,12 +129,11 @@ function Update-Scoop {
     .SYNOPSIS
         Update scoop itself and all buckets.
     #>
-    [CmdletBinding()]
     param()
 
     # TODO: Stop-ScoopExecution
     if (!(Test-CommandAvailable -Command 'git')) { abort 'Scoop uses Git to update itself. Run ''scoop install git'' and try again.' }
-    Write-UserMessage -Message 'Updating Scoop...'
+    Write-UserMessage -Message 'Updating Scoop...' -Output
 
     # TODO: CONFIG refactor adoption
     $configRepo = get_config 'SCOOP_REPO'
@@ -169,7 +157,7 @@ function Update-Scoop {
 
     # Clone new installation or pull changes
     $par = @{ 'Repo' = $configRepo; 'Branch' = $configBranch; 'TargetDirectory' = $currentDir }
-    if (Test-Path "$currentDir\.git" -PathType Container) {
+    if (Join-Path $currentDir '.git' | Test-Path -PathType Container) {
         Update-ScoopCorePull @par
     } else {
         Update-ScoopCoreClone @par
@@ -178,7 +166,7 @@ function Update-Scoop {
     # Update buckets
     # Add main bucket if not already added
     if ((Get-LocalBucket) -notcontains 'main') {
-        Write-UserMessage -Message 'The main bucket has been separated', 'Adding main bucket...'
+        Write-UserMessage -Message 'The main bucket has been separated', 'Adding main bucket...' -Output
         add_bucket 'main'
     }
 
@@ -269,7 +257,7 @@ function Update-App {
 
     #region Workaround of #2220
     # Remove and replace whole region after proper implementation
-    Write-Host 'Downloading new version'
+    Write-UserMessage -Message 'Downloading new version' -Output
 
     if (Test-Aria2Enabled) {
         dl_with_cache_aria2 $App $version $manifest $architecture $SCOOP_CACHE_DIRECTORY $manifest.cookie $true (!$SkipHashCHeck)

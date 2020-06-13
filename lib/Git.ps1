@@ -31,11 +31,26 @@ function Invoke-GitCmd {
         'Checkout' { $action = 'checkout' }
         'Fetch' { $action = 'fetch' }
         'Ls-Remote' { $action = 'ls-remote' }
+        'CurrentCommit' {
+            $action = 'rev-parse'
+            $Argument = $Argument + @('HEAD')
+        }
         'Update' {
             $action = 'pull'
             $Argument += '--rebase=false'
         }
-        'Updatelog' {
+        'UpdateLog' {
+            $preAction += '--no-pager'
+            $action = 'log'
+            $para = @(
+                '--no-decorate'
+                '--format="tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset"'
+                '--grep="\[\(scoop\|shovel\) skip\]"'
+                '--invert-grep'
+            )
+            $Argument = $para + $Argument
+        }
+        'VersionLog' {
             $preAction += '--no-pager'
             $action = 'log'
             $Argument += '--oneline', 'HEAD', '-n', '1'
