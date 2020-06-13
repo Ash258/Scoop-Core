@@ -1,4 +1,4 @@
-'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
     . "$PSScriptRoot\$_.ps1"
 }
 
@@ -797,8 +797,9 @@ function run_uninstaller($manifest, $architecture, $dir) {
     $msi = msi $manifest $architecture
     $uninstaller = uninstaller $manifest $architecture
     $version = $manifest.version
+
     if ($uninstaller.script) {
-        write-output "Running uninstaller script..."
+        Write-UserMessage -Message  'Running uninstaller script...' -Output:$false
         Invoke-Expression (@($uninstaller.script) -join "`r`n")
         return
     }

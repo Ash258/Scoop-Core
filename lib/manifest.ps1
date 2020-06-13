@@ -84,7 +84,8 @@ function install_info($app, $version, $global) {
 
 function default_architecture {
     $arch = get_config 'default-architecture'
-    $system = if ([Environment]::Is64BitOperatingSystem) { '64bit' } else { '32bit' }
+    $system = if ([System.IntPtr]::Size -eq 8) { '64bit' } else { '32bit' }
+
     if ($null -eq $arch) {
         $arch = $system
     } else {
