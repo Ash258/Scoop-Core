@@ -49,7 +49,7 @@ function Invoke-GitCmd {
         'VersionLog' {
             $preAction += '--no-pager'
             $action = 'log'
-            $Argument += '--oneline', 'HEAD', '-n', '1'
+            $Argument += '--oneline', '--max-count=1', 'HEAD'
         }
         default { $action = $Command }
     }

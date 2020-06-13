@@ -98,7 +98,7 @@ function add_bucket($name, $repo) {
 
     ensure $bucketsdir | Out-Null
     $dir = ensure $dir
-    Invoke-GitCmd -Command 'clone' -Argument '-q', """$repo""", """$dir""" -Proxy
+    Invoke-GitCmd -Command 'clone' -Argument '--quiet', """$repo""", """$dir""" -Proxy
 
     Write-UserMessage -Message "The $name bucket was added successfully." -Success
 }

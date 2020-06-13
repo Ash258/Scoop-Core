@@ -32,7 +32,7 @@ function Update-ScoopCoreClone {
 
     $newDir = versiondir 'scoop' 'new'
 
-    Invoke-GitCmd -Command 'clone' -Argument '-q', '--single-branch', '--branch', """$Branch""", $Repo, """$newDir""" -Proxy
+    Invoke-GitCmd -Command 'clone' -Argument '--quiet', '--single-branch', '--branch', """$Branch""", $Repo, """$newDir""" -Proxy
 
     # TODO: Stop-ScoopExecution
     # Check if scoop was successful downloaded
@@ -66,7 +66,7 @@ function Update-ScoopCorePull {
     $target = @{ 'Repository' = $TargetDirectory }
 
     $previousCommit = Invoke-GitCmd @target -Command 'CurrentCommit'
-    $currentRepo = Invoke-GitCmd @target -Command 'config' -Argument 'remote.origin.url'
+    $currentRepo = Invoke-GitCmd @target -Command 'config' -Argument '--get', 'remote.origin.url'
     $currentBranch = Invoke-GitCmd @target -Command 'branch' -Argument '--show-current'
 
     $isRepoChanged = !($currentRepo -eq $Repo)
@@ -81,13 +81,13 @@ function Update-ScoopCorePull {
         # Reset git fetch refs, so that it can fetch all branches (GH-3368)
         Invoke-GitCmd @target -Command 'config' -Argument 'remote.origin.fetch', '"+refs/heads/*:refs/remotes/origin/*"'
         # Fetch remote branch
-        Invoke-GitCmd @target -Command 'fetch' -Argument '-q', '--force', 'origin', """refs/heads/${Branch}:refs/remotes/origin/$Branch""" -Proxy
+        Invoke-GitCmd @target -Command 'fetch' -Argument '--quiet', '--force', 'origin', """refs/heads/${Branch}:refs/remotes/origin/$Branch""" -Proxy
         # Checkout and track the branch
-        Invoke-GitCmd @target -Command 'checkout' -Argument '-q', '-B', """$Branch""", '-t', """origin/$Branch""" -Proxy
+        Invoke-GitCmd @target -Command 'checkout' -Argument '--quiet', '-B', """$Branch""", '--track', """origin/$Branch""" -Proxy
         # Reset branch HEAD
-        Invoke-GitCmd @target -Command 'reset' -Argument '-q', '--hard', """origin/$Branch"""
+        Invoke-GitCmd @target -Command 'reset' -Argument '--quiet', '--hard', """origin/$Branch"""
     } else {
-        Invoke-GitCmd @target -Command 'Update' -Argument '-q' -Proxy
+        Invoke-GitCmd @target -Command 'Update' -Argument '--quiet' -Proxy
     }
 
     $res = $LASTEXITCODE
@@ -117,7 +117,7 @@ function Update-ScoopLocalBucket {
 
             $target = @{ 'Repository' = $loc }
             $previousCommit = Invoke-GitCmd @target -Command 'CurrentCommit'
-            Invoke-GitCmd @target -Command 'Update' -Argument '-q' -Proxy
+            Invoke-GitCmd @target -Command 'Update' -Argument '--quiet' -Proxy
 
             if ($SHOW_UPDATE_LOG) { Invoke-GitCmd @target -Command 'UpdateLog' -Argument """$previousCommit..HEAD""" }
         }
