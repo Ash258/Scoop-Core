@@ -73,7 +73,8 @@ $GITHUB_REGEX = '/releases/tag/[vV]?([\d.]+)'
 #region Functions
 function next($AppName, $Err) {
     Write-Host "${AppName}: " -NoNewline
-    Write-Host $Err -ForegroundColor DarkRed
+    Write-UserMessage -Message $Err -Color DarkRed
+
     # Just throw something to invoke try-catch
     throw 'error'
 }
@@ -101,7 +102,7 @@ function Invoke-Check {
     if ($json.checkver.script) { $page = $json.checkver.script -join "`r`n" | Invoke-Expression }
     if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-page-script.html" $page -Encoding Ascii }
 
-    if ($err) { next  $appName "$($err.Message)`r`nURL $url is not valid" }
+    if ($err) { next $appName "$($err.Message)`r`nURL $url is not valid" }
     if (!$regex -and $replace) { next $appName "'replace' requires 're' or 'regex'" }
 
     if ($jsonpath) {
@@ -165,7 +166,7 @@ function Invoke-Check {
 
     # version hasn't changed (step over if forced update)
     if ($ver -eq $expectedVersion -and !$ForceUpdate) {
-        Write-Host $ver -ForegroundColor DarkGreen
+        Write-UserMessage -Message $ver -Color DarkGreen
         return
     }
 
@@ -174,16 +175,16 @@ function Invoke-Check {
     $updateAvailable = (Compare-Version -ReferenceVersion $expectedVersion -DifferenceVersion $ver) -ne 0
 
     if ($json.autoupdate -and $updateAvailable) {
-        Write-Host ' autoupdate available' -ForegroundColor Cyan
+        Write-UserMessage -Message ' autoupdate available' -Color Cyan
     } else {
-        Write-Host ''
+        Write-UserMessage -Message ''
     }
 
     # Forcing an update implies updating
     if ($ForceUpdate) { $Update = $true }
 
     if ($Update -and $json.autoupdate) {
-        if ($ForceUpdate) { Write-Host 'Forcing autoupdate!' -ForegroundColor DarkMagenta }
+        if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color DarkMagenta }
         try {
             if ($Version -ne '') { $ver = $Version }
 
@@ -269,7 +270,7 @@ foreach ($q in $Queue) {
     $wc.DownloadStringAsync($url, $state)
 }
 
-# wait for all to complete
+# Wait for all to complete
 $inProgress = 0
 while ($inProgress -lt $Queue.Length) {
     $ev = Wait-Event

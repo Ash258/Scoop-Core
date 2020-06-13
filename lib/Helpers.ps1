@@ -34,6 +34,7 @@ function Write-UserMessage {
         [Switch] $Err,
         [Switch] $Success,
         [Switch] $SkipSeverity,
+        [Alias('ForegroundColor')]
         [System.ConsoleColor] $Color = 'White'
     )
 
