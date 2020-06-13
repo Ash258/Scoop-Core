@@ -50,7 +50,7 @@ if (($utility -eq 'aria2') -and (-not (Test-HelperInstalled -Helper Aria2))) {
 
 $exitCode = 0
 foreach ($app in $application) {
-    Write-Host 'Starting download for' $app -ForegroundColor Green
+    Write-UserMessage "Starting download for $app" -Color Green
 
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null

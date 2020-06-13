@@ -39,7 +39,7 @@ foreach ($app in $Application) {
     }
 
     if ($manifest) {
-        $manifest | ConvertToPrettyJson | Write-UserMessage
+        $manifest | ConvertToPrettyJson | Write-UserMessage -Output
     } else {
         Write-UserMessage -Message "Manifest for $app not found" -Err
         ++$problems

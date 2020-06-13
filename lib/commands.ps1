@@ -34,3 +34,9 @@ function exec($cmd, $arguments) {
 
     & $cmd_path @arguments
 }
+
+function Invoke-ScoopCommand {
+    param($cmd, $arguments)
+
+    & (command_path $cmd) @arguments
+}

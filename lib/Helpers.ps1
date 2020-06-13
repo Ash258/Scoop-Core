@@ -51,7 +51,9 @@ function Write-UserMessage {
             default {
                 $sev = ''
                 $foreColor = 'White'
-                if ($Color -ne 'White') {
+                # If color is white (default) and there is no output => Write-Host
+                # If color other than White is passed => Write-Host
+                if ((($Color -eq 'White') -and !$Output) -or ($Color -ne 'White')) {
                     $foreColor = $Color
                 } else {
                     $Output = $true

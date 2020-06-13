@@ -154,7 +154,6 @@
         "markdown.extension.list.indentationSize": "inherit",
         "markdown.extension.orderedList.marker": "one",
         "markdown.extension.tableFormatter.enabled": true,
-        "markdown.extension.toc.githubCompatibility": true,
         "markdown.extension.toc.levels": "2..6",
         "powershell.codeFormatting.addWhitespaceAroundPipe": true,
         "powershell.codeFormatting.alignPropertyValuePairs": true,
