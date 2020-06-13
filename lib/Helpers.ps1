@@ -123,9 +123,10 @@ function Out-UTF8Content {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Alias('Path')]
+        [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [Alias('Value')]
         $Content
     )
 
