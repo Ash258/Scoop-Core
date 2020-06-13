@@ -117,6 +117,9 @@ function Update-ScoopLocalBucket {
                 add_bucket 'main'
             }
 
+            # Skip not git repositories
+            if (!(Test-Path "$loc\.git")) { continue }
+
             Push-Location $loc
             $previousCommit = Invoke-Expression 'git rev-parse HEAD'
             git_pull -q
