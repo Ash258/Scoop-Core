@@ -3,6 +3,18 @@
 }
 
 function Invoke-GitCmd {
+    <#
+    .SYNOPSIS
+        Git execution wrapper support -C parameter.
+    .PARAMETER Command
+        Specifies git command to execute.
+    .PARAMETER Repository
+        Specifies fullpath to git repository.
+    .PARAMETER Proxy
+        Specifies the command needs proxy or not.
+    .PARAMETER Argument
+        Specifies additional arguments, which should be used.
+    #>
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [String] $Command,
@@ -30,15 +42,13 @@ function Invoke-GitCmd {
         default { $action = $Command }
     }
 
-    $pre = $preAction -join ' '
-    $additionalArgs = $Argument -join ' '
-    $commandToRun = "git $pre $action $additionalArgs"
+    $commandToRun = 'git', ($preAction -join ' '), $action, ($Argument -join ' ') -join ' '
 
     if ($Proxy) {
         $prox = get_config 'proxy' 'none'
 
         # TODO: Drop comspec
-        if ($prox -and ($prox -ne 'none')) { $commandToRun = "SET HTTPS_PROXY=$proxy && SET HTTP_PROXY=$proxy && $commandToRun" }
+        if ($prox -and ($prox -ne 'none')) { $commandToRun = "SET HTTPS_PROXY=$prox && SET HTTP_PROXY=$prox && $commandToRun" }
     }
 
     debug $commandToRun
@@ -47,31 +57,34 @@ function Invoke-GitCmd {
     & "$env:ComSpec" /c $commandToRun
 }
 
+#region Deprecated
 function git_proxy_cmd {
-    $proxy = get_config 'proxy'
-    $cmd = "git $($args | ForEach-Object { "$_ " })"
-    if ($proxy -and $proxy -ne 'none') {
-        $cmd = "SET HTTPS_PROXY=$proxy&&SET HTTP_PROXY=$proxy&&$cmd"
-    }
-    & "$env:COMSPEC" /c $cmd
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command @args -Proxy
 }
 
 function git_clone {
-    git_proxy_cmd clone $args
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command 'Clone' -Argument $args -Proxy
 }
 
 function git_ls_remote {
-    git_proxy_cmd ls-remote $args
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command 'ls-remote' -Argument $args -Proxy
 }
 
 function git_pull {
-    git_proxy_cmd pull --rebase=false $args
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command 'Update' -Argument $args -Proxy
 }
 
 function git_fetch {
-    git_proxy_cmd fetch $args
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command 'fetch' -Argument $args -Proxy
 }
 
 function git_checkout {
-    git_proxy_cmd checkout $args
+    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
+    Invoke-GitCmd -Command 'checkout' -Argument $args -Proxy
 }
+#endregion Deprecated
