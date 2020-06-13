@@ -32,12 +32,11 @@ $Dir = Resolve-Path $Dir
 foreach ($m in Get-ChildItem $Dir "$App.*") {
     $path = $m.Fullname
 
-    # beautify
     $manifest = parse_json $path
 
-    # Some migrations and fixes
     Write-UserMessage $m.Basename
 
+    #region Migrations and fixes
     # Checkver
     $checkver = $manifest.checkver
     if ($checkver) {
@@ -71,10 +70,14 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
     }
 
     # Property Sort
+    # Version
+    # Description
+    # Homepage
+    # License
+    # notes
+    # ##|_comment
 
-    # $manifest
-    $manifest = $manifest | ConvertToPrettyJson
+    #endregion Migrations and fixes
 
-    # Convert to 4 spaces
-    $manifest -replace "`t", (' ' * 4) | Out-UTF8File -File $path
+    ($manifest | ConvertToPrettyJson) -replace "`t", (' ' * 4) | Out-UTF8File -File $path
 }
