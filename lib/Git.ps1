@@ -17,6 +17,7 @@ function Invoke-GitCmd {
     #>
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('Cmd', 'Action')]
         [String] $Command,
         [String] $Repository,
         [Switch] $Proxy,
