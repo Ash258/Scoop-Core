@@ -66,12 +66,15 @@ function Update-ScoopCorePull {
         [String] $Branch
     )
 
-    Push-Location $TargetDirectory
+    # Push-Location $TargetDirectory
+
+    $target = @{ 'Repository' = $TargetDirectory }
 
     $previousCommit = Invoke-Expression 'git rev-parse HEAD'
     $currentRepo = Invoke-Expression 'git config remote.origin.url'
     $currentBranch = Invoke-Expression 'git branch --show-current'
 
+    exit
     $isRepoChanged = !($currentRepo -eq $Repo)
     $isBranchChanged = !($currentBranch -eq $Branch)
 

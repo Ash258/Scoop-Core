@@ -2,31 +2,40 @@
     . "$PSScriptRoot\$_.ps1"
 }
 
-Invoke-GitCmd {
+function Invoke-GitCmd {
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [ValidateSet('Clone', 'Checkout', 'Fetch', 'Pull', 'Ls-Remote')]
         [String] $Command,
         [String] $Repository,
         [Switch] $Proxy,
         [String[]] $Argument
     )
 
+    $preAction = if ($Repository) { '-C', """$Repository""" } else { @() }
+
     switch ($Command) {
         'Clone' { $action = 'clone' }
         'Checkout' { $action = 'checkout' }
         'Fetch' { $action = 'fetch' }
-        'Pull' { $action = 'pull --rebase=false' }
         'Ls-Remote' { $action = 'ls-remote' }
+        'Update' {
+            $action = 'pull'
+            $Argument += '--rebase=false'
+        }
+        'Updatelog' {
+            $preAction += '--no-pager'
+            $action = 'log'
+            $Argument += '--oneline', 'HEAD', '-n', '1'
+        }
         default { $action = $Command }
     }
 
-    $minusC = if ($Repository) { "-C $Repository " } else { '' }
+    $pre = $preAction -join ' '
     $additionalArgs = $Argument -join ' '
-    $commandToRun = "git $minusC$action $additionalArgs"
+    $commandToRun = "git $pre $action $additionalArgs"
 
     if ($Proxy) {
-        $prox = get_config 'proxy'
+        $prox = get_config 'proxy' 'none'
 
         # TODO: Drop comspec
         if ($prox -and ($prox -ne 'none')) { $commandToRun = "SET HTTPS_PROXY=$proxy && SET HTTP_PROXY=$proxy && $commandToRun" }
