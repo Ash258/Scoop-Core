@@ -42,7 +42,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
     #region Migrations and fixes
     # Checkver
     $checkver = $manifest.checkver
-    if ($checkver -and $checkver.GetType() -ne [System.String]) {
+    if ($checkver -and ($checkver.GetType() -ne [System.String])) {
         # Remove not needed url
         if ($checkver.url -and ($checkver.url -eq $manifest.homepage)) {
             _infoMes $name 'Removing checkver.url (same as homepage)'
