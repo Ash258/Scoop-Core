@@ -34,6 +34,8 @@ function _infoMes ($name, $mes) { Write-UserMessage -Message "${name}: $mes" -In
 foreach ($m in Get-ChildItem $Dir "$App.*") {
     $path = $m.Fullname
 
+    if ($m.Extension -notin '.json', '.yml', '.yaml') { continue }
+
     $manifest = parse_json $path
     $name = $m.Basename
 
