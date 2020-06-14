@@ -40,6 +40,8 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $buc = if ($bucket) { " [$bucket]" } else { '' }
     Write-UserMessage -Message "Installing '$app' ($version) [$architecture]$buc"
 
+    # TODO: License handling
+
     $dir = ensure (versiondir $app $version $global)
     $original_dir = $dir # keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
