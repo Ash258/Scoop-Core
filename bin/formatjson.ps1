@@ -59,6 +59,14 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
 
             $checkver | Add-Member -MemberType NoteProperty -Name 'regex' -Value $checkver.re
             $checkver.PSObject.Properties.Remove('re')
+
+            if ($checkver.reverse) {
+                _infoMes $name 'checkver.reverse -> after regex'
+
+                $rev = $checkver.reverse
+                $checkver.PSObject.Properties.Remove('reverse')
+                $checkver | Add-Member -MemberType NoteProperty -Name 'reverse' -Value $rev
+            }
         }
 
         # Only one property regex
