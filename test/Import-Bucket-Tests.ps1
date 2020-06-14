@@ -9,7 +9,7 @@ if ([String]::IsNullOrEmpty($MyInvocation.PSScriptRoot)) {
 
 $repo_dir = (Get-Item $MyInvocation.PSScriptRoot).FullName
 
-$repo_files = @(Get-ChildItem $repo_dir -file -recurse)
+$repo_files = @(Get-ChildItem $repo_dir -file -Recurse)
 
 $project_file_exclusions = @(
     $([regex]::Escape($repo_dir) + '(\\|/).git(\\|/).*$'),
@@ -19,9 +19,7 @@ $project_file_exclusions = @(
 )
 
 $bucketdir = $repo_dir
-if (Test-Path("$repo_dir\bucket")) {
-    $bucketdir = "$repo_dir\bucket"
-}
+if (Test-Path("$repo_dir\bucket")) { $bucketdir = "$repo_dir\bucket" }
 
 . "$PSScriptRoot\Import-File-Tests.ps1"
 . "$PSScriptRoot\Scoop-Manifest.Tests.ps1" -bucketdir $bucketdir

@@ -1,7 +1,7 @@
-. "$PSScriptRoot\..\lib\core.ps1"
-
 Describe "config" -Tag 'Scoop' {
     BeforeAll {
+        . "$PSScriptRoot\..\lib\core.ps1"
+
         $json = '{ "one": 1, "two": [ { "a": "a" }, "b", 2 ], "three": { "four": 4 }, "five": true, "six": false, "seven": "\/Date(1529917395805)\/", "eight": "2019-03-18T15:22:09.3930000+00:00" }'
     }
 

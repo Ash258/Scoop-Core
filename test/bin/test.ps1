@@ -2,62 +2,59 @@
 #Requires -Modules @{ ModuleName = 'BuildHelpers'; ModuleVersion = '2.0.1' }
 #Requires -Modules @{ ModuleName = 'Pester'; ModuleVersion = '4.4.0' }
 #Requires -Modules @{ ModuleName = 'PSScriptAnalyzer'; ModuleVersion = '1.17.1' }
+
 param([String] $TestPath = 'test/')
 
-$resultsXml = "$PSScriptRoot/TestResults.xml"
-$excludes = @()
-
 $splat = @{
-    Path         = $TestPath
-    OutputFile   = $resultsXml
-    OutputFormat = 'NUnitXML'
-    PassThru     = $true
+    CI   = $true
+    Path = $TestPath
 }
 
-if ($env:CI -eq $true) {
+if ($env:CI -and ($env:CI -eq $true)) {
+    $excludes = @()
     $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
     $commitMessage = "$env:APPVEYOR_REPO_COMMIT_MESSAGE $env:APPVEYOR_REPO_COMMIT_MESSAGE_EXTENDED".TrimEnd()
+    $commitChangedFiles = @(Get-GitChangedFile -Commit $commit -Exclude 'supporting*' )
 
     if ($commitMessage -match '!linter') {
-        Write-Warning "Skipping code linting per commit flag '!linter'"
+        Write-Warning 'Skipping code linting per commit flag ''!linter'''
         $excludes += 'Linter'
     }
 
-    $changed_scripts = (Get-GitChangedFile -Include '*.ps1' -Commit $commit)
-    if (!$changed_scripts) {
-        Write-Warning "Skipping tests and code linting for *.ps1 files because they didn't change"
+    if (($commitChangedFiles -match '\.ps(m|d)?1$').Count -eq 0) {
+        Write-Warning 'Skipping tests and code linting for *.ps1 files because they did not change'
         $excludes += 'Linter'
         $excludes += 'Scoop'
     }
 
-    $changed_scripts = (Get-GitChangedFile -Include '*decompress.ps1' -Commit $commit)
-    if (!$changed_scripts) {
-        Write-Warning "Skipping tests and code linting for decompress.ps1 files because it didn't change"
+    if (($commitChangedFiles -match 'decompress\.ps(m|d)?1$').Count -eq 0) {
+        Write-Warning 'Skipping tests and code linting for decompress.ps1 files because it did not change'
         $excludes += 'Decompress'
     }
 
-    if ($env:CI_WINDOWS -ne $true) {
-        Write-Warning "Skipping tests and code linting for decompress.ps1 because they only work on Windows"
+    if ($env:CI_WINDOWS -and ($env:CI_WINDOWS -ne $true)) {
+        Write-Warning 'Skipping tests and code linting for decompress.ps1 because they only work on Windows'
         $excludes += 'Decompress'
     }
 
     if ($commitMessage -match '!manifests') {
-        Write-Warning "Skipping manifest validation per commit flag '!manifests'"
+        Write-Warning 'Skipping manifest validation per commit flag ''!manifests'''
         $excludes += 'Manifests'
     }
 
-    $changed_manifests = (Get-GitChangedFile -Include '*.json' -Commit $commit)
-    if (!$changed_manifests) {
-        Write-Warning "Skipping tests and validation for manifest files because they didn't change"
+    $json = $commitChangedFiles -match '\.json$'
+    $json = $json -notmatch '\.vscode|schema|buckets|supporting'
+    if ($json.Count -eq 0) {
+        Write-Warning 'Skipping tests and validation for manifest files because they did not change'
         $excludes += 'Manifests'
     }
 
-    if ($excludes.Length -gt 0) {
-        $splat.ExcludeTag = $excludes
+    if ($excludes.Length -gt 0) { $splat.ExcludeTag = $excludes }
+    if ($commitChangedFiles.Count -eq 0) {
+        Write-Warning 'No changed files'
+        exit 0
     }
 }
 
-Write-Host 'Invoke-Pester' @splat
-$result = Invoke-Pester @splat
-
-if ($result.FailedCount -gt 0) { exit $result.FailedCount }
+Write-Host 'Invoke-Pester' @splat -ForegroundColor Magenta
+Invoke-Pester @splat

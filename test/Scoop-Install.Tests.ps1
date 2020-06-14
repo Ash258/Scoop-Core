@@ -1,9 +1,11 @@
-. "$PSScriptRoot\..\lib\core.ps1"
-. "$PSScriptRoot\..\lib\manifest.ps1"
-. "$PSScriptRoot\..\lib\install.ps1"
-. "$PSScriptRoot\Scoop-TestLib.ps1"
+BeforeAll {
+    . "$PSScriptRoot\Scoop-TestLib.ps1"
+    . "$PSScriptRoot\..\lib\core.ps1"
+    . "$PSScriptRoot\..\lib\manifest.ps1"
+    . "$PSScriptRoot\..\lib\install.ps1"
+}
 
-Describe "ensure_architecture" -Tag 'Scoop' {
+Describe 'ensure_architecture' -Tag 'Scoop' {
     It "should keep correct architectures" {
         ensure_architecture "32bit" | Should -be "32bit"
         ensure_architecture "32" | Should -be "32bit"
@@ -73,14 +75,16 @@ Describe "is_in_dir" -Tag 'Scoop' {
 
 Describe "env add and remove path" -Tag 'Scoop' {
     # test data
-    $manifest = @{
-        "env_add_path" = @("foo", "bar")
-    }
-    $testdir = Join-Path $PSScriptRoot "path-test-directory"
-    $global = $false
+    BeforeAll {
+        $manifest = @{
+            "env_add_path" = @("foo", "bar")
+        }
+        $testdir = Join-Path $PSScriptRoot "path-test-directory"
+        $global = $false
 
-    # store the original path to prevent leakage of tests
-    $origPath = $env:PATH
+        # store the original path to prevent leakage of tests
+        $origPath = $env:PATH
+    }
 
     It "should concat the correct path" {
         Mock add_first_in_path { }

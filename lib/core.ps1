@@ -983,7 +983,7 @@ $scoopdir = $SCOOP_ROOT_DIRECTORY
 # Scoop global apps directory
 $SCOOP_GLOBAL_ROOT_DIRECTORY = $env:SCOOP_GLOBAL, (get_config 'globalPath'), "$env:ProgramData\scoop" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -first 1
 $globaldir = $SCOOP_GLOBAL_ROOT_DIRECTORY
-
+      
 # Scoop cache directory
 # Note: Setting the SCOOP_CACHE environment variable to use a shared directory
 #       is experimental and untested. There may be concurrency issues when

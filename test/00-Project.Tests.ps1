@@ -10,48 +10,46 @@ $project_file_exclusions = @(
     'supporting(\\|/)shimexe(\\|/)packages(\\|/)*'
 )
 
-Describe 'Project code' {
-
-    $files = @(
-        $repo_files |
-            Where-Object { $_.fullname -inotmatch $($project_file_exclusions -join '|') } |
-            Where-Object { $_.fullname -imatch '.(ps1|psm1)$' }
+function Test-PowerShellSyntax {
+    # ref: http://powershell.org/wp/forums/topic/how-to-check-syntax-of-scripts-automatically @@ https://archive.is/xtSv6
+    # originally created by Alexander Petrovskiy & Dave Wyatt
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [String[]] $Path
     )
 
-    $files_exist = ($files.Count -gt 0)
+    process {
+        foreach ($scriptPath in $Path) {
+            $contents = Get-Content -Path $scriptPath
+
+            if ($null -eq $contents) { continue }
+
+            $errors = $null
+            $null = [System.Management.Automation.PSParser]::Tokenize($contents, [ref]$errors)
+
+            New-Object psobject -Property @{
+                Path              = $scriptPath
+                SyntaxErrorsFound = ($errors.Count -gt 0)
+            }
+        }
+    }
+}
+
+Describe 'Project code' {
+    BeforeAll {
+        $files = @(
+            $repo_files |
+                Where-Object { $_.fullname -inotmatch $($project_file_exclusions -join '|') } |
+                Where-Object { $_.fullname -imatch '.(ps1|psm1)$' }
+        )
+
+        $files_exist = ($files.Count -gt 0)
+    }
 
     It $('PowerShell code files exist ({0} found)' -f $files.Count) -skip:$(-not $files_exist) {
         if (-not ($files.Count -gt 0)) {
             throw "No PowerShell code files were found"
-        }
-    }
-
-    function Test-PowerShellSyntax {
-        # ref: http://powershell.org/wp/forums/topic/how-to-check-syntax-of-scripts-automatically @@ https://archive.is/xtSv6
-        # originally created by Alexander Petrovskiy & Dave Wyatt
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
-            [string[]]
-            $Path
-        )
-
-        process {
-            foreach ($scriptPath in $Path) {
-                $contents = Get-Content -Path $scriptPath
-
-                if ($null -eq $contents) {
-                    continue
-                }
-
-                $errors = $null
-                $null = [System.Management.Automation.PSParser]::Tokenize($contents, [ref]$errors)
-
-                New-Object psobject -Property @{
-                    Path              = $scriptPath
-                    SyntaxErrorsFound = ($errors.Count -gt 0)
-                }
-            }
         }
     }
 
@@ -68,7 +66,4 @@ Describe 'Project code' {
             throw "The following files have syntax errors: `r`n`r`n$($badFiles -join "`r`n")"
         }
     }
-
 }
-
-. "$PSScriptRoot\Import-File-Tests.ps1"

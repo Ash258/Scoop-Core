@@ -1,7 +1,10 @@
-. "$PSScriptRoot\Scoop-TestLib.ps1"
-. "$PSScriptRoot\..\lib\versions.ps1"
 
 Describe 'versions comparison' -Tag 'Scoop' {
+    BeforeAll {
+        . "$PSScriptRoot\Scoop-TestLib.ps1"
+        . "$PSScriptRoot\..\lib\versions.ps1"
+    }
+
     Context 'semver compliant versions' {
         It 'handles major.minor.patch progressing' {
             Compare-Version '0.1.0' '0.1.1' | Should -Be 1

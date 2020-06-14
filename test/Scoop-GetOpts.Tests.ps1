@@ -1,7 +1,9 @@
-. "$PSScriptRoot\Scoop-TestLib.ps1"
-. "$PSScriptRoot\..\lib\getopt.ps1"
-
 Describe "getopt" -Tag 'Scoop' {
+    BeforeAll {
+        . "$PSScriptRoot\Scoop-TestLib.ps1"
+        . "$PSScriptRoot\..\lib\getopt.ps1"
+    }
+
     It 'handle short option with required argument missing' {
         $null, $null, $err = getopt '-x' 'x:' ''
         $err | Should -be 'Option -x requires an argument.'

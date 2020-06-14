@@ -1,12 +1,14 @@
-. "$PSScriptRoot\Scoop-TestLib.ps1"
-. "$PSScriptRoot\..\lib\decompress.ps1"
-. "$PSScriptRoot\..\lib\install.ps1"
-. "$PSScriptRoot\..\lib\manifest.ps1"
+BeforeAll {
+    . "$PSScriptRoot\Scoop-TestLib.ps1"
+    . "$PSScriptRoot\..\lib\decompress.ps1"
+    . "$PSScriptRoot\..\lib\install.ps1"
+    . "$PSScriptRoot\..\lib\manifest.ps1"
 
-function test_extract($extract_fn, $from, $removal) {
-    $to = (strip_ext $from) -replace '\.tar$', ''
-    & $extract_fn ($from -replace '/', '\') ($to -replace '/', '\') -Removal:$removal
-    return $to
+    function test_extract($extract_fn, $from, $removal) {
+        $to = (strip_ext $from) -replace '\.tar$', ''
+        & $extract_fn ($from -replace '/', '\') ($to -replace '/', '\') -Removal:$removal
+        return $to
+    }
 }
 
 Describe 'Decompression function' -Tag 'Scoop', 'Decompress' {
@@ -22,7 +24,6 @@ Describe 'Decompression function' -Tag 'Scoop', 'Decompress' {
     }
 
     Context "7zip extraction" {
-
         BeforeAll {
             if ($env:CI) {
                 Mock Get-AppFilePath { (Get-Command 7z.exe).Path }

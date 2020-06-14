@@ -1,13 +1,15 @@
 param($bucketdir = "$PSScriptRoot\..\bucket\")
 
-. "$PSScriptRoot\Scoop-TestLib.ps1"
-. "$PSScriptRoot\..\lib\core.ps1"
-. "$PSScriptRoot\..\lib\manifest.ps1"
+if (!(Test-Path $bucketdir)) { Write-Host 'Skipping manifest tests'; return }
 
-Describe -Tag 'Manifests' "manifest-validation" {
+Describe 'manifest-validation' -Tag 'Manifests' {
     BeforeAll {
-        $working_dir = setup_working "manifest"
-        $schema = "$PSScriptRoot/../schema.json"
+        . "$PSScriptRoot\Scoop-TestLib.ps1"
+        . "$PSScriptRoot\..\lib\core.ps1"
+        . "$PSScriptRoot\..\lib\manifest.ps1"
+
+        $working_dir = setup_working 'manifest'
+        $schema = "$PSScriptRoot\..\schema.json"
         Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Newtonsoft.Json.dll"
         Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Newtonsoft.Json.Schema.dll"
         Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Scoop.Validator.dll"
@@ -47,9 +49,8 @@ Describe -Tag 'Manifests' "manifest-validation" {
 
     Context "manifest validates against the schema" {
         BeforeAll {
-            if ($null -eq $bucketdir) {
-                $bucketdir = "$PSScriptRoot\..\bucket\"
-            }
+            if ($null -eq $bucketdir) { $bucketdir = "$PSScriptRoot\..\bucket\" }
+
             $changed_manifests = @()
             if ($env:CI -eq $true) {
                 $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
@@ -57,45 +58,54 @@ Describe -Tag 'Manifests' "manifest-validation" {
             }
             $manifest_files = Get-ChildItem $bucketdir *.json
             $validator = New-Object Scoop.Validator($schema, $true)
+
+            $quota_exceeded = $false
         }
 
-        $quota_exceeded = $false
+        foreach ($file in $manifest_files) {
+            $skip_manifest = ($changed_manifests -inotcontains $file.FullName)
+            if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') { $skip_manifest = $false }
 
-        $manifest_files | ForEach-Object {
-            $skip_manifest = ($changed_manifests -inotcontains $_.FullName)
-            if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') {
-                $skip_manifest = $false
-            }
-            It "$_" -skip:$skip_manifest {
-                $file = $_ # exception handling may overwrite $_
+            if ($skip_manifest) { continue }
 
-                if (!($quota_exceeded)) {
-                    try {
-                        $validator.Validate($file.fullname)
+            $manifestError = $false
+            if (!($quota_exceeded)) {
+                try {
+                    $validator.Validate($file.fullname)
 
-                        if ($validator.Errors.Count -gt 0) {
-                            Write-Host -f red "      [-] $_ has $($validator.Errors.Count) Error$(If($validator.Errors.Count -gt 1) { 's' })!"
-                            Write-Host -f yellow $validator.ErrorsAsString
-                        }
-                        $validator.Errors.Count | Should -be 0
-                    } catch {
-                        if ($_.exception.message -like '*The free-quota limit of 1000 schema validations per hour has been reached.*') {
-                            $quota_exceeded = $true
-                            Write-Host -f darkyellow 'Schema validation limit exceeded. Will skip further validations.'
-                        } else {
-                            throw
-                        }
+                    if ($validator.Errors.Count -gt 0) {
+                        Write-Host -f red "      [x] $file"
+                        Write-Host -f red "          [-] $_ has $($validator.Errors.Count) Error$(If($validator.Errors.Count -gt 1) { 's' })!"
+
+                        foreach ($l in ($validator.ErrorsAsString -split "`n")) { Write-Host -f yellow "    $l" }
+                    }
+                    $validator.Errors.Count | Should -Be 0
+                    if ($validator.Errors.Count) { $manifestError = $true }
+                } catch {
+                    if ($_.exception.message -like '*The free-quota limit of 1000 schema validations per hour has been reached.*') {
+                        $quota_exceeded = $true
+                        Write-Host -f darkyellow 'Schema validation limit exceeded. Will skip further validations.'
+                    } else {
+                        throw
                     }
                 }
-
-                $manifest = parse_json $file.fullname
-                $url = arch_specific "url" $manifest "32bit"
-                $url64 = arch_specific "url" $manifest "64bit"
-                if (!$url) {
-                    $url = $url64
-                }
-                $url | Should -Not -BeNullOrEmpty
             }
+
+            $manifest = parse_json $file.FullName
+            $url = arch_specific "url" $manifest "32bit"
+            $url64 = arch_specific "url" $manifest "64bit"
+            if (!$url) { $url = $url64 }
+            if (!$url) { $manifestError = $true }
+
+            if ($manifestError) {
+                $color = 'Red'
+                $tick = 'x'
+            } else {
+                $color = 'Green'
+                $tick = '+'
+            }
+            Write-Host "      [$tick] $file" -ForegroundColor $color
+            $url | Should -Not -BeNullOrEmpty
         }
-}
+    }
 }
