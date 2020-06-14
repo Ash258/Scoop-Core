@@ -17,9 +17,9 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir
 )
 
@@ -40,7 +40,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
     #region Migrations and fixes
     # Checkver
     $checkver = $manifest.checkver
-    if ($checkver) {
+    if ($checkver -and $checkver.GetType() -ne [System.String]) {
         # Remove not needed url
         if ($checkver.url -and ($checkver.url -eq $manifest.homepage)) {
             _infoMes $name 'Removing checkver.url (same as homepage)'
@@ -62,18 +62,24 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
         }
 
         # Only one property regex
-        if (($checkver.PSObject.Properties.name.Count -eq 1) -and $checkver.regex) {
+        if (($checkver.PSObject.Properties.Name.Count -eq 1) -and $checkver.regex) {
             _infoMes $name 'alone checkver.regex -> checkver'
             $checkver = $checkver.regex
         }
 
-        if ($checkver.replace) {
+        if ($checkver.PSObject.Properties.Name -eq 'replace') {
             _infoMes $name 'Sort: checkver.replace -> latest'
 
             $repl = $checkver.replace
             $checkver.PSObject.Properties.Remove('replace')
             $checkver | Add-Member -MemberType NoteProperty -Name 'replace' -Value $repl
+        }
 
+        # Only one github property and homepage is set to github repository
+        if (($checkver.PSObject.Properties.name.Count -eq 1) -and $checkver.github -and ($checkver.github -eq $manifest.homepage)) {
+            _infoMes $name 'alone checkver.github -> checkver github string'
+
+            $checkver = 'github'
         }
 
         $manifest.checkver = $checkver
