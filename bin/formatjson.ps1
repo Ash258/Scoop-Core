@@ -111,10 +111,10 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
             }
         }
 
-        $newArch = [PSCustomObject] @{ }
-
         # Skip single architecture
         if ($arch.PSObject.Properties.Name.Count -eq 1) { continue }
+
+        $newArch = [PSCustomObject] @{ }
 
         '64bit', '32bit' | ForEach-Object {
             if ($arch.$_) { $newArch | Add-Member -MemberType NoteProperty -Name $_ -Value $arch.$_ }
