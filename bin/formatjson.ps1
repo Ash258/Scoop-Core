@@ -67,7 +67,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
             $checkver = $checkver.regex
         }
 
-        if ($checkver.PSObject.Properties.Name -eq 'replace') {
+        if (($checkver.PSObject.Properties.Name -eq 'replace') -and ($checkver.PSObject.Properties.Name[-1] -ne 'replace')) {
             _infoMes $name 'Sort: checkver.replace -> latest'
 
             $repl = $checkver.replace
