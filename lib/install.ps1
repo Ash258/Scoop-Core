@@ -40,22 +40,27 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $buc = if ($bucket) { " [$bucket]" } else { '' }
     Write-UserMessage -Message "Installing '$app' ($version) [$architecture]$buc"
 
-    # TODO: License handling
+    # Show license
+    $license = $manifest.license
+    if ($license -and ($license -ne 'Unknown')) {
+        $id = if ($license.identifier) { $license.identifier } else { $license }
+        # Remove [|,]...
+        if ($id -like '*...') { $id = $id -replace '[|,]\.{3}' }
+        $id = $id -split ','
+        $id = $id -split '\|'
 
-    # if ($manifest.license) {
-    #     $license = $manifest.license
-    #     if ($manifest.license.identifier -and $manifest.license.url) {
-    #         $license = "$($manifest.license.identifier) ($($manifest.license.url))"
-    #     } elseif ($manifest.license -match '^((ht)|f)tps?://') {
-    #         $license = "$($manifest.license)"
-    #     } elseif ($manifest.license -match '[|,]') {
-    #         $licurl = $manifest.license.Split("|,") | ForEach-Object { "https://spdx.org/licenses/$_.html" }
-    #         $license = "$($manifest.license) ($($licurl -join ', '))"
-    #     } else {
-    #         $license = "$($manifest.license) (https://spdx.org/licenses/$($manifest.license).html)"
-    #     }
-    #     Write-Output "License: $license"
-    # }
+        if ($license.url) {
+            $s = if ($id.Count -eq 1) { $id } else { $id -join ', ' }
+            $toShow = $s + ' (' + $license.url + ')'
+        } else {
+            $line = if ($id.Count -gt 1) { "`r`n  " } else { '' }
+            $id | ForEach-Object {
+                $toShow += "$line$_ (https://spdx.org/licenses/$_.html)"
+            }
+        }
+
+        Write-UserMessage -Message "By installing you accept following $(pluralize $id.Count 'license' 'licenses'): $toShow" -Warn
+    }
 
     $dir = ensure (versiondir $app $version $global)
     $original_dir = $dir # keep reference to real (not linked) directory
