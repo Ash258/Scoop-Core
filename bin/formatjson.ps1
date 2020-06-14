@@ -47,13 +47,6 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
             $checkver.PSObject.Properties.Remove('url')
         }
 
-        if ($checkver.re) {
-            _infoMes $name 'checkver.re -> checkver.regex'
-
-            $checkver | Add-Member -MemberType NoteProperty -Name 'regex' -Value $checkver.re
-            $checkver.PSObject.Properties.Remove('re')
-        }
-
         if ($checkver.jp) {
             _infoMes $name 'checkver.jp -> checkver.jsonpath'
 
@@ -61,10 +54,26 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
             $checkver.PSObject.Properties.Remove('jp')
         }
 
+        if ($checkver.re) {
+            _infoMes $name 'checkver.re -> checkver.regex'
+
+            $checkver | Add-Member -MemberType NoteProperty -Name 'regex' -Value $checkver.re
+            $checkver.PSObject.Properties.Remove('re')
+        }
+
         # Only one property regex
         if (($checkver.PSObject.Properties.name.Count -eq 1) -and $checkver.regex) {
             _infoMes $name 'alone checkver.regex -> checkver'
             $checkver = $checkver.regex
+        }
+
+        if ($checkver.replace) {
+            _infoMes $name 'Sort: checkver.replace -> latest'
+
+            $repl = $checkver.replace
+            $checkver.PSObject.Properties.Remove('replace')
+            $checkver | Add-Member -MemberType NoteProperty -Name 'replace' -Value $repl
+
         }
 
         $manifest.checkver = $checkver
