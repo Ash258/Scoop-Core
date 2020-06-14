@@ -29,12 +29,13 @@ param(
 
 $Dir = Resolve-Path $Dir
 
+function _infoMes ($name, $mes) { Write-UserMessage -Message "${name}: $mes" -Info }
+
 foreach ($m in Get-ChildItem $Dir "$App.*") {
     $path = $m.Fullname
 
     $manifest = parse_json $path
-
-    Write-UserMessage $m.Basename
+    $name = $m.Basename
 
     #region Migrations and fixes
     # Checkver
@@ -42,19 +43,19 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
     if ($checkver) {
         # Remove not needed url
         if ($checkver.url -and ($checkver.url -eq $manifest.homepage)) {
-            Write-UserMessage -Message 'Removing checkver.url (same as homepage)' -Info
+            _infoMes $name 'Removing checkver.url (same as homepage)'
             $checkver.PSObject.Properties.Remove('url')
         }
 
         if ($checkver.re) {
-            Write-UserMessage -Message 'checkver.re -> checkver.regex' -Info
+            _infoMes $name 'checkver.re -> checkver.regex'
 
             $checkver | Add-Member -MemberType NoteProperty -Name 'regex' -Value $checkver.re
             $checkver.PSObject.Properties.Remove('re')
         }
 
         if ($checkver.jp) {
-            Write-UserMessage -Message 'checkver.jp -> checkver.jsonpath' -Info
+            _infoMes $name 'checkver.jp -> checkver.jsonpath'
 
             $checkver | Add-Member -MemberType NoteProperty -Name 'jsonpath' -Value $checkver.jp
             $checkver.PSObject.Properties.Remove('jp')
@@ -62,21 +63,66 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
 
         # Only one property regex
         if (($checkver.PSObject.Properties.name.Count -eq 1) -and $checkver.regex) {
-            Write-UserMessage -Message 'alone checkver.regex -> checkver' -Info
+            _infoMes $name 'alone checkver.regex -> checkver'
             $checkver = $checkver.regex
         }
 
         $manifest.checkver = $checkver
     }
 
-    # Property Sort
-    # Version
-    # Description
-    # Homepage
-    # License
-    # notes
-    # ##|_comment
+    # Architecture properties sort
+    foreach ($mainProp in 'architecture', 'autoupdate') {
+        if ($mainProp -eq 'autoupdate') {
+            if ($manifest.$mainProp.architecture) {
+                $arch = $manifest.$mainProp.architecture
+            } else {
+                continue
+            }
+        } else {
+            if ($manifest.$mainProp) {
+                $arch = $manifest.$mainProp
+            } else {
+                continue
+            }
+        }
 
+        $newArch = [PSCustomObject] @{ }
+
+        # Skip single architecture
+        if ($arch.PSObject.Properties.Name.Count -eq 1) { continue }
+
+        '64bit', '32bit' | ForEach-Object {
+            if ($arch.$_) {
+                $newArch | Add-Member -MemberType NoteProperty -Name $_ -Value $arch.$_
+            }
+        }
+
+        if ($arch.PSObject.Properties.Name[0] -ne '64bit') {
+            _infoMes $name "Sorting Arch: $mainProp"
+            $arch = $newArch
+        }
+
+        if ($mainProp -eq 'autoupdate') {
+            $manifest.$mainProp.architecture = $newArch
+        } else {
+            $manifest.$mainProp = $newArch
+        }
+    }
+
+    $newManifest = [PSCustomObject] @{ }
+    '##', '_comment', 'version', 'description', 'homepage', 'license', 'notes', 'depends' | ForEach-Object {
+        if ($manifest.$_) {
+            $newManifest | Add-Member -MemberType NoteProperty -Name $_ -Value $manifest.$_
+            $manifest.PSObject.Properties.Remove($_)
+        }
+    }
+
+    # Add remaining properties in same order
+    $manifest.PSObject.Properties.Name | ForEach-Object {
+        $newManifest | Add-Member -MemberType NoteProperty -Name $_ -Value $manifest.$_
+    }
+
+    $manifest = $newManifest
     #endregion Migrations and fixes
 
     ($manifest | ConvertToPrettyJson) -replace "`t", (' ' * 4) | Out-UTF8File -File $path
