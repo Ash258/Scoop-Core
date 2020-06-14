@@ -86,7 +86,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
         }
 
         # Only one github property and homepage is set to github repository
-        if (($checkver.PSObject.Properties.name.Count -eq 1) -and $checkver.github -and ($checkver.github -eq $manifest.homepage)) {
+        if (($checkver.PSObject.Properties.Name.Count -eq 1) -and $checkver.github -and ($checkver.github -eq $manifest.homepage)) {
             _infoMes $name 'alone checkver.github -> checkver github string'
 
             $checkver = 'github'
@@ -117,9 +117,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*") {
         if ($arch.PSObject.Properties.Name.Count -eq 1) { continue }
 
         '64bit', '32bit' | ForEach-Object {
-            if ($arch.$_) {
-                $newArch | Add-Member -MemberType NoteProperty -Name $_ -Value $arch.$_
-            }
+            if ($arch.$_) { $newArch | Add-Member -MemberType NoteProperty -Name $_ -Value $arch.$_ }
         }
 
         if ($arch.PSObject.Properties.Name[0] -ne '64bit') {
