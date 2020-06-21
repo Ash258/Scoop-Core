@@ -11,6 +11,8 @@ reset_aliases
 
 $opt, $apps, $err = getopt $args 'g' 'global'
 if ($err) { Write-UserMessage -Message "scoop hold: $err" -Err; exit 2 }
+if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
+
 $global = $opt.g -or $opt.global
 
 # TODO: Stop-ScoopExecution
