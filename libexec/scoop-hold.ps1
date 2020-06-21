@@ -37,9 +37,15 @@ foreach ($app in $apps) {
         continue
     }
 
+    # TODO: Respect NO_JUNCTION
     $dir = versiondir $app 'current' $global
     $json = install_info $app 'current' $global
+    if ($json.hold -and ($json.hold -eq $true)) {
+       Write-UserMessage -Message "'$app' is already held" -Warning
+       continue
+    }
     $install = @{ }
+    # TODO: Add-member instead of duplicating of whole object
     $json | Get-Member -MemberType Properties | ForEach-Object { $install.Add($_.Name, $json.($_.Name)) }
     $install.hold = $true
     save_install_info $install $dir
