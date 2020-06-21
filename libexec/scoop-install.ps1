@@ -64,9 +64,7 @@ try {
 
 if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
 
-if ($global -and !(is_admin)) {
-    abort 'ERROR: you need admin rights to install global apps' 4
-}
+if ($global -and !(is_admin)) { abort 'Admin privileges are required to manipulate with globally installed apps' 4 }
 
 if (is_scoop_outdated) { Update-Scoop }
 

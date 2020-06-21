@@ -142,7 +142,7 @@ function is_admin {
 }
 
 # messages
-function abort($msg, [int] $exit_code = 3) { Write-UserMessage -Messag $msg -Error; exit $exit_code }
+function abort($msg, [int] $exit_code = 3) { Write-UserMessage -Message $msg -Err; exit $exit_code }
 function error($msg) { Write-Host "ERROR $msg" -ForegroundColor DarkRed }
 function warn($msg) { Write-Host "WARN  $msg" -ForegroundColor DarkYellow }
 function info($msg) { Write-Host "INFO  $msg" -ForegroundColor DarkGray }

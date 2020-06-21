@@ -20,9 +20,9 @@ if ($err) { Write-UserMessage -Message "scoop cleanup: $err" -Err; exit 2 }
 $global = $opt.g -or $opt.global
 $cache = $opt.k -or $opt.cache
 
-if (!$apps) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
+if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
 
-if ($global -and !(is_admin)) { Write-UserMessage -Message 'ERROR: you need admin rights to cleanup global apps' -Err; exit 4 }
+if ($global -and !(is_admin)) { Write-UserMessage -Message 'Admin privileges are required to manipulate with globally installed apps' -Err; exit 4 }
 
 function cleanup($app, $global, $verbose, $cache) {
     $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
