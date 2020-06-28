@@ -32,7 +32,7 @@ Describe "config" -Tag 'Scoop' {
     }
 
     It "get_config should return exactly the same values" {
-        $scoopConfig = ConvertFrom-Json $json
+        $SCOOP_CONFIGURATION = ConvertFrom-Json $json
         get_config 'does_not_exist' 'default' | Should -Be 'default'
 
         get_config 'one' | Should -BeExactly 1

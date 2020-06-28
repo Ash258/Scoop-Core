@@ -196,7 +196,7 @@ Describe "shim" -Tag 'Scoop' {
     }
 
     AfterEach {
-        rm_shim "shim-test" $shimdir
+        rm_shim "shim-test" $shimdir 6>&1 | Out-Null
     }
 }
 
