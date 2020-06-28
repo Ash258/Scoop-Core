@@ -204,3 +204,16 @@ function Test-Config {
 
     return $result
 }
+
+function Test-CompletionRegistered {
+    $result = (Get-Content $PROFILE) -like '*\supporting\completion*'
+    if (!$result) {
+        Write-UserMessage -Message 'Automatic completion module is not imported in $PROFILE' -Warning
+        Write-UserMessage -Message @(
+            '  Consider importing module for automatic commands/parameters completion'
+            '    Import-Module "$env:SCOOP\apps\scoop\current\supporting\completion\Scoop-Completion.psd1" -ErrorAction SilentlyContinue'
+        )
+    }
+
+    return $result
+}

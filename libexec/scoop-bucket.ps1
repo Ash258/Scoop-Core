@@ -1,4 +1,4 @@
-# Usage: scoop bucket add|list|known|rm [<args>]
+# Usage: scoop bucket [add|list|known|rm] [<args>]
 # Summary: Manage Scoop buckets
 # Help: Add, list or remove buckets.
 #

@@ -1,4 +1,4 @@
-# Usage: scoop alias add|list|rm [<args>]
+# Usage: scoop alias [add|list|rm] [<args>]
 # Summary: Manage scoop aliases
 # Help: Add, remove or list Scoop aliases
 #

@@ -1,4 +1,4 @@
-# Usage: scoop cache show|rm [app]
+# Usage: scoop cache [rm|show] [app]
 # Summary: Show or clear the download cache
 # Help: Scoop caches downloads so you don't need to download the same files
 # when you uninstall and re-install the same version of an app.

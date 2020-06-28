@@ -15,6 +15,7 @@ $issues += !(Test-EnvironmentVariable)
 $issues += !(Test-HelpersInstalled)
 $issues += !(Test-Drive)
 $issues += !(Test-Config)
+$issues += !(Test-CompletionRegistered)
 
 if ($issues -gt 0) {
     Write-UserMessage -Message "Found $issues potential $(pluralize $issues 'problem' 'problems')." -Warning
