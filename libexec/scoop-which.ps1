@@ -5,7 +5,7 @@
 param([String] $Command)
 
 'core', 'help', 'commands' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases

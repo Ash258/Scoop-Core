@@ -5,7 +5,7 @@
 # using one or the other.
 
 'core', 'manifest', 'help', 'getopt', 'install', 'Versions', 'shortcuts' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -27,11 +27,11 @@ foreach ($a in $apps) {
 
     $app, $bucket, $version = parse_app $app
 
-    # Set global flag when running reset command on specific app
-    if (($null -eq $global) -and (installed $app $true)) { $global = $true }
-
     # Skip scoop
     if ($app -eq 'scoop') { return }
+
+    # Set global flag when running reset command on specific app
+    if (($null -eq $global) -and (installed $app $true)) { $global = $true }
 
     if (!(installed $app)) {
         ++$problems
@@ -68,8 +68,9 @@ foreach ($a in $apps) {
     $dir = link_current $dir
     create_shims $manifest $dir $global $architecture
     create_startmenu_shortcuts $manifest $dir $global $architecture
-    env_add_path $manifest $dir
-    env_set $manifest $dir $global
+    env_add_path $manifest $dir $global $architecture
+    env_set $manifest $dir $global $architecture
+
     # unlink all potential old link before re-persisting
     unlink_persist_data $original_dir
     persist_data $manifest $original_dir $persist_dir

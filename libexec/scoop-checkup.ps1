@@ -3,7 +3,7 @@
 # Help: Performs a series of diagnostic tests to try to identify things that may cause problems with Scoop.
 
 'core', 'Diagnostic' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 $issues = 0

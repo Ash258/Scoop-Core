@@ -1,26 +1,30 @@
-'core', 'autoupdate', 'buckets' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'core', 'Helpers', 'autoupdate', 'buckets' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 function manifest_path($app, $bucket) {
-    return "$(Find-BucketDirectory $bucket)\$(sanitary_path $app).json"
+    $name = sanitary_path $app
+
+    # TODO: YAML
+    return Find-BucketDirectory $bucket | Join-Path -ChildPath "$name.json"
 }
 
-function parse_json($path) {
-    if (!(Test-Path $path)) { return $null }
+function parse_json {
+    param([Parameter(Mandatory, ValueFromPipeline)] [System.IO.FileInfo] $Path)
 
-    return Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+    if (!(Test-Path $Path)) { return $null }
+
+    return Get-Content $Path -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
 }
 
 function url_manifest($url) {
     $str = $null
     try {
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.Webclient
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $str = $wc.downloadstring($url)
-    } catch [system.management.automation.methodinvocationexception] {
-        # TODO: ???
-        Write-UserMessage -Message "error: $($_.Exception.InnerException.Message)" -Warning
+        $str = $wc.DownloadString($url)
+    } catch [System.Management.Automation.MethodInvocationException] {
+        Write-UserMessage -Message $_.Exception.InnerException.Message -Warning
     } catch {
         throw
     }
@@ -31,18 +35,19 @@ function url_manifest($url) {
 
 function manifest($app, $bucket, $url) {
     if ($url) { return url_manifest $url }
-    parse_json (manifest_path $app $bucket)
+
+    return parse_json (manifest_path $app $bucket)
 }
 
 function save_installed_manifest($app, $bucket, $dir, $url) {
     if ($url) {
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.Webclient
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         # TODO: YML
-        $wc.downloadstring($url) | Out-UTF8File "$dir\scoop-manifest.json"
+        Join-Path $dir 'scoop-manifest.json' | Out-UTF8Content -Content ($wc.DownloadString($url))
     } else {
         # TODO: YML
-        Copy-Item (manifest_path $app $bucket) "$dir\scoop-manifest.json"
+        Copy-Item (manifest_path $app $bucket) (Join-Path $dir 'scoop-manifest.json')
     }
 }
 
@@ -51,29 +56,31 @@ function installed_manifest($app, $version, $global) {
     $old = 'manifest.json'
     $new = 'scoop-manifest.json'
     $d = versiondir $app $version $global
+
     # Migration
-    if (Test-Path "$d\$old") {
+    if (Join-Path $d $old | Test-Path ) {
         Write-UserMessage -Message "Migrating $old to $new" -Info
-        Rename-Item "$d\$old" $new
+        Join-Path $d $old | Rename-Item -NewName $new
     }
-    return parse_json "$d\$new"
+
+    return parse_json (Join-Path $d $new)
 }
 
 function save_install_info($info, $dir) {
     $nulls = $info.keys | Where-Object { $null -eq $info[$_] }
     $nulls | ForEach-Object { $info.remove($_) } # strip null-valued
 
-    $info | ConvertToPrettyJson | Out-UTF8File "$dir\scoop-install.json"
+    $info | ConvertToPrettyJson | Out-UTF8File -Path (Join-Path $dir 'scoop-install.json')
 }
 
 function install_info($app, $version, $global) {
     $d = versiondir $app $version $global
-    $path = "$d\scoop-install.json"
+    $path = Join-Path $d 'scoop-install.json'
 
     if (!(Test-Path $path)) {
-        if (Test-Path "$d\install.json") {
+        if (Join-Path $d 'install.json' | Test-Path) {
             Write-UserMessage -Message "Migrating install.json to scoop-install.json" -Info
-            Rename-Item "$d\install.json" 'scoop-install.json'
+            Join-Path $d 'install.json' | Rename-Item -NewName 'scoop-install.json'
         } else {
             return $null
         }
@@ -84,7 +91,8 @@ function install_info($app, $version, $global) {
 
 function default_architecture {
     $arch = get_config 'default-architecture'
-    $system = if ([Environment]::Is64BitOperatingSystem) { '64bit' } else { '32bit' }
+    $system = if ([System.IntPtr]::Size -eq 8) { '64bit' } else { '32bit' }
+
     if ($null -eq $arch) {
         $arch = $system
     } else {
@@ -114,24 +122,26 @@ function supports_architecture($manifest, $architecture) {
 
 function generate_user_manifest($app, $bucket, $version) {
     $null, $manifest, $bucket, $null = Find-Manifest $app $bucket
-    if ("$($manifest.version)" -eq "$version") {
-        return manifest_path $app $bucket
-    }
+
+    if ($manifest.version -eq $version) { return manifest_path $app $bucket }
+
     Write-UserMessage -Warning -Message @(
         "Given version ($version) does not match manifest ($($manifest.version))"
         "Attempting to generate manifest for '$app' ($version)"
     )
 
+    # TODO: Stop-ScoopExecution
     if (!($manifest.autoupdate)) {
         abort "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'"
     }
 
-    ensure $(usermanifestsdir) | Out-Null
+    $path = usermanifestsdir | ensure
     try {
-        autoupdate $app "$(Resolve-Path $(usermanifestsdir))" $manifest $version $(@{ })
-        return "$(Resolve-Path $(usermanifest $app))"
+        autoupdate $app "$path" $manifest $version $(@{ })
+
+        return (usermanifest $app | Resolve-Path).Path
     } catch {
-        Write-Host -f darkred "Could not install $app@$version"
+        Write-UserMessage -Message "Could not install $app@$version" -Color DarkRed
     }
 
     return $null

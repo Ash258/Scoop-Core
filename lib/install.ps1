@@ -1,5 +1,5 @@
-'autoupdate', 'buckets', 'decompress' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 function nightly_version($date, $quiet = $false) {
@@ -16,13 +16,14 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
 
     if (!$manifest) {
-        # TODO: Stop-ScoopExecution Try catch throw needed
+        # TODO: Stop-ScoopExecution: Throw
         abort "Couldn't find manifest for '$app'$(if($url) { " at the URL $url" })."
     }
 
     $version = $manifest.version
     if (!$version) { abort "Manifest doesn't specify a version." }
     if ($version -match '[^\w\.\-\+_]') {
+        # TODO: Stop-ScoopExecution: throw
         abort "Manifest version has unsupported character '$($matches[0])'."
     }
 
@@ -33,14 +34,37 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     }
 
     if (!(supports_architecture $manifest $architecture)) {
-        write-host -f DarkRed "'$app' doesn't support $architecture architecture!"
+        Write-UserMessage -Message "'$app' doesn't support $architecture architecture!" -Color DarkRed
         return
     }
 
-    write-output "Installing '$app' ($version) [$architecture]"
+    $buc = if ($bucket) { " [$bucket]" } else { '' }
+    Write-UserMessage -Message "Installing '$app' ($version) [$architecture]$buc"
+
+    # Show license
+    $license = $manifest.license
+    if ($license -and ($license -ne 'Unknown')) {
+        $id = if ($license.identifier) { $license.identifier } else { $license }
+        # Remove [|,]...
+        if ($id -like '*...') { $id = $id -replace '[|,]\.{3}' }
+        $id = $id -split ','
+        $id = $id -split '\|'
+
+        if ($license.url) {
+            $s = if ($id.Count -eq 1) { $id } else { $id -join ', ' }
+            $toShow = $s + ' (' + $license.url + ')'
+        } else {
+            $line = if ($id.Count -gt 1) { "`r`n  " } else { '' }
+            $id | ForEach-Object {
+                $toShow += "$line$_ (https://spdx.org/licenses/$_.html)"
+            }
+        }
+
+        Write-UserMessage -Message "By installing you accept following $(pluralize $id.Count 'license' 'licenses'): $toShow" -Warn
+    }
 
     $dir = ensure (versiondir $app $version $global)
-    $original_dir = $dir # keep reference to real (not linked) directory
+    $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
 
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
@@ -51,17 +75,17 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     create_shims $manifest $dir $global $architecture
     create_startmenu_shortcuts $manifest $dir $global $architecture
     install_psmodule $manifest $dir $global
-    if ($global) { ensure_scoop_in_path $global } # can assume local scoop is in path
+    if ($global) { ensure_scoop_in_path $global } # Can assume local scoop is in path
     env_add_path $manifest $dir $global $architecture
     env_set $manifest $dir $global $architecture
 
-    # persist data
+    # Persist data
     persist_data $manifest $original_dir $persist_dir
     persist_permission $manifest $global
 
     post_install $manifest $architecture
 
-    # save info for uninstall
+    # Save info for uninstall
     save_installed_manifest $app $bucket $dir $url
     save_install_info @{ 'architecture' = $architecture; 'url' = $url; 'bucket' = $bucket } $dir
 
@@ -82,21 +106,21 @@ function locate($app, $bucket) {
 function Find-Manifest($app, $bucket) {
     $manifest, $url = $null, $null
 
-    # check if app is a URL or UNC path
+    # Check if app is a URL or UNC path
     if ($app -match '^(ht|f)tps?://|\\\\') {
         $url = $app
         $app = appname_from_url $url
         $manifest = url_manifest $url
     } else {
-        # check buckets
+        # Check buckets
         $manifest, $bucket = find_manifest $app $bucket
 
         if (!$manifest) {
-            # couldn't find app in buckets: check if it's a local path
+            # Couldn't find app in buckets: check if it's a local path
             $path = $app
             if (!$path.endswith('.json')) { $path += '.json' }
-            if (test-path $path) {
-                $url = "$(resolve-path $path)"
+            if (Test-Path $path) {
+                $url = "$(Resolve-Path $path)"
                 $app = appname_from_url $url
                 $manifest, $bucket = url_manifest $url
             }
@@ -113,23 +137,20 @@ function dl_with_cache($app, $version, $url, $to, $cookies = $null, $use_cache =
         ensure $cachedir | Out-Null
         do_dl $url "$cached.download" $cookies
         Move-Item "$cached.download" $cached -force
-    } else { write-host "Loading $(url_remote_filename $url) from cache" }
+    } else { Write-UserMessage -Message "Loading $(url_remote_filename $url) from cache" }
 
-    if (!($null -eq $to)) {
-        Copy-Item $cached $to
-    }
+    if (!($null -eq $to)) { Copy-Item $cached $to }
 }
 
 function do_dl($url, $to, $cookies) {
-    $progress = [console]::isoutputredirected -eq $false -and
-    $host.name -ne 'Windows PowerShell ISE Host'
+    $progress = ([System.Console]::IsOutputRedirected -eq $false) -and ($Host.name -ne 'Windows PowerShell ISE Host')
 
     try {
         $url = handle_special_urls $url
         dl $url $to $cookies $progress
     } catch {
-        $e = $_.exception
-        if ($e.innerexception) { $e = $e.innerexception }
+        $e = $_.Exception
+        if ($e.InnerException) { $e = $e.InnerException }
         throw $e
     }
 }
@@ -173,6 +194,7 @@ function aria_exit_code($exitcode) {
     if ($null -eq $codes[$exitcode]) {
         return 'An unknown error occurred'
     }
+
     return $codes[$exitcode]
 }
 
@@ -204,7 +226,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
     $urls = @(url $manifest $architecture)
 
     # aria2 input file
-    $urlstxt = Join-Path $cachedir "$app.txt"
+    $urlstxt = Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"
     $urlstxt_content = ''
     $has_downloads = $false
 
@@ -233,16 +255,17 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
         $options += "--header='Cookie: $(cookie_header $cookies)'"
     }
 
-    $proxy = get_config 'proxy'
+    $proxy = get_config 'proxy' 'none'
     if ($proxy -ne 'none') {
-        if ([Net.Webrequest]::DefaultWebProxy.Address) {
-            $options += "--all-proxy='$([Net.Webrequest]::DefaultWebProxy.Address.Authority)'"
+        $defaultWebProxy = [System.Net.WebRequest]::DefaultWebProxy
+        if ($defaultWebProxy.Address) {
+            $options += "--all-proxy='$($defaultWebProxy.Address.Authority)'"
         }
-        if ([Net.Webrequest]::DefaultWebProxy.Credentials.UserName) {
-            $options += "--all-proxy-user='$([Net.Webrequest]::DefaultWebProxy.Credentials.UserName)'"
+        if ($defaultWebProxy.Credentials.UserName) {
+            $options += "--all-proxy-user='$($defaultWebProxy.Credentials.UserName)'"
         }
-        if ([Net.Webrequest]::DefaultWebProxy.Credentials.Password) {
-            $options += "--all-proxy-passwd='$([Net.Webrequest]::DefaultWebProxy.Credentials.Password)'"
+        if ($defaultWebProxy.Credentials.Password) {
+            $options += "--all-proxy-passwd='$($defaultWebProxy.Credentials.Password)'"
         }
     }
 
@@ -259,11 +282,11 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
             'source'    = cache_path $app $version $url
         }
 
-        if (!(test-path $data.$url.source)) {
+        if (!(Test-Path $data.$url.source)) {
             $has_downloads = $true
             # create aria2 input file content
             $urlstxt_content += "$(handle_special_urls $url)`n"
-            if (($url -notlike '*sourceforge.net/*') -or ($url -notlike '*portableapps.com/*')) {
+            if (($url -notlike '*sourceforge.net*') -and ($url -notlike '*portableapps.com*')) {
                 $urlstxt_content += "    referer=$(strip_filename $url)`n"
             }
             $urlstxt_content += "    dir=$cachedir`n"
@@ -276,21 +299,23 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
     }
 
     if ($has_downloads) {
-        # write aria2 input file
-        Set-Content -Path $urlstxt $urlstxt_content
+        # Write aria2 input file
+        Out-UTF8File -Path $urlstxt -Content $urlstxt_content
 
-        # build aria2 command
+        # Build aria2 command
         $aria2 = "& '$(Get-HelperPath -Helper Aria2)' $($options -join ' ')"
 
         debug $aria2
-        # handle aria2 console output
+        # Handle aria2 console output
         Write-Host "Starting download with aria2 ..."
         Invoke-Expression $aria2 | ForEach-Object {
             # Skip blank lines
             if ([String]::IsNullOrWhiteSpace($_)) { return }
+
             $color = 'Gray'
             # Prevent potential overlaping of text when one line is shorter
-            $blank = ' ' * ($Host.UI.RawUI.WindowSize.Width - $_.Length - 20)
+            $len = $Host.UI.RawUI.WindowSize.Width - $_.Length - 20
+            $blank = if ($len -gt 0) { ' ' * $len } else { '' }
 
             if ($_.StartsWith('(OK):')) {
                 $noNewLine = $true
@@ -313,66 +338,63 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                 $aria2
             )
 
+            # TODO: Stop-ScoopExecution: Throw
             abort (new_issue_msg $app $bucket "download via aria2 failed")
         }
 
-        # remove aria2 input file when done
-        if (test-path($urlstxt)) {
-            Remove-Item $urlstxt
-        }
+        # Remove aria2 input file when done
+        if (Test-Path $urlstxt) { Remove-Item $urlstxt }
     }
 
     foreach ($url in $urls) {
-
         $metalink_filename = get_filename_from_metalink $data.$url.source
         if ($metalink_filename) {
             Remove-Item $data.$url.source -Force
-            Rename-Item -Force (Join-Path -Path $cachedir -ChildPath $metalink_filename) $data.$url.source
+            Join-Path $SCOOP_CACHE_DIRECTORY $metalink_filename | Rename-Item -NewName $data.$url.source -Force
         }
 
-        # run hash checks
+        # Run hash checks
         if ($check_hash) {
             $manifest_hash = hash_for_url $manifest $url $architecture
             $ok, $err = check_hash $data.$url.source $manifest_hash $(show_app $app $bucket)
             if (!$ok) {
                 Write-UserMessage -Message $err -Err
-                if (test-path $data.$url.source) {
-                    # rm cached file
-                    Remove-Item -force $data.$url.source
-                }
+                if (Test-Path $data.$url.source) { Remove-Item $data.$url.source -Force }
                 if ($url.Contains('sourceforge.net')) {
                     Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Color Yellow
                 }
+                # TODO: Stop-ScoopExecution: throw
                 abort (new_issue_msg $app $bucket "hash check failed")
             }
         }
 
-        # copy or move file to target location
-        if (!(test-path $data.$url.source) ) {
+        # Copy or move file to target location
+        if (!(Test-Path $data.$url.source) ) {
+            # TODO: Stop-ScoopExecution: throw
             abort $(new_issue_msg $app $bucket "cached file not found")
         }
 
-        if (!($dir -eq $cachedir)) {
+        if ($dir -ne $SCOOP_CACHE_DIRECTORY) {
             if ($use_cache) {
                 Copy-Item $data.$url.source $data.$url.target
             } else {
-                Move-Item $data.$url.source $data.$url.target -force
+                Move-Item $data.$url.source $data.$url.target -Force
             }
         }
     }
 }
 
-# download with filesize and progress indicator
+# Download with filesize and progress indicator
 function dl($url, $to, $cookies, $progress) {
-    $reqUrl = ($url -split "#")[0]
-    $wreq = [net.webrequest]::create($reqUrl)
-    if ($wreq -is [net.httpwebrequest]) {
-        $wreq.useragent = Get-UserAgent
-        if (($url -notlike '*.sourceforge.net/*') -or ($url -notlike '*.portableapps.com/*')) {
-            $wreq.referer = strip_filename $url
+    $reqUrl = ($url -split '#')[0]
+    $wreq = [System.Net.WebRequest]::Create($reqUrl)
+    if ($wreq -is [System.Net.HttpWebRequest]) {
+        $wreq.UserAgent = Get-UserAgent
+        if (($url -notlike '*sourceforge.net*') -and ($url -notlike '*portableapps.com*')) {
+            $wreq.Referer = strip_filename $url
         }
         if ($cookies) {
-            $wreq.headers.add('Cookie', (cookie_header $cookies))
+            $wreq.Headers.Add('Cookie', (cookie_header $cookies))
         }
     }
 
@@ -399,7 +421,7 @@ function dl($url, $to, $cookies, $progress) {
         }
 
         $newUrl = $redirectRes.Headers['Location']
-        info "Following redirect to $newUrl..."
+        Write-UserMessage -Message "Following redirect to $newUrl..." -Info
 
         # Handle manual file rename
         if ($url -like '*#/*') {
@@ -412,88 +434,84 @@ function dl($url, $to, $cookies, $progress) {
     }
 
     $total = $wres.ContentLength
-    if ($total -eq -1 -and $wreq -is [net.ftpwebrequest]) {
-        $total = ftp_file_size($url)
+    if (($total -eq -1) -and ($wreq -is [System.Net.FtpWebRequest])) {
+        $total = ftp_file_size $url
     }
 
     if ($progress -and ($total -gt 0)) {
-        [console]::CursorVisible = $false
+        [System.Console]::CursorVisible = $false
         function dl_onProgress($read) {
             dl_progress $read $total $url
         }
     } else {
-        write-host "Downloading $url ($(filesize $total))..."
+        Write-UserMessage -Message "Downloading $url ($(filesize $total))..." -Output:$false
         function dl_onProgress {
             #no op
         }
     }
 
     try {
-        $s = $wres.getresponsestream()
-        $fs = [io.file]::openwrite($to)
-        $buffer = new-object byte[] 2048
+        $s = $wres.GetResponseStream()
+        $fs = [System.IO.File]::OpenWrite($to)
+        $buffer = New-Object byte[] 2048
         $totalRead = 0
-        $sw = [diagnostics.stopwatch]::StartNew()
+        $sw = [System.Diagnostics.StopWatch]::StartNew()
 
         dl_onProgress $totalRead
-        while (($read = $s.read($buffer, 0, $buffer.length)) -gt 0) {
-            $fs.write($buffer, 0, $read)
+        while (($read = $s.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $fs.Write($buffer, 0, $read)
             $totalRead += $read
-            if ($sw.elapsedmilliseconds -gt 100) {
-                $sw.restart()
+            if ($sw.ElapsedMilliseconds -gt 100) {
+                $sw.Restart()
                 dl_onProgress $totalRead
             }
         }
-        $sw.stop()
+        $sw.Stop()
         dl_onProgress $totalRead
     } finally {
         if ($progress) {
-            [console]::CursorVisible = $true
-            write-host
+            [System.Console]::CursorVisible = $true
+            Write-Host
         }
-        if ($fs) {
-            $fs.close()
-        }
-        if ($s) {
-            $s.close();
-        }
-        $wres.close()
+        if ($fs) { $fs.Close() }
+        if ($s) { $s.Close() }
+        $wres.Close()
     }
 }
 
 function dl_progress_output($url, $read, $total, $console) {
     $filename = url_remote_filename $url
 
-    # calculate current percentage done
-    $p = [math]::Round($read / $total * 100, 0)
+    # Calculate current percentage done
+    $p = [System.Math]::Round($read / $total * 100, 0)
 
-    # pre-generate LHS and RHS of progress string
-    # so we know how much space we have
+    # Pre-generate LHS and RHS of progress string
+    # So we know how much space we have
     $left = "$filename ($(filesize $total))"
     $right = [string]::Format("{0,3}%", $p)
 
-    # calculate remaining width for progress bar
+    # Calculate remaining width for progress bar
     $midwidth = $console.BufferSize.Width - ($left.Length + $right.Length + 8)
 
-    # calculate how many characters are completed
-    $completed = [math]::Abs([math]::Round(($p / 100) * $midwidth, 0) - 1)
+    # Calculate how many characters are completed
+    $completed = [System.Math]::Abs([System.Math]::Round(($p / 100) * $midwidth, 0) - 1)
 
-    # generate dashes to symbolise completed
+    # Generate dashes to symbolise completed
     if ($completed -gt 1) {
-        $dashes = [string]::Join("", ((1..$completed) | ForEach-Object { "=" }))
+        $dashes = [string]::Join('', ((1..$completed) | ForEach-Object { '=' }))
     }
 
-    # this is why we calculate $completed - 1 above
+    # This is why we calculate $completed - 1 above
     $dashes += switch ($p) {
-        100 { "=" }
-        default { ">" }
+        100 { '=' }
+        default { '>' }
     }
 
-    # the remaining characters are filled with spaces
+    # The remaining characters are filled with spaces
     $spaces = switch ($dashes.Length) {
         $midwidth { [string]::Empty }
         default {
-            [string]::Join("", ((1..($midwidth - $dashes.Length)) | ForEach-Object { " " }))
+            [string]::Join('', ((1..($midwidth - $dashes.Length)) | ForEach-Object { ' ' }))
         }
     }
 
@@ -501,36 +519,36 @@ function dl_progress_output($url, $read, $total, $console) {
 }
 
 function dl_progress($read, $total, $url) {
-    $console = $host.UI.RawUI;
-    $left = $console.CursorPosition.X;
-    $top = $console.CursorPosition.Y;
-    $width = $console.BufferSize.Width;
+    $console = $host.UI.RawUI
+    $left = $console.CursorPosition.X
+    $top = $console.CursorPosition.Y
+    $width = $console.BufferSize.Width
 
     if ($read -eq 0) {
-        $maxOutputLength = $(dl_progress_output $url 100 $total $console).length
+        $maxOutputLength = (dl_progress_output $url 100 $total $console).Length
         if (($left + $maxOutputLength) -gt $width) {
             # not enough room to print progress on this line
             # print on new line
-            write-host
+            Write-Host
             $left = 0
             $top = $top + 1
             if ($top -gt $console.CursorPosition.Y) { $top = $console.CursorPosition.Y }
         }
     }
 
-    write-host $(dl_progress_output $url $read $total $console) -nonewline
-    [console]::SetCursorPosition($left, $top)
+    Write-Host $(dl_progress_output $url $read $total $console) -NoNewline
+    [System.Console]::SetCursorPosition($left, $top)
 }
 
 function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_cache = $true, $check_hash = $true) {
-    # we only want to show this warning once
-    if (!$use_cache) { Write-UserMessage -Message "Cache is being ignored." -Warning }
+    # We only want to show this warning once
+    if (!$use_cache) { Write-UserMessage -Message 'Cache is being ignored.' -Warning }
 
-    # can be multiple urls: if there are, then msi or installer should go last,
-    # so that $fname is set properly
+    # Can be multiple urls: if there are, then msi or installer should go last,
+    # So that $fname is set properly
     $urls = @(url $manifest $architecture)
 
-    # can be multiple cookies: they will be used for all HTTP requests.
+    # Can be multiple cookies: they will be used for all HTTP requests
     $cookies = $manifest.cookie
 
     $fname = $null
@@ -539,9 +557,9 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
     # needs to be extracted, will get the next dir from the queue
     $extract_dirs = @(extract_dir $manifest $architecture)
     $extract_tos = @(extract_to $manifest $architecture)
-    $extracted = 0;
+    $extracted = 0
 
-    # download first
+    # Download first
     if (Test-Aria2Enabled) {
         dl_with_cache_aria2 $app $version $manifest $architecture $dir $cookies $use_cache $check_hash
     } else {
@@ -549,25 +567,27 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
             $fname = url_filename $url
 
             try {
-                dl_with_cache $app $version $url "$dir\$fname" $cookies $use_cache
+                dl_with_cache $app $version $url (Join-Path $dir $fname) $cookies $use_cache
             } catch {
-                write-host -f darkred $_
+                Write-Host $_ -Color DarkRed
+                # TODO: Stop-ScoopExecution: throw
                 abort "URL $url is not valid"
             }
 
             if ($check_hash) {
                 $manifest_hash = hash_for_url $manifest $url $architecture
-                $ok, $err = check_hash "$dir\$fname" $manifest_hash $(show_app $app $bucket)
+                $ok, $err = check_hash (Join-Path $dir $fname) $manifest_hash $(show_app $app $bucket)
                 if (!$ok) {
                     Write-UserMessage -Message $err -Err
                     $cached = cache_path $app $version $url
-                    if (test-path $cached) {
+                    if (Test-Path $cached) {
                         # rm cached file
-                        Remove-Item -force $cached
+                        Remove-Item $cached -Force
                     }
                     if ($url.Contains('sourceforge.net')) {
                         Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
                     }
+                    # TODO: Stop-ScoopExecution: Throw
                     abort $(new_issue_msg $app $bucket "hash check failed")
                 }
             }
@@ -580,7 +600,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         $extract_dir = $extract_dirs[$extracted]
         $extract_to = $extract_tos[$extracted]
 
-        # work out extraction method, if applicable
+        # Work out extraction method, if applicable
         $extract_fn = $null
         if ($manifest.innosetup) {
             $extract_fn = 'Expand-InnoArchive'
@@ -592,7 +612,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
                 $extract_fn = 'Expand-ZipArchive'
             }
         } elseif ($fname -match '\.msi$') {
-            # check manifest doesn't use deprecated install method
+            # Check manifest doesn't use deprecated install method
             if (msi $manifest $architecture) {
                 Write-UserMessage -Message "MSI install is deprecated. If you maintain this manifest, please refer to the manifest reference docs." -Warning
             } else {
@@ -604,47 +624,48 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         }
 
         if ($extract_fn) {
-            Write-Host "Extracting " -NoNewline
-            Write-Host $fname -f Cyan -NoNewline
+            Write-Host 'Extracting ' -NoNewline
+            Write-Host $fname -ForegroundColor Cyan -NoNewline
             Write-Host " ... " -NoNewline
-            & $extract_fn -Path "$dir\$fname" -DestinationPath "$dir\$extract_to" -ExtractDir $extract_dir -Removal
-            Write-Host "done." -f Green
+            & $extract_fn -Path (Join-Path $dir $fname) -DestinationPath (Join-Path $dir $extract_to) -ExtractDir $extract_dir -Removal
+            Write-Host 'done.' -ForegroundColor Green
             $extracted++
         }
     }
 
-    $fname # returns the last downloaded file
+    $fname # The last downloaded file
 }
 
 function cookie_header($cookies) {
     if (!$cookies) { return }
 
-    $vals = $cookies.psobject.properties | ForEach-Object {
-        "$($_.name)=$($_.value)"
+    $vals = $cookies.PsObject.Properties | ForEach-Object {
+        "$($_.Name)=$($_.Value)"
     }
 
-    [string]::join(';', $vals)
+    [string]::Join(';', $vals)
 }
 
 function is_in_dir($dir, $check) {
-    $check -match "^$([regex]::escape("$dir"))(\\|`$)"
+    $check -match "^$([System.Text.RegularExpressions.Regex]::Escape("$dir"))(\\|`$)"
 }
 
 function ftp_file_size($url) {
-    $request = [net.ftpwebrequest]::create($url)
-    $request.method = [net.webrequestmethods+ftp]::getfilesize
-    $request.getresponse().contentlength
+    $request = [System.Net.FtpWebRequest]::Create($url)
+    $request.Method = [System.Net.WebRequestMethods+Ftp]::GetFileSize
+    return $request.GetResponse().ContentLength
 }
 
 # hashes
 function hash_for_url($manifest, $url, $arch) {
-    $hashes = @(hash $manifest $arch) | Where-Object { $_ -ne $null };
+    $hashes = @(hash $manifest $arch) | Where-Object { $null -ne $_ };
 
-    if ($hashes.length -eq 0) { return $null }
+    if ($hashes.Length -eq 0) { return $null }
 
     $urls = @(url $manifest $arch)
 
-    $index = [array]::indexof($urls, $url)
+    $index = [array]::IndexOf($urls, $url)
+    # TODO: Stop-ScoopExecution: throw
     if ($index -eq -1) { abort "Couldn't find hash in manifest for '$url'." }
 
     @($hashes)[$index]
@@ -657,9 +678,9 @@ function check_hash($file, $hash, $app_name) {
         return $true, $null
     }
 
-    Write-Host "Checking hash of " -NoNewline
-    Write-Host $(url_remote_filename $url) -f Cyan -NoNewline
-    Write-Host " ... " -nonewline
+    Write-Host 'Checking hash of ' -NoNewline
+    Write-Host $(url_remote_filename $url) -ForegroundColor Cyan -NoNewline
+    Write-Host ' ... ' -NoNewLine
     $algorithm, $expected = get_hash $hash
     if ($null -eq $algorithm) {
         return $false, "Hash type '$algorithm' isn't supported."
@@ -681,7 +702,7 @@ function check_hash($file, $hash, $app_name) {
         }
         return $false, $msg
     }
-    Write-Host "ok." -f Green
+    Write-Host 'ok.' -ForegroundColor Green
     return $true, $null
 }
 
@@ -690,17 +711,18 @@ function compute_hash($file, $algname) {
         if (Test-CommandAvailable Get-FileHash) {
             return (Get-FileHash -Path $file -Algorithm $algname).Hash.ToLower()
         } else {
-            $fs = [system.io.file]::openread($file)
-            $alg = [system.security.cryptography.hashalgorithm]::create($algname)
-            $hexbytes = $alg.computehash($fs) | ForEach-Object { $_.tostring('x2') }
+            $fs = [System.IO.File]::OpenRead($file)
+            $alg = [System.Security.Cryptography.HashAlgorithm]::Create($algname)
+            $hexbytes = $alg.Computehash($fs) | ForEach-Object { $_.tostring('x2') }
             return [string]::join('', $hexbytes)
         }
     } catch {
-        Write-UserMessage -Message $_.exception.message -Err
+        Write-UserMessage -Message $_.Exception.Message -Err
     } finally {
-        if ($fs) { $fs.dispose() }
-        if ($alg) { $alg.dispose() }
+        if ($fs) { $fs.Dispose() }
+        if ($alg) { $alg.Dispose() }
     }
+
     return ''
 }
 
@@ -716,7 +738,7 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
     if ($installer.script) {
-        write-output "Running installer script..."
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
         Invoke-Expression (@($installer.script) -join "`r`n")
         return
     }
@@ -730,25 +752,28 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
 
 # deprecated (see also msi_installed)
 function install_msi($fname, $dir, $msi) {
-    $msifile = "$dir\$(coalesce $msi.file "$fname")"
+    $msifile = Join-Path $dir (coalesce $msi.File "$fname")
     if (!(is_in_dir $dir $msifile)) {
+        # TODO: Stop-ScoopExecution: throw
         abort "Error in manifest: MSI file $msifile is outside the app directory."
     }
-    if (!($msi.code)) { abort "Error in manifest: Couldn't find MSI code." }
-    if (msi_installed $msi.code) { abort "The MSI package is already installed on this system." }
+    # TODO: Stop-ScoopExecution: throw
+    if (!($msi.code)) { abort 'Error in manifest: Could not find MSI code.' }
+    # TODO: Stop-ScoopExecution: throw
+    if (msi_installed $msi.code) { abort 'The MSI package is already installed on this system.' }
 
-    $logfile = "$dir\install.log"
+    $logfile = Join-Path $dir 'install.log'
 
-    $arg = @("/i `"$msifile`"", '/norestart', "/lvp `"$logfile`"", "TARGETDIR=`"$dir`"",
-        "INSTALLDIR=`"$dir`"") + @(args $msi.args $dir)
+    $arg = @("/i `"$msifile`"", '/norestart', "/lvp `"$logfile`"", "TARGETDIR=`"$dir`"", "INSTALLDIR=`"$dir`"") + @(args $msi.args $dir)
 
     if ($msi.silent) { $arg += '/qn', 'ALLUSERS=2', 'MSIINSTALLPERUSER=1' }
     else { $arg += '/qb-!' }
 
-    $continue_exit_codes = @{ 3010 = "a restart is required to complete installation" }
+    $continue_exit_codes = @{ 3010 = 'a restart is required to complete installation' }
 
-    $installed = Invoke-ExternalCommand 'msiexec' $arg -Activity "Running installer..." -ContinueExitCodes $continue_exit_codes
+    $installed = Invoke-ExternalCommand 'msiexec' $arg -Activity 'Running installer...' -ContinueExitCodes $continue_exit_codes
     if (!$installed) {
+        # TODO: Stop-ScoopExecution: throw
         abort "Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
     }
     Remove-Item $logfile
@@ -761,17 +786,18 @@ function install_msi($fname, $dir, $msi) {
 # http://blogs.technet.com/b/heyscriptingguy/archive/2011/12/14/use-powershell-to-find-and-uninstall-software.aspx
 function msi_installed($code) {
     $path = "hklm:\software\microsoft\windows\currentversion\uninstall\$code"
-    if (!(test-path $path)) { return $false }
+    if (!(Test-Path $path)) { return $false }
     $key = Get-Item $path
-    $name = $key.getvalue('displayname')
-    $version = $key.getvalue('displayversion')
+    $name = $key.GetValue('displayname')
+    $version = $key.GetValue('displayversion')
     $classkey = "IdentifyingNumber=`"$code`",Name=`"$name`",Version=`"$version`""
     try { $wmi = [wmi]"Win32_Product.$classkey"; $true } catch { $false }
 }
 
 function install_prog($fname, $dir, $installer, $global) {
-    $prog = "$dir\$(coalesce $installer.file "$fname")"
+    $prog = Join-Path $dir (coalesce $installer.file "$fname")
     if (!(is_in_dir $dir $prog)) {
+        # TODO: Stop-ScoopExecution: throw
         abort "Error in manifest: Installer $prog is outside the app directory."
     }
     $arg = @(args $installer.args $dir $global)
@@ -779,15 +805,14 @@ function install_prog($fname, $dir, $installer, $global) {
     if ($prog.endswith('.ps1')) {
         & $prog @arg
     } else {
-        $installed = Invoke-ExternalCommand $prog $arg -Activity "Running installer..."
+        $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
+            # TODO: Stop-ScoopExecution: throw
             abort "Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
         }
 
         # Don't remove installer if "keep" flag is set to true
-        if (!($installer.keep -eq "true")) {
-            Remove-Item $prog
-        }
+        if ($installer.keep -ne 'true') { Remove-Item $prog }
     }
 }
 
@@ -795,19 +820,22 @@ function run_uninstaller($manifest, $architecture, $dir) {
     $msi = msi $manifest $architecture
     $uninstaller = uninstaller $manifest $architecture
     $version = $manifest.version
+
     if ($uninstaller.script) {
-        write-output "Running uninstaller script..."
+        Write-UserMessage -Message 'Running uninstaller script...' -Output:$false
         Invoke-Expression (@($uninstaller.script) -join "`r`n")
         return
     }
 
     if ($msi -or $uninstaller) {
-        $exe = $null; $arg = $null; $continue_exit_codes = @{ }
+        $exe = $null
+        $arg = $null
+        $continue_exit_codes = @{ }
 
         if ($msi) {
             $code = $msi.code
-            $exe = "msiexec";
-            $arg = @("/norestart", "/x $code")
+            $exe = 'msiexec'
+            $arg = @('/norestart', "/x $code")
             if ($msi.silent) {
                 $arg += '/qn', 'ALLUSERS=2', 'MSIINSTALLPERUSER=1'
             } else {
@@ -817,14 +845,14 @@ function run_uninstaller($manifest, $architecture, $dir) {
             $continue_exit_codes.1605 = 'not installed, skipping'
             $continue_exit_codes.3010 = 'restart required'
         } elseif ($uninstaller) {
-            $exe = "$dir\$($uninstaller.file)"
+            $exe = Join-Path $dir $uninstaller.file
             $arg = args $uninstaller.args
             if (!(is_in_dir $dir $exe)) {
                 Write-UserMessage -Message "Error in manifest: Installer $exe is outside the app directory, skipping." -Warning
-                $exe = $null;
+                $exe = $null
             } elseif (!(test-path $exe)) {
                 Write-UserMessage -Message "Uninstaller $exe is missing, skipping." -Warning
-                $exe = $null;
+                $exe = $null
             }
         }
 
@@ -832,8 +860,9 @@ function run_uninstaller($manifest, $architecture, $dir) {
             if ($exe.endswith('.ps1')) {
                 & $exe @arg
             } else {
-                $uninstalled = Invoke-ExternalCommand $exe $arg -Activity "Running uninstaller..." -ContinueExitCodes $continue_exit_codes
-                if (!$uninstalled) { abort "Uninstallation aborted." }
+                $uninstalled = Invoke-ExternalCommand $exe $arg -Activity 'Running uninstaller...' -ContinueExitCodes $continue_exit_codes
+                # TODO: Stop-ScoopExecution: throw
+                if (!$uninstalled) { abort 'Uninstallation aborted.' }
             }
         }
     }
@@ -849,15 +878,17 @@ function create_shims($manifest, $dir, $global, $arch) {
     $shims = @(arch_specific 'bin' $manifest $arch)
     $shims | Where-Object { $_ -ne $null } | ForEach-Object {
         $target, $name, $arg = shim_def $_
-        write-output "Creating shim for '$name'."
+        Write-UserMessage -Message "Creating shim for '$name'." -Output:$false
 
-        if (test-path "$dir\$target" -pathType leaf) {
-            $bin = "$dir\$target"
-        } elseif (test-path $target -pathType leaf) {
+        $bin = Join-Path $dir $target
+        if (Test-Path $bin -PathType Leaf) {
+            $bin = $bin
+        } elseif (Test-Path $target -PathType Leaf) {
             $bin = $target
         } else {
             $bin = search_in_path $target
         }
+        # TODO: Stop-ScoopExecution: throw
         if (!$bin) { abort "Can't shim '$target': File doesn't exist." }
 
         shim $bin $global $name (substitute $arg @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
@@ -865,21 +896,20 @@ function create_shims($manifest, $dir, $global, $arch) {
 }
 
 function rm_shim($name, $shimdir) {
-    $shim = "$shimdir\$name.ps1"
+    $shim = Join-Path $shimdir "$name.ps1"
 
     # Handle no shim from failed install
-    if (!(test-path $shim)) {
-        Write-UserMessage -Message "Shim for '$name' is missing. Skipping." -Warning
-    } else {
-        write-output "Removing shim for '$name'."
+    if (Test-Path $shim) {
+        Write-UserMessage -Message "Removing shim for '$name'." -Output:$false
         Remove-Item $shim
+    } else {
+        Write-UserMessage -Message "Shim for '$name' is missing. Skipping." -Warning
     }
 
     # Other shim types might be present
     '', '.exe', '.shim', '.cmd' | ForEach-Object {
-        if (test-path -Path "$shimdir\$name$_" -PathType leaf) {
-            Remove-Item "$shimdir\$name$_"
-        }
+        $p = Join-Path $shimdir "$name$_"
+        if (Test-Path $p -PathType Leaf) { Remove-Item $p }
     }
 }
 
@@ -897,8 +927,8 @@ function rm_shims($manifest, $global, $arch) {
 # Gets the path for the 'current' directory junction for
 # the specified version directory.
 function current_dir($versiondir) {
-    $parent = split-path $versiondir
-    return "$parent\current"
+    $parent = Split-Path $versiondir
+    return Join-Path $parent 'current'
 }
 
 
@@ -908,24 +938,26 @@ function current_dir($versiondir) {
 # Returns the 'current' junction directory if in use, otherwise
 # the version directory.
 function link_current($versiondir) {
-    if (get_config NO_JUNCTIONS) { return $versiondir }
+    if (get_config 'NO_JUNCTIONS') { return $versiondir }
 
     $currentdir = current_dir $versiondir
 
-    write-host "Linking $(friendly_path $currentdir) => $(friendly_path $versiondir)"
+    Write-UserMessage -Message "Linking $(friendly_path $currentdir) => $(friendly_path $versiondir)" -Output:$false
 
     if ($currentdir -eq $versiondir) {
-        abort "Error: Version 'current' is not allowed!"
+        # TODO: Stop-ScoopExecution: throw
+        abort "Version 'current' is not allowed!"
     }
 
-    if (test-path $currentdir) {
+    if (Test-Path $currentdir) {
         # remove the junction
         attrib -R /L $currentdir
         & "$env:COMSPEC" /c rmdir $currentdir
     }
 
-    & "$env:COMSPEC" /c mklink /j $currentdir $versiondir | out-null
+    & "$env:COMSPEC" /c mklink /j $currentdir $versiondir | Out-Null
     attrib $currentdir +R /L
+
     return $currentdir
 }
 
@@ -935,19 +967,21 @@ function link_current($versiondir) {
 # Returns the 'current' junction directory (if it exists),
 # otherwise the normal version directory.
 function unlink_current($versiondir) {
-    if (get_config NO_JUNCTIONS) { return $versiondir }
+    if (get_config 'NO_JUNCTIONS') { return $versiondir }
     $currentdir = current_dir $versiondir
 
-    if (test-path $currentdir) {
-        write-host "Unlinking $(friendly_path $currentdir)"
+    if (Test-Path $currentdir) {
+        Write-UserMessage -Message "Unlinking $(friendly_path $currentdir)" -Output:$false
 
         # remove read-only attribute on link
         attrib $currentdir -R /L
 
         # remove the junction
         & "$env:COMSPEC" /c "rmdir `"$currentdir`""
+
         return $currentdir
     }
+
     return $versiondir
 }
 
@@ -957,7 +991,7 @@ function ensure_install_dir_not_in_path($dir, $global) {
 
     $fixed, $removed = find_dir_or_subdir $path "$dir"
     if ($removed) {
-        $removed | ForEach-Object { "Installer added '$(friendly_path $_)' to path. Removing." }
+        $removed | ForEach-Object { Write-UserMessage -Message "Installer added '$(friendly_path $_)' to path. Removing." -Output:$false }
         env 'path' $global $fixed
     }
 
@@ -970,10 +1004,10 @@ function ensure_install_dir_not_in_path($dir, $global) {
 }
 
 function find_dir_or_subdir($path, $dir) {
-    $dir = $dir.trimend('\')
+    $dir = $dir.TrimEnd('\')
     $fixed = @()
     $removed = @()
-    $path.split(';') | ForEach-Object {
+    $path.Split(';') | ForEach-Object {
         if ($_) {
             if (($_ -eq $dir) -or ($_ -like "$dir\*")) { $removed += $_ }
             else { $fixed += $_ }
@@ -990,8 +1024,8 @@ function env_add_path($manifest, $dir, $global, $arch) {
         $env_add_path | Where-Object { $_ } | ForEach-Object {
             $path_dir = Join-Path $dir $_
             if (!(is_in_dir $dir $path_dir)) {
-                # TODO: Throw
-                abort "Error in manifest: env_add_path '$_' is outside the app directory."
+                # TODO: Stop-ScoopExecution: Throw
+                abort "env_add_path '$_' is outside the app directory."
             }
             add_first_in_path $path_dir $global
         }
@@ -1012,7 +1046,7 @@ function env_set($manifest, $dir, $global, $arch) {
     if ($env_set) {
         $env_set | Get-Member -Member NoteProperty | ForEach-Object {
             $name = $_.name;
-            $val = format $env_set.$($_.name) @{ "dir" = $dir }
+            $val = format $env_set.$($_.name) @{ 'dir' = $dir }
             env $name $global $val
             Set-Content env:\$name $val
         }
@@ -1032,7 +1066,7 @@ function env_rm($manifest, $global, $arch) {
 function pre_install($manifest, $arch) {
     $pre_install = arch_specific 'pre_install' $manifest $arch
     if ($pre_install) {
-        write-output "Running pre-install script..."
+        Write-UserMessage -Message 'Running pre-install script...' -Output:$false
         Invoke-Expression (@($pre_install) -join "`r`n")
     }
 }
@@ -1040,16 +1074,18 @@ function pre_install($manifest, $arch) {
 function post_install($manifest, $arch) {
     $post_install = arch_specific 'post_install' $manifest $arch
     if ($post_install) {
-        write-output "Running post-install script..."
+        Write-UserMessage -Message 'Running post-install script...' -Output:$false
         Invoke-Expression (@($post_install) -join "`r`n")
     }
 }
 
 function show_notes($manifest, $dir, $original_dir, $persist_dir) {
     if ($manifest.notes) {
-        write-output "Notes"
-        write-output "-----"
-        write-output (wraptext (substitute $manifest.notes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
+        Write-UserMessage -Output:$false -Message @(
+            'Notes'
+            '-----'
+            (wraptext (substitute $manifest.notes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
+        )
     }
 }
 
@@ -1072,7 +1108,7 @@ function prune_installed($apps, $global) {
 # check whether the app failed to install
 function failed($app, $global) {
     if (is_directory (appdir $app $global)) {
-        return !(install_info $app (current_version $app $global) $global)
+        return !(install_info $app (Select-CurrentVersion -App $app -Global:$global) $global)
     } else {
         return $false
     }
@@ -1081,6 +1117,7 @@ function failed($app, $global) {
 function ensure_none_failed($apps, $global) {
     foreach ($app in $apps) {
         if (failed $app $global) {
+            # TODO: Stop-ScoopExecution: throw
             abort "'$app' install failed previously. Please uninstall it and try again."
         }
     }
@@ -1090,7 +1127,7 @@ function show_suggestions($suggested) {
     $installed_apps = (installed_apps $true) + (installed_apps $false)
 
     foreach ($app in $suggested.keys) {
-        $features = $suggested[$app] | get-member -type noteproperty | ForEach-Object { $_.name }
+        $features = $suggested[$app] | Get-Member -Type NoteProperty | ForEach-Object { $_.name }
         foreach ($feature in $features) {
             $feature_suggestions = $suggested[$app].$feature
 
@@ -1099,13 +1136,13 @@ function show_suggestions($suggested) {
                 $suggested_app, $bucket, $null = parse_app $suggestion
 
                 if ($installed_apps -contains $suggested_app) {
-                    $fulfilled = $true;
-                    break;
+                    $fulfilled = $true
+                    break
                 }
             }
 
             if (!$fulfilled) {
-                write-host "'$app' suggests installing '$([string]::join("' or '", $feature_suggestions))'."
+                Write-UserMessage -Message "'$app' suggests installing '$([string]::join("' or '", $feature_suggestions))'." -Output:$false
             }
         }
     }
@@ -1140,23 +1177,24 @@ function persist_data($manifest, $original_dir, $persist_dir) {
         $persist | ForEach-Object {
             $source, $target = persist_def $_
 
-            write-host "Persisting $source"
+            Write-UserMessage -Message "Persisting $source" -Output:$false
 
-            $source = $source.TrimEnd("/").TrimEnd("\\")
+            $source = $source.TrimEnd('/').TrimEnd('\\')
 
-            $source = "$dir\$source"
-            $target = "$persist_dir\$target"
+            # TODO: $dir???!!!!
+            $source = Join-Path $dir $source
+            $target = Join-Path $persist_dir $target
 
             # if we have had persist data in the store, just create link and go
             if (Test-Path $target) {
                 # if there is also a source data, rename it (to keep a original backup)
                 if (Test-Path $source) {
-                    Move-Item -Force $source "$source.original"
+                    Move-Item $source "$source.original" -Force
                 }
                 # we don't have persist data in the store, move the source to target, then create link
             } elseif (Test-Path $source) {
                 # ensure target parent folder exist
-                ensure (Split-Path -Path $target) | Out-Null
+                Split-Path $target | ensure | Out-Null
                 Move-Item $source $target
                 # we don't have neither source nor target data! we need to crate an empty target,
                 # but we can't make a judgement that the data should be a file or directory...
@@ -1170,11 +1208,11 @@ function persist_data($manifest, $original_dir, $persist_dir) {
             # create link
             if (is_directory $target) {
                 # target is a directory, create junction
-                & "$env:COMSPEC" /c "mklink /j `"$source`" `"$target`"" | out-null
+                & "$env:COMSPEC" /c "mklink /j `"$source`" `"$target`"" | Out-Null
                 attrib $source +R /L
             } else {
                 # target is a file, create hard link
-                & "$env:COMSPEC" /c "mklink /h `"$source`" `"$target`"" | out-null
+                & "$env:COMSPEC" /c "mklink /h `"$source`" `"$target`"" | Out-Null
             }
         }
     }
@@ -1182,8 +1220,7 @@ function persist_data($manifest, $original_dir, $persist_dir) {
 
 function unlink_persist_data($dir) {
     # unlink all junction / hard link in the directory
-    Get-ChildItem -Recurse $dir | ForEach-Object {
-        $file = $_
+    foreach ($file in Get-ChildItem -Recurse $dir) {
         if ($null -ne $file.LinkType) {
             $filepath = $file.FullName
             # directory (junction)

@@ -10,7 +10,7 @@
 #   -k, --cache        Remove outdated download cache
 
 'core', 'manifest', 'buckets', 'Versions', 'getopt', 'help', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -20,13 +20,13 @@ if ($err) { Write-UserMessage -Message "scoop cleanup: $err" -Err; exit 2 }
 $global = $opt.g -or $opt.global
 $cache = $opt.k -or $opt.cache
 
-if (!$apps) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
+if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
 
-if ($global -and !(is_admin)) { Write-UserMessage -Message 'ERROR: you need admin rights to cleanup global apps' -Err; exit 4 }
+if ($global -and !(is_admin)) { Write-UserMessage -Message 'Admin privileges are required to manipulate with globally installed apps' -Err; exit 4 }
 
 function cleanup($app, $global, $verbose, $cache) {
-    $currentVersion = Select-CurrentVerison -AppName $app -Global:$global
-    if ($cache) { Remove-Item "$cachedir\$app#*" -Exclude "$app#$currentVersion#*" }
+    $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
+    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Exclude "$app#$currentVersion#*" }
 
     $versions = Get-InstalledVersion -AppName $app -Global:$global | Where-Object { $_ -ne $currentVersion }
     if (!$versions) {
@@ -34,10 +34,10 @@ function cleanup($app, $global, $verbose, $cache) {
         return
     }
 
-    Write-Host -f yellow "Removing $app`:" -nonewline
+    Write-Host "Removing ${app}:" -ForegroundColor Yellow -NoNewLine
     $versions | ForEach-Object {
         $version = $_
-        Write-Host " $version" -nonewline
+        Write-Host " $version" -NoNewLine
         $dir = versiondir $app $version $global
         # unlink all potential old link before doing recursive Remove-Item
         unlink_persist_data $dir
@@ -61,8 +61,7 @@ if ($apps) {
     # $apps is now a list of ($app, $global) tuples
     $apps | ForEach-Object { cleanup @_ $verbose $cache }
 
-    if ($cache) { Remove-Item "$cachedir\*.download" -ErrorAction Ignore }
-
+    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction Ignore }
     if (!$verbose) { Write-UserMessage -Message 'Everything is shiny now!' -Success }
 }
 

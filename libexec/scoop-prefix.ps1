@@ -3,8 +3,8 @@
 
 param($app)
 
-'core', 'help', 'manifest', 'buckets' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'help', 'Helpers', 'manifest', 'buckets' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -16,7 +16,7 @@ $app_path = versiondir $app 'current' $false
 if (!(Test-Path $app_path)) { $app_path = versiondir $app 'current' $true }
 
 if (Test-Path $app_path) {
-    Write-Output $app_path
+    Write-UserMessage -Message $app_path -Output
 } else {
     $exitCode = 3
     Write-UserMessage -Message "Could not find app path for '$app'." -Err

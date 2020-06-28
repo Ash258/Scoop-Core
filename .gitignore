@@ -4,3 +4,4 @@ test/installer/tmp/*
 test/tmp/*
 *~
 TestResults.xml
+checkver*.html

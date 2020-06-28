@@ -13,26 +13,26 @@
 
 param($cmd, $app)
 
-. "$PSScriptRoot\..\lib\help.ps1"
+. (Join-Path $PSScriptRoot "..\lib\help.ps1")
 
 reset_aliases
 
 function cacheinfo($file) {
     $app, $version, $url = $file.name -split '#'
     $size = filesize $file.length
-    return New-Object psobject -prop @{ app = $app; version = $version; url = $url; size = $size }
+    return New-Object PSObject -prop @{ 'app' = $app; 'version' = $version; 'url' = $url; 'size' = $size }
 }
 
 function show($app) {
-    $files = @(Get-ChildItem "$cachedir" | Where-Object { $_.name -match "^$app" })
+    $files = @(Get-ChildItem $SCOOP_CACHE_DIRECTORY | Where-Object -Property Name -Match "^$app")
     $total_length = ($files | Measure-Object length -sum).sum -as [double]
 
-    $f_app = @{ expression = { "$($_.app) ($($_.version))" } }
-    $f_url = @{ expression = { $_.url }; alignment = 'right' }
-    $f_size = @{ expression = { $_.size }; alignment = 'right' }
+    $f_app = @{ 'Expression' = { "$($_.app) ($($_.version))" } }
+    $f_url = @{ 'Expression' = { $_.url }; 'Alignment' = 'Right' }
+    $f_size = @{ 'Expression' = { $_.size }; 'Alignment' = 'Right' }
 
 
-    $files | ForEach-Object { cacheinfo $_ } | Format-Table $f_size, $f_app, $f_url -auto -hide
+    $files | ForEach-Object { cacheinfo $_ } | Format-Table $f_size, $f_app, $f_url -AutoSize -HideTableHeaders
 
     "Total: $($files.length) $(pluralize $files.length 'file' 'files'), $(filesize $total_length)"
 }
@@ -41,10 +41,8 @@ $exitCode = 0
 switch ($cmd) {
     'rm' {
         if (!$app) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
-        Remove-Item "$cachedir\$app#*"
-        if (Test-Path("$cachedir\$app.txt")) {
-            Remove-Item "$cachedir\$app.txt"
-        }
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*"|  Remove-Item -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"|  Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
     }
     'show' {
         show $app

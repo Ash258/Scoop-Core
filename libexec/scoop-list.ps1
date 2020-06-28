@@ -9,8 +9,8 @@
 #   -r, --reverse       Apps will be listed descending order.
 #                           In case of Installed or Updated, apps will be listed from newest to oldest.
 
-'core', 'buckets', 'getopt', 'Versions', 'manifest' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'buckets', 'getopt', 'Helpers', 'Versions', 'manifest' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -28,14 +28,14 @@ $def_arch = default_architecture
 
 $locA = appsdir $false
 $globA = appsdir $true
-$local = installed_apps $false | ForEach-Object { @{ name = $_; gci = (Get-ChildItem $locA $_) } }
-$global = installed_apps $true | ForEach-Object { @{ name = $_; gci = (Get-ChildItem $globA $_); global = $true } }
+$local = installed_apps $false | ForEach-Object { @{ 'name' = $_; 'gci' = (Get-ChildItem $locA $_) } }
+$global = installed_apps $true | ForEach-Object { @{ 'name' = $_; 'gci' = (Get-ChildItem $globA $_); 'global' = $true } }
 
 $apps = @($local) + @($global)
 
 if ($apps) {
     $mes = if ($query) { " matching '$query'" }
-    Write-Host "Installed apps${mes}: `n"
+    Write-UserMessage -Message "Installed apps${mes}: `n"
 
     $sortSplat = @{ 'Property' = { $_.name }; 'Descending' = $reverse }
     if ($orderInstalled) {

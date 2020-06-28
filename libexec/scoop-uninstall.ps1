@@ -6,8 +6,8 @@
 #   -g, --global   Uninstall a globally installed app
 #   -p, --purge    Remove all persistent data
 
-'core', 'manifest', 'help', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'uninstall' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'uninstall' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -30,12 +30,12 @@ if (!$apps) {
 }
 
 if ($global -and !(is_admin)) {
-    Write-UserMessage -Message 'You need admin rights to uninstall global apps.' -Err
+    Write-UserMessage -Message 'Administrator privileges are required to uninstall global apps.' -Err
     exit 4
 }
 
 if ($apps -eq 'scoop') {
-    & "$PSScriptRoot\..\bin\uninstall.ps1" $global $purge
+    & (Join-Path $PSScriptRoot '..\bin\uninstall.ps1') $global $purge
     exit $LASTEXITCODE
 }
 

@@ -21,6 +21,8 @@
     An array of manifests, which should be updated all the time. (-ForceUpdate parameter to checkver)
 .PARAMETER SkipUpdated
     Updated manifests will not be shown.
+.PARAMETER SkipCheckver
+    Specifies to skip checkver execution.
 .EXAMPLE
     PS BUCKETROOT > .\bin\auto-pr.ps1 'someUsername/repository:branch' -Request
 .EXAMPLE
@@ -31,31 +33,27 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!($_ -match '^(.*)\/(.*):(.*)$')) {
-            throw 'Upstream must be in this format: <user>/<repo>:<branch>'
-        }
+        if (!($_ -match '^(.*)\/(.*):(.*)$')) { throw 'Upstream must be in this format: <user>/<repo>:<branch>' }
         $true
     })]
     [String] $Upstream,
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
+        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+        $true
     })]
     [String] $Dir,
     [Switch] $Push,
     [Switch] $Request,
     [Switch] $Help,
     [string[]] $SpecialSnowflakes,
-    [Switch] $SkipUpdated
+    [Switch] $SkipUpdated,
+    [Switch] $SkipCheckver
 )
 
 'manifest', 'json' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 $Dir = Resolve-Path $Dir
@@ -86,9 +84,8 @@ function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd
 
-    if ($LASTEXITCODE -gt 0) {
-        abort "^^^ Error! See above ^^^ (last command: $cmd)"
-    }
+    # TODO: Stop-ScoopExecution
+    if ($LASTEXITCODE -gt 0) { abort "^^^ Error! See above ^^^ (last command: $cmd)" }
 
     return $output
 }
@@ -151,19 +148,19 @@ if ($Push) {
     execute 'hub push origin master'
 }
 
-. "$PSScriptRoot\checkver.ps1" -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
-if ($SpecialSnowflakes) {
-    Write-Host "Forcing update on our special snowflakes: $($SpecialSnowflakes -join ',')" -ForegroundColor DarkCyan
-    $SpecialSnowflakes -split ',' | ForEach-Object {
-        . "$PSScriptRoot\checkver.ps1" $_ -Dir $Dir -ForceUpdate
+if (!$SkipCheckver) {
+    . "$PSScriptRoot\checkver.ps1" -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
+    if ($SpecialSnowflakes) {
+        Write-UserMessage -Message "Forcing update on our special snowflakes: $($SpecialSnowflakes -join ',')" -Color DarkCyan
+        $SpecialSnowflakes -split ',' | ForEach-Object {
+            . "$PSScriptRoot\checkver.ps1" $_ -Dir $Dir -ForceUpdate
+        }
     }
 }
 
 hub diff --name-only | ForEach-Object {
     $manifest = $_
-    if (!$manifest.EndsWith('.json')) {
-        return
-    }
+    if (!$manifest.EndsWith('.json')) { return }
 
     $app = ([System.IO.Path]::GetFileNameWithoutExtension($manifest))
     $json = parse_json $manifest

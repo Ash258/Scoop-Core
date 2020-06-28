@@ -10,7 +10,7 @@
 #   -b, --all-architectures         All avaible files across all architectures will be downloaded.
 
 'getopt', 'help', 'manifest', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -49,9 +49,8 @@ if (($utility -eq 'aria2') -and (-not (Test-HelperInstalled -Helper Aria2))) {
 #endregion Parameter validation
 
 $exitCode = 0
+$problems = 0
 foreach ($app in $application) {
-    Write-Host 'Starting download for' $app -ForegroundColor Green
-
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
 
@@ -66,8 +65,10 @@ foreach ($app in $application) {
         debug $cleanAppName
         debug $foundBucket
         debug $appName
+
         Write-UserMessage -Message 'Found application name or bucket is not same as requested' -Err
-        $exitCode = 3
+        ++$problems
+
         continue
     }
 
@@ -76,7 +77,8 @@ foreach ($app in $application) {
         $generated = generate_user_manifest $appName $bucket $version
         if ($null -eq $generated) {
             Write-UserMessage -Message 'Manifest cannot be generated with provided version' -Err
-            $exitCode = 3
+            ++$problems
+
             continue
         }
         $manifest = parse_json $generated
@@ -87,6 +89,8 @@ foreach ($app in $application) {
         $version = nightly_version (Get-Date)
         $checkHash = $false
     }
+
+    Write-UserMessage "Starting download for $app" -Color Green
 
     # TODO: Rework with proper wrappers after #3149
     switch ($utility) {
@@ -113,7 +117,8 @@ foreach ($app in $application) {
                                 Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
                             }
                             Write-UserMessage -Message (new_issue_msg $appName $bucket 'hash check failed') -Err
-                            $exitCode = 3
+                            ++$problems
+
                             continue
                         }
                     }
@@ -128,5 +133,7 @@ foreach ($app in $application) {
         }
     }
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
 
 exit $exitCode

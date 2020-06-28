@@ -1,26 +1,21 @@
-<#
-TODO
- - clean up
-#>
-
-'core', 'json' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'core', 'json', 'Helpers' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 function find_hash_in_rdf([String] $url, [String] $basename) {
     $data = $null
     try {
         # Download and parse RDF XML file
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.WebClient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $data = $wc.downloadstring($url)
-    } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+        $data = $wc.DownloadString($url)
+    } catch [System.Net.WebException] {
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+
         return $null
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-rdf.html" $data -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-rdf.html' | Out-UTF8Content -Content $data }
     $data = [xml] $data
 
     # Find file content
@@ -33,41 +28,38 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     $hashfile = $null
 
     $templates = @{
-        '$md5'      = '([a-fA-F0-9]{32})';
-        '$sha1'     = '([a-fA-F0-9]{40})';
-        '$sha256'   = '([a-fA-F0-9]{64})';
-        '$sha512'   = '([a-fA-F0-9]{128})';
-        '$checksum' = '([a-fA-F0-9]{32,128})';
-        '$base64'   = '([a-zA-Z0-9+\/=]{24,88})';
+        '$md5'      = '([a-fA-F0-9]{32})'
+        '$sha1'     = '([a-fA-F0-9]{40})'
+        '$sha256'   = '([a-fA-F0-9]{64})'
+        '$sha512'   = '([a-fA-F0-9]{128})'
+        '$checksum' = '([a-fA-F0-9]{32,128})'
+        '$base64'   = '([a-zA-Z0-9+\/=]{24,88})'
     }
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.WebClient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $hashfile = $wc.downloadstring($url)
-    } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+        $hashfile = $wc.DownloadString($url)
+    } catch [System.Net.WebException] {
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
         return
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-txt.html" $hashfile -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-txt.html' | Out-UTF8Content -Content $hashfile }
 
-    if ($regex.Length -eq 0) {
-        $regex = '^([a-fA-F0-9]+)$'
-    }
+    if ($regex.Length -eq 0) { $regex = '^([a-fA-F0-9]+)$' }
 
     $regex = substitute $regex $templates $false
     $regex = substitute $regex $substitutions $true
-    debug $regex
-    if ($hashfile -match $regex) {
-        $hash = $matches[1] -replace '\s', ''
-    }
 
-    # convert base64 encoded hash values
+    debug $regex
+
+    if ($hashfile -match $regex) { $hash = $matches[1] -replace '\s' }
+
+    # Convert base64 encoded hash values
     if ($hash -match '^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$') {
         $base64 = $matches[0]
-        if (!($hash -match '^[a-fA-F0-9]+$') -and $hash.length -notin @(32, 40, 64, 128)) {
+        if (!($hash -match '^[a-fA-F0-9]+$') -and $hash.Length -notin @(32, 40, 64, 128)) {
             try {
                 $hash = ([System.Convert]::FromBase64String($base64) | ForEach-Object { $_.ToString('x2') }) -join ''
             } catch {
@@ -76,14 +68,14 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
         }
     }
 
-    # find hash with filename in $hashfile
+    # Find hash with filename in $hashfile
     if ($hash.Length -eq 0) {
         $filenameRegex = "([a-fA-F0-9]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
         $filenameRegex = substitute $filenameRegex $substitutions $true
         if ($hashfile -match $filenameRegex) {
             $hash = $matches[1]
         }
-        $metalinkRegex = "<hash[^>]+>([a-fA-F0-9]{64})"
+        $metalinkRegex = '<hash[^>]+>([a-fA-F0-9]{64})'
         if ($hashfile -match $metalinkRegex) {
             $hash = $matches[1]
         }
@@ -96,21 +88,21 @@ function find_hash_in_json([String] $url, [Hashtable] $substitutions, [String] $
     $json = $null
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.WebClient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $json = $wc.downloadstring($url)
-    } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+        $json = $wc.DownloadString($url)
+    } catch [System.Net.WebException] {
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
         return
     }
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-json.html" $json -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-json.html' | Out-UTF8Content -Content $json }
 
     $hash = json_path $json $jsonpath $substitutions
     if (!$hash) {
         $hash = json_path_legacy $json $jsonpath $substitutions
     }
+
     return format_hash $hash
 }
 
@@ -118,26 +110,23 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     $xml = $null
 
     try {
-        $wc = New-Object Net.Webclient
+        $wc = New-Object System.Net.WebClient
         $wc.Headers.Add('Referer', (strip_filename $url))
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $xml = $wc.downloadstring($url)
-    } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+        $xml = $wc.DownloadString($url)
+    } catch [System.Net.WebException] {
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
         return
     }
 
-    if (Test-ScoopDebugEnabled) { Set-Content "$PWD\checkver-hash-xml.html" $xml -Encoding Ascii }
+    if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-xml.html' | Out-UTF8Content -Content $xml }
     $xml = [xml] $xml
 
     # Replace placeholders
-    if ($substitutions) {
-        $xpath = substitute $xpath $substitutions
-    }
+    if ($substitutions) { $xpath = substitute $xpath $substitutions }
 
     # Find all `significant namespace declarations` from the XML file
-    $nsList = $xml.SelectNodes("//namespace::*[not(. = ../../namespace::*)]")
+    $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
     # Then add them into the NamespaceManager
     $nsmgr = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
     $nsList | ForEach-Object {
@@ -146,6 +135,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
 
     # Getting hash from XML, using XPath
     $hash = $xml.SelectSingleNode($xpath, $nsmgr).'#text'
+
     return format_hash $hash
 }
 
@@ -167,9 +157,8 @@ function find_hash_in_headers([String] $url) {
             }
         }
         $res.Close()
-    } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+    } catch [System.Net.WebException] {
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
         return
     }
 
@@ -192,12 +181,14 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
     debug $substitutions
 
     $hashfile_url = substitute $config.url $substitutions
+
     debug $hashfile_url
+
     if ($hashfile_url) {
-        write-host -f DarkYellow 'Searching hash for ' -NoNewline
-        write-host -f Green $basename -NoNewline
-        write-host -f DarkYellow ' in ' -NoNewline
-        write-host -f Green $hashfile_url
+        Write-Host 'Searching hash for ' -ForegroundColor DarkYellow -NoNewline
+        Write-Host $basename -ForegroundColor Green -NoNewline
+        Write-Host ' in ' -ForegroundColor DarkYellow -NoNewline
+        Write-Host $hashfile_url -ForegroundColor Green
     }
 
     if ($hashmode.Length -eq 0 -and $config.url.Length -ne 0) {
@@ -206,6 +197,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
 
     $jsonpath = ''
     if ($config.jp) {
+        Write-UserMessage -Message '''jp'' property is deprecated. Use ''jsonpath'' instead.' -Err
         $jsonpath = $config.jp
         $hashmode = 'json'
     }
@@ -215,6 +207,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
     }
     $regex = ''
     if ($config.find) {
+        Write-UserMessage -Message '''find'' property is deprecated. Use ''regex'' instead.' -Err
         $regex = $config.find
     }
     if ($config.regex) {
@@ -227,11 +220,11 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
         $hashmode = 'xpath'
     }
 
-    if (!$hashfile_url -and $url -match "^(?:.*fosshub.com\/).*(?:\/|\?dwl=)(?<filename>.*)$") {
+    if (!$hashfile_url -and $url -match '^(?:.*fosshub.com\/).*(?:\/|\?dwl=)(?<filename>.*)$') {
         $hashmode = 'fosshub'
     }
 
-    if (!$hashfile_url -and $url -match "(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*)") {
+    if (!$hashfile_url -and $url -match '(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*)') {
         $hashmode = 'sourceforge'
     }
 
@@ -258,37 +251,38 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
             $hash = find_hash_in_textfile $url $substitutions ($Matches.filename + '.*?"sha256":"([a-fA-F0-9]{64})"')
         }
         'sourceforge' {
-            # change the URL because downloads.sourceforge.net doesn't have checksums
+            # Change the URL because downloads.sourceforge.net doesn't have checksums
             $hashfile_url = (strip_filename (strip_fragment "https://sourceforge.net/projects/$($matches['project'])/files/$($matches['file'])")).TrimEnd('/')
             $hash = find_hash_in_textfile $hashfile_url $substitutions '"$basename":.*?"sha1":\s"([a-fA-F0-9]{40})"'
         }
     }
 
     if ($hash) {
-        # got one!
-        write-host -f DarkYellow 'Found: ' -NoNewline
-        write-host -f Green $hash -NoNewline
-        write-host -f DarkYellow ' using ' -NoNewline
-        write-host -f Green  "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode"
+        Write-Host 'Found: ' -ForegroundColor DarkYellow -NoNewline
+        Write-Host $hash -ForegroundColor Green -NoNewline
+        Write-Host ' using ' -ForegroundColor DarkYellow -NoNewline
+        Write-Host  "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor Green
+
         return $hash
     } elseif ($hashfile_url) {
-        write-host -f DarkYellow "Could not find hash in $hashfile_url"
+        Write-UserMessage -Message "Could not find hash in $hashfile_url" -Color DarkYellow
     }
 
-    write-host -f DarkYellow 'Downloading ' -NoNewline
-    write-host -f Green $basename -NoNewline
-    write-host -f DarkYellow ' to compute hashes!'
+    Write-Host 'Downloading ' -ForegroundColor DarkYellow -NoNewline
+    Write-Host $basename -ForegroundColor Green -NoNewline
+    Write-Host ' to compute hashes!' -ForegroundColor DarkYellow
+
     try {
         dl_with_cache $app $version $url $null $null $true
     } catch [system.net.webexception] {
-        write-host -f darkred $_
-        write-host -f darkred "URL $url is not valid"
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
         return $null
     }
     $file = cache_path $app $version $url
     $hash = compute_hash $file 'sha256'
-    write-host -f DarkYellow 'Computed hash: ' -NoNewline
-    write-host -f Green $hash
+    Write-Host 'Computed hash: ' -ForegroundColor DarkYellow -NoNewline
+    Write-Host $hash -ForegroundColor Green
+
     return $hash
 }
 
@@ -333,55 +327,57 @@ function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions)
 }
 
 function get_version_substitutions([String] $version, [Hashtable] $customMatches) {
-    $firstPart = $version.Split('-') | Select-Object -first 1
-    $lastPart = $version.Split('-') | Select-Object -last 1
+    $firstPart = $version -split '-' | Select-Object -First 1
+    $lastPart = $version -split '-' | Select-Object -Last 1
     $versionVariables = @{
-        '$version'           = $version;
-        '$underscoreVersion' = ($version -replace "\.", "_");
-        '$dashVersion'       = ($version -replace "\.", "-");
-        '$cleanVersion'      = ($version -replace "\.", "");
-        '$majorVersion'      = $firstPart.Split('.') | Select-Object -first 1;
-        '$minorVersion'      = $firstPart.Split('.') | Select-Object -skip 1 -first 1;
-        '$patchVersion'      = $firstPart.Split('.') | Select-Object -skip 2 -first 1;
-        '$buildVersion'      = $firstPart.Split('.') | Select-Object -skip 3 -first 1;
-        '$preReleaseVersion' = $lastPart;
+        '$version'           = $version
+        '$underscoreVersion' = ($version -replace '\.', '_')
+        '$dashVersion'       = ($version -replace '\.', '-')
+        '$cleanVersion'      = ($version -replace '\.')
+        '$majorVersion'      = ($firstPart -split '\.' | Select-Object -First 1)
+        '$minorVersion'      = ($firstPart -split '\.' | Select-Object -Skip 1 -First 1)
+        '$patchVersion'      = ($firstPart -split '\.' | Select-Object -Skip 2 -First 1)
+        '$buildVersion'      = ($firstPart -split '\.' | Select-Object -Skip 3 -First 1)
+        '$preReleaseVersion' = $lastPart
     }
-    if ($version -match "(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)") {
+    if ($version -match '(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)') {
         $versionVariables.Set_Item('$matchHead', $matches['head'])
         $versionVariables.Set_Item('$matchTail', $matches['tail'])
     }
     if ($customMatches) {
         $customMatches.GetEnumerator() | ForEach-Object {
-            if ($_.Name -ne "0") {
+            if ($_.Name -ne '0') {
                 $versionVariables.Set_Item('$match' + (Get-Culture).TextInfo.ToTitleCase($_.Name), $_.Value)
             }
         }
     }
+
     return $versionVariables
 }
 
+# TODO: debt: Rename $matches
 function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $matches) {
-    Write-Host -f DarkCyan "Autoupdating $app"
+    Write-UserMessage -Message "Autoupdating $app" -Color DarkCyan
     $has_changes = $false
     $has_errors = $false
-    [Bool]$valid = $true
+    [bool] $valid = $true
     $substitutions = get_version_substitutions $version $matches
 
     if ($json.url) {
-        # create new url
+        # Create new url
         $url = substitute $json.autoupdate.url $substitutions
         $valid = $true
 
         if ($valid) {
-            # create hash
+            # Create hash
             $hash = get_hash_for_app $app $json.autoupdate.hash $version $url $substitutions
             if ($null -eq $hash) {
                 $valid = $false
-                Write-Host -f DarkRed "Could not find hash!"
+                Write-UserMessage -Message 'Could not find hash!' -Color DarkRed
             }
         }
 
-        # write changes to the json object
+        # Write changes to the json object
         if ($valid) {
             $has_changes = $true
             update_manifest_with_new_version $json $version $url $hash
@@ -394,20 +390,20 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
             $valid = $true
             $architecture = $_.Name
 
-            # create new url
+            # Create new url
             $url = substitute (arch_specific "url" $json.autoupdate $architecture) $substitutions
             $valid = $true
 
             if ($valid) {
-                # create hash
+                # Create hash
                 $hash = get_hash_for_app $app (arch_specific "hash" $json.autoupdate $architecture) $version $url $substitutions
                 if ($null -eq $hash) {
                     $valid = $false
-                    Write-Host -f DarkRed "Could not find hash!"
+                    Write-UserMessage -Message 'Could not find hash!' -Color DarkRed
                 }
             }
 
-            # write changes to the json object
+            # Write changes to the json object
             if ($valid) {
                 $has_changes = $true
                 update_manifest_with_new_version $json $version $url $hash $architecture
@@ -418,27 +414,25 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
         }
     }
 
-    # update properties
-    update_manifest_prop "extract_dir" $json $substitutions
+    # Update properties
+    update_manifest_prop 'extract_dir' $json $substitutions
 
-    # update license
-    update_manifest_prop "license" $json $substitutions
+    # Update license
+    update_manifest_prop 'license' $json $substitutions
 
     if ($has_changes -and !$has_errors) {
-        # write file
-        Write-Host -f DarkGreen "Writing updated $app manifest"
+        # Write file
+        Write-UserMessage -Message "Writing updated $app manifest" -Color DarkGreen
 
-        $path = join-path $dir "$app.json"
+        $path = Join-Path $dir "$app.json"
 
-        $file_content = $json | ConvertToPrettyJson
-        [System.IO.File]::WriteAllLines($path, $file_content)
+        $json | ConvertToPrettyJson | Out-UTF8File -Path $path
 
-        # notes
+        # Notes
         if ($json.autoupdate.note) {
-            Write-Host ""
-            Write-Host -f DarkYellow $json.autoupdate.note
+            Write-UserMessage -Message '', $json.autoupdate.note -Color DarkYellow
         }
     } else {
-        Write-Host -f DarkGray "No updates for $app"
+        Write-UserMessage -Message "No updates for $app" -Color DarkGray
     }
 }

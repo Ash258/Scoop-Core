@@ -4,7 +4,7 @@
 param($cmd)
 
 'core', 'commands', 'help' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
@@ -30,7 +30,7 @@ function print_summaries {
         $commands.add("$command ", $summary) # add padding
     }
 
-    $commands.getenumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
+    $commands.getenumerator() | Sort-Object Name | Format-Table -HideTableHead -AutoSize -Wrap
 }
 
 $exitCode = 0

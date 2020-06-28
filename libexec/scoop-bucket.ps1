@@ -21,7 +21,7 @@
 param($Cmd, $Name, $Repo)
 
 'buckets', 'help' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases

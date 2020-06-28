@@ -1,5 +1,5 @@
-'core', 'manifest' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'core', 'Helpers', 'manifest' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 function Get-LatestVersion {
@@ -13,8 +13,8 @@ function Get-LatestVersion {
     .PARAMETER Uri
         Specifies remote app manifest's URI.
     #>
-    [OutputType([String])]
     [CmdletBinding()]
+    [OutputType([String])]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [Alias('App')]
@@ -40,8 +40,8 @@ function Get-InstalledVersion {
         Versions are sorted from oldest to newest, i.e., latest installed version is the last one in the output array.
         If no installed version found, empty array will be returned.
     #>
-    [OutputType([Object[]])]
     [CmdletBinding()]
+    [OutputType([Object[]])]
     param (
         [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
         [Alias('App')]
@@ -74,8 +74,8 @@ function Select-CurrentVersion {
     .PARAMETER Global
         Specifies globally installed application.
     #>
-    [OutputType([String])]
     [CmdletBinding()]
+    [OutputType([String])]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [Alias('App')]
@@ -87,10 +87,11 @@ function Select-CurrentVersion {
     process {
         $appPath = appdir $AppName $Global
 
-        if (Test-Path "$appPath\current" -PathType Container) {
+        $currentPath = Join-Path $appPath 'current'
+        if (Test-Path $currentPath -PathType Container) {
             $currentVersion = (installed_manifest $AppName 'current' $Global).version
             # Get version from link target in case of nightly
-            if ($currentVersion -eq 'nightly') { $currentVersion = ((Get-Item "$appPath\current").Target | Get-Item).BaseName }
+            if ($currentVersion -eq 'nightly') { $currentVersion = ((Get-Item $currentPath).Target | Get-Item).BaseName }
         } else {
             $installedVersion = @(Get-InstalledVersion -AppName $AppName -Global:$Global)
             $currentVersion = if ($installedVersion) { $installedVersion[-1] } else { $null }
@@ -116,8 +117,8 @@ function Compare-Version {
             '1' if DifferenceVersion is greater then ReferenceVersion,
             '-1' if DifferenceVersion is less then ReferenceVersion
     #>
-    [OutputType([Int])]
     [CmdletBinding()]
+    [OutputType([Int])]
     param (
         [Parameter(Position = 0)]
         [Alias('Old')]

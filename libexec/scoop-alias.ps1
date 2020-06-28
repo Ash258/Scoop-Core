@@ -24,7 +24,7 @@ param(
 )
 
 'core', 'help', 'Alias' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 $exitCode = 0

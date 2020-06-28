@@ -27,11 +27,8 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
+        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+        $true
     })]
     [String] $Dir,
     [Switch] $Update,
@@ -41,14 +38,14 @@ param(
     [Switch] $UseCache
 )
 
-'core', 'Helpers', 'manifest', 'buckets', 'autoupdate', 'json', 'versions', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'Helpers', 'manifest', 'buckets', 'autoupdate', 'json', 'Versions', 'install' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 $Dir = Resolve-Path $Dir
 if ($ForceUpdate) { $Update = $true }
 # Cleanup
-if (!$UseCache) { Remove-Item "$cachedir\*HASH_CHECK*" -Force }
+if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*'|  Remove-Item -Force }
 
 function err ([String] $name, [String[]] $message) {
     Write-Host "$name`: " -ForegroundColor Red -NoNewline
@@ -56,9 +53,9 @@ function err ([String] $name, [String[]] $message) {
 }
 
 $MANIFESTS = @()
-foreach ($single in Get-ChildItem $Dir "$App.json") {
+foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
     $name = (strip_ext $single.Name)
-    $manifest = parse_json "$Dir\$($single.Name)"
+    $manifest = parse_json $single.FullName
 
     # Skip nighly manifests, since their hash validation is skipped
     if ($manifest.version -eq 'nightly') { continue }
@@ -87,14 +84,14 @@ foreach ($single in Get-ChildItem $Dir "$App.json") {
     }
 
     $MANIFESTS += @{
-        app      = $name
-        manifest = $manifest
-        urls     = $urls
-        hashes   = $hashes
+        'app'      = $name
+        'manifest' = $manifest
+        'urls'     = $urls
+        'hashes'   = $hashes
     }
 }
 
-# clear any existing events
+# Clear any existing events
 Get-Event | ForEach-Object { Remove-Event $_.SourceIdentifier }
 
 foreach ($current in $MANIFESTS) {
@@ -121,15 +118,13 @@ foreach ($current in $MANIFESTS) {
 
         # Append type of algorithm to both expected and actual if it's not sha256
         if ($algorithm -ne 'sha256') {
-            $actual_hash = "$algorithm`:$actual_hash"
-            $expected = "$algorithm`:$expected"
+            $actual_hash = "${algorithm}:$actual_hash"
+            $expected = "${algorithm}:$expected"
         }
 
         $actuals += $actual_hash
-        if ($actual_hash -ne $expected) {
-            $mismatched += $count
-        }
-        $count++
+        if ($actual_hash -ne $expected) { $mismatched += $count }
+        ++$count
     }
 
     if ($break) {
@@ -147,12 +142,12 @@ foreach ($current in $MANIFESTS) {
         Write-Host 'Mismatch found ' -ForegroundColor Red
         $mismatched | ForEach-Object {
             $file = cache_path $current.app $version $current.urls[$_]
-            Write-Host  "`tURL:`t`t$($current.urls[$_])"
+            Write-UserMessage -Message "`tURL:`t`t$($current.urls[$_])"
             if (Test-Path $file) {
-                Write-Host  "`tFirst bytes:`t$(Get-MagicByte -File $file -Pretty)"
+                Write-UserMessage -Message "`tFirst bytes:`t$(Get-MagicByte -File $file -Pretty)"
             }
-            Write-Host  "`tExpected:`t$($current.hashes[$_])" -ForegroundColor Green
-            Write-Host  "`tActual:`t`t$($actuals[$_])" -ForegroundColor Red
+            Write-UserMessage -Message "`tExpected:`t$($current.hashes[$_])" -Color Green
+            Write-UserMessage -Message "`tActual:`t`t$($actuals[$_])" -Color Red
         }
     }
 
@@ -177,10 +172,10 @@ foreach ($current in $MANIFESTS) {
             }
         }
 
-        Write-Host "Writing updated $($current.app) manifest" -ForegroundColor DarkGreen
+        Write-UserMessage -Message "Writing updated $($current.app) manifest" -Color DarkGreen
 
-        $current.manifest = $current.manifest | ConvertToPrettyJson
-        $path = Resolve-Path "$Dir\$($current.app).json"
-        [System.IO.File]::WriteAllLines($path, $current.manifest)
+        $p = Join-Path $Dir "$($current.app).json"
+
+        $current.manifest | ConvertToPrettyJson | Out-UTF8File -Path $p
     }
 }

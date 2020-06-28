@@ -13,8 +13,8 @@
 #   -s, --skip                Skip hash validation (use with caution!)
 #   -q, --quiet               Hide extraneous messages
 
-'depends', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'depends', 'Helpers', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 reset_aliases
