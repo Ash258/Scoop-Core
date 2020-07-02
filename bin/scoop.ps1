@@ -3,16 +3,17 @@ param($cmd)
 
 Set-StrictMode -Off
 
-'core', 'buckets', 'commands', 'Git' | ForEach-Object {
+'core', 'buckets', 'Helpers', 'commands', 'Git' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
+$exitCode = 0
 
 if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
     Write-UserMessage -Message 'Current Scoop (soon to be Shovel) version:' -Output
     Invoke-GitCmd -Command 'VersionLog' -Repository (versiondir 'scoop' 'current')
-    Write-UserMessage -Message ''
+    Write-UserMessage -Message '' -Output
 
     Get-LocalBucket | ForEach-Object {
         $b = Find-BucketDirectory $_ -Root
@@ -20,15 +21,16 @@ if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
         if (Join-Path $b '.git' | Test-Path -PathType Container) {
             Write-UserMessage -Message "'$_' bucket:" -Output
             Invoke-GitCmd -Command 'VersionLog' -Repository $b
-            Write-UserMessage -Message ''
+            Write-UserMessage -Message '' -Output
         }
     }
 } elseif ((@($null, '--help', '/?') -contains $cmd) -or ($args[0] -contains '-h')) {
-    exec 'help' $args
+    Invoke-ScoopCommand 'help' $args
 } elseif ((commands) -contains $cmd) {
-    exec $cmd $args
+    Invoke-ScoopCommand $cmd $args
 } else {
-    # TODO: Stop-ScoopExecution
-    Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'."
-    exit 1
+    Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'." -Output
+    $exitCode = 1
 }
+
+exit $exitCode

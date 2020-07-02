@@ -766,55 +766,9 @@ function pluralize($count, $singular, $plural) {
     if ($count -eq 1) { $singular } else { $plural }
 }
 
-function reset_alias($name, $value) {
-    if ($existing = Get-Alias $name -ErrorAction Ignore | Where-Object { $_.Options -match 'readonly' }) {
-        if ($existing.Definition -ne $value) {
-            Write-UserMessage "Alias $name is read-only; can't reset it." -Warning
-        }
-
-        return # already set
-    }
-    if ($value -is [ScriptBlock]) {
-        if (!(Test-Path "function:script:$name")) {
-            New-Item -Path Function: -Name "script:$name" -Value $value | Out-Null
-        }
-
-        return
-    }
-
-    Set-Alias $name $value -Scope Script -Option AllScope
-}
-
 function reset_aliases() {
-    # for aliases where there's a local function, re-alias so the function takes precedence
-    $aliases = Get-Alias | Where-Object { $_.Options -notmatch 'readonly|allscope' } | ForEach-Object { $_.name }
-    Get-ChildItem Function: | ForEach-Object {
-        $fn = $_.Name
-        if ($aliases -contains $fn) {
-            Set-Alias $fn Local:$fn -Scope Script
-        }
-    }
-
-# for dealing with user aliases
-$default_aliases = @{
-    'cp'     = 'copy-item'
-    'echo'   = 'write-output'
-    'gc'     = 'get-content'
-    'gci'    = 'get-childitem'
-    'gcm'    = 'get-command'
-    'gm'     = 'get-member'
-    'iex'    = 'invoke-expression'
-    'ls'     = 'get-childitem'
-    'mkdir'  = { New-Item -Type Directory @args }
-    'mv'     = 'move-item'
-    'rm'     = 'remove-item'
-    'sc'     = 'set-content'
-    'select' = 'select-object'
-    'sls'    = 'select-string'
-}
-
-# set default aliases
-$default_aliases.Keys | ForEach-Object { reset_alias $_ $default_aliases[$_] }
+    Show-DeprecatedWarning $MyInvocation 'Reset-Alias'
+    Reset-Alias
 }
 
 # convert list of apps to list of ($app, $global) tuples

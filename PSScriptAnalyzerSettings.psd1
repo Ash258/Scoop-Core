@@ -2,8 +2,8 @@
     Severity     = @('Error', 'Warning')
 
     ExcludeRules = @(
-        # Currently Scoop widely uses Write-Host to output colored text.
         'PSUseShouldProcessForStateChangingFunctions',
+        # Currently Scoop widely uses Write-Host to output colored text.
         'PSAvoidUsingWriteHost',
         # Temporarily allow uses of Invoke-Expression,
         # this command is used by some core functions and hard to be removed.

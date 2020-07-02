@@ -10,18 +10,12 @@
 reset_aliases
 
 $opt, $apps, $err = getopt $args 'g' 'global'
-if ($err) { Write-UserMessage -Message "scoop hold: $err" -Err; exit 2 }
-if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
+if ($err) { Stop-ScoopExecution -Message "scoop hold: $err" -ExitCode 2 }
+if (!$apps) { Stop-ScoopExecution -Message '<app> missing' -Usage (my_usage) }
 
 $global = $opt.g -or $opt.global
 
-# TODO: Stop-ScoopExecution
-if ($global -and !(is_admin)) { abort 'Admin privileges are required to interact with globally installed apps' 4 }
-
-if (!$apps) {
-    my_usage
-    exit 1
-}
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed apps' -ExitCode 4 }
 
 $exitCode = 0
 foreach ($app in $apps) {

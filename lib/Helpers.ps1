@@ -79,6 +79,41 @@ function Write-UserMessage {
     }
 }
 
+function Stop-ScoopExecution {
+    <#
+    .SYNOPSIS
+        Print error message and exit scoop execution with given Exit code.
+    .DESCRIPTION
+        This function should be used only as the last thing, where there is not possible to recover from error state or
+        if you can freely exit entire execution without causing problems to user.
+        If it is called there is no failsafe / error state handling.
+        For Example. When there is installation of multiple applications happening, and first fail. This function
+        is called, and rest of applications are not installed, which is not user friendly.
+    .PARAMETER Message
+        Specifies the tessage, which will be printed to user.
+    .PARAMETER ExitCode
+        Specifies the exit code.
+    #>
+    param(
+        [Parameter(Position = 0, Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [String[]] $Message,
+        [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
+        [Int] $ExitCode = 3,
+        [String[]] $Usage
+    )
+
+    begin { if ($Usage) { $ExitCode = 1 } }
+
+    process {
+        Write-UserMessage -Message $Message -Err
+        if ($Usage) {
+            Write-UserMessage -Message $Usage -Output
+        }
+    }
+
+    end { exit $ExitCode }
+}
+
 function Out-UTF8File {
     <#
     .SYNOPSIS
@@ -175,4 +210,59 @@ function Get-MagicByte {
 
         return $cont.ToUpper()
     }
+}
+
+function _resetAlias($name, $value) {
+    $existing = Get-Alias $name -ErrorAction Ignore
+
+    if ($existing -and ($existing | Where-Object -Property Options -Match 'readonly')) {
+        if ($existing.Definition -ne $value) {
+            Write-UserMessage "Alias $name is read-only; can't reset it." -Warning
+        }
+
+        # Already set
+        return
+    }
+
+    if ($value -is [ScriptBlock]) {
+        if (!(Test-Path "Function:script:$name")) {
+            New-Item -Path Function: -Name "script:$name" -Value $value | Out-Null
+        }
+
+        return
+    }
+
+    Set-Alias $name $value -Scope Script -Option AllScope
+}
+
+function Reset-Alias {
+    # For aliases where there's a local function, re-alias so the function takes precedence
+    $aliases = Get-Alias | Where-Object -Property Options -NotMatch 'readonly|allscope' | Select-Object -ExpandProperty Name
+    Get-ChildItem Function: | ForEach-Object {
+        $fn = $_.Name
+        if ($fn -in $aliases) {
+            Set-Alias $fn Local:$fn -Scope Script
+        }
+    }
+
+    # User aliases
+    $defautlAliases = @{
+        'cp'     = 'Copy-Item'
+        'echo'   = 'Write-Output'
+        'gc'     = 'Get-Content'
+        'gci'    = 'Get-ChildItem'
+        'gcm'    = 'Get-Command'
+        'gm'     = 'Get-Member'
+        'iex'    = 'Invoke-Expression'
+        'ls'     = 'Get-ChildItem'
+        'mkdir'  = { New-Item -Type Directory @args }
+        'mv'     = 'Move-Item'
+        'rm'     = 'Remove-Item'
+        'sc'     = 'Set-Content'
+        'select' = 'Select-Object'
+        'sls'    = 'Select-String'
+    }
+
+    # Set default aliases
+    $defautlAliases.Keys | ForEach-Object { _resetAlias $_ $defautlAliases[$_] }
 }
