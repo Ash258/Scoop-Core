@@ -257,7 +257,7 @@ Describe "ensure_robocopy_in_path" -Tag 'Scoop' {
     Mock versiondir { $repo_dir }
 
     BeforeAll {
-        reset_aliases
+        Reset-Alias
     }
 
     Context "robocopy is not in path" {

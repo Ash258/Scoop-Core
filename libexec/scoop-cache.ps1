@@ -15,7 +15,7 @@ param($cmd, $app)
 
 . (Join-Path $PSScriptRoot "..\lib\help.ps1")
 
-reset_aliases
+Reset-Alias
 
 function cacheinfo($file) {
     $app, $version, $url = $file.name -split '#'

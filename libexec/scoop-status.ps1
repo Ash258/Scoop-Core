@@ -5,7 +5,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 # check if scoop needs updating
 $currentdir = versiondir 'scoop' 'current'

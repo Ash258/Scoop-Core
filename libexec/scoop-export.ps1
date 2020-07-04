@@ -5,7 +5,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 $def_arch = default_architecture
 
 $local = installed_apps $false | ForEach-Object { @{ 'name' = $_; 'global' = $false } }

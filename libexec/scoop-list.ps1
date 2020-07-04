@@ -13,7 +13,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $opt, $query, $err = getopt $args 'iur' 'installed', 'updated', 'reverse'
 # TODO: Stop-ScoopExecution

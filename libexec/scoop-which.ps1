@@ -8,7 +8,7 @@ param([String] $Command)
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 if (!$command) { Write-UserMessage '<command> missing' -Err; my_usage; exit 1 }
 

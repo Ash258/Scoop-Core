@@ -24,7 +24,7 @@ param($Cmd, $Name, $Repo)
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 # TODO: Remove
 $usage_add = 'usage: scoop bucket add <name> [<repo>]'

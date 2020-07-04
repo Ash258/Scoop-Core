@@ -38,7 +38,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
 if ($err) { Write-UserMessage "scoop virustotal: $err"; exit 1 }

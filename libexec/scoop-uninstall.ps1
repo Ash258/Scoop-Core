@@ -10,7 +10,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 # options
 $opt, $apps, $err = getopt $args 'gp' 'global', 'purge'

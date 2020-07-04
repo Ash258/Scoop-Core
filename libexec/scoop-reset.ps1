@@ -8,7 +8,7 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 $opt, $apps, $err = getopt $args
 
 if ($err) { Write-UserMessage -Message "scoop reset: $err" -Err; exit 2 }
