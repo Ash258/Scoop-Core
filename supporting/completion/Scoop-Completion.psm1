@@ -84,19 +84,19 @@ $script:REGEX_PARAMETERS_VALUES = $SCOOP_PARAMETER_VALUES.Keys -join '|'
 
 #region Helpers
 function script:Expand-ScoopLongParameter($Cmd, $Filter) {
-    return ($SCOOP_LONG_PARAMETERS[$Cmd] -split ' ') -like "$Filter*" | Sort-Object | ForEach-Object { "--$_" }
+    return @($SCOOP_LONG_PARAMETERS[$Cmd] -split ' ') -like "$Filter*" | Sort-Object | ForEach-Object { "--$_" }
 }
 
 function script:Expand-ScoopShortParameter($Cmd, $Filter) {
-    return ($SCOOP_SHORT_PARAMETERS[$Cmd] -split ' ') -like "$Filter*" | Sort-Object | ForEach-Object { "-$_" }
+    return @($SCOOP_SHORT_PARAMETERS[$Cmd] -split ' ') -like "$Filter*" | Sort-Object | ForEach-Object { "-$_" }
 }
 
 function script:Expand-ScoopParametersValue($Cmd, $Param, $Filter) {
-    return ($SCOOP_PARAMETER_VALUES[$Cmd][$Param] -split ' ') -like "$Filter*" | Sort-Object
+    return @($SCOOP_PARAMETER_VALUES[$Cmd][$Param] -split ' ') -like "$Filter*" | Sort-Object
 }
 
 function script:Get-ScoopAlias($Filter) {
-    $res = $()
+    $res = @()
     if ($null -ne $SCOOP_ALL_ALIASES) {
         $res = @(($SCOOP_ALL_ALIASES.PSObject.Properties.Name) -like "$Filter*")
     }
@@ -116,18 +116,18 @@ function script:New-AllScoopAlias {
 }
 
 function script:Expand-ScoopCommandParameter($Commands, $Command, $Filter) {
-    return ($Commands.$Command -split ' ') -like "$Filter*"
+    return @($Commands.$Command -split ' ') -like "$Filter*"
 }
 
 function script:Expand-ScoopCommand($Filter, [Switch] $IncludeAlias) {
     $cmdList = $SCOOP_COMMANDS
     if ($IncludeAlias) { $cmdList += Get-ScoopAlias($Filter) }
 
-    return $cmdList -like "$Filter*" | Sort-Object
+    return @($cmdList) -like "$Filter*" | Sort-Object
 }
 
 function script:Get-LocallyInstalledApplicationsByScoop($Filter) {
-    return (Get-ChildItem $SCOOP_DIRECTORY 'apps\*' -Exclude 'scoop' -Directory -Name) -like "$Filter*"
+    return @(Get-ChildItem $SCOOP_DIRECTORY 'apps\*' -Exclude 'scoop' -Directory -Name) -like "$Filter*"
 }
 
 function script:Get-LocallyAvaialableApplicationsByScoop($Filter) {
@@ -138,7 +138,7 @@ function script:Get-LocallyAvaialableApplicationsByScoop($Filter) {
         $manifests += Get-ChildItem $buc.FullName 'bucket\*' -File | Select-Object -ExpandProperty BaseName
     }
 
-    return ($manifests | Select-Object -Unique) -like "$Filter*"
+    return @($manifests | Select-Object -Unique) -like "$Filter*"
 }
 
 function script:Get-ScoopCachedFile($Filter) {
@@ -147,15 +147,15 @@ function script:Get-ScoopCachedFile($Filter) {
     $res = @()
     foreach ($f in $files) { $res += ($f -split '#')[0] }
 
-    return ($res | Select-Object -Unique) -like "$Filter*"
+    return @($res | Select-Object -Unique) -like "$Filter*"
 }
 
 function script:Get-LocallyAddedBucket($Filter) {
-    return (Get-ChildItem $SCOOP_DIRECTORY 'buckets\*' -Directory -Name) -like "$Filter*"
+    return @(Get-ChildItem $SCOOP_DIRECTORY 'buckets\*' -Directory -Name) -like "$Filter*"
 }
 
 function script:Get-AvailableBucket($Filter) {
-    return @((scoop bucket known) -like "$Filter*")
+    return @(scoop bucket known) -like "$Filter*"
 }
 #endregion Helpers
 
