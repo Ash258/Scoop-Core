@@ -130,7 +130,7 @@ function script:Get-LocallyInstalledApplicationsByScoop($Filter) {
     return @(Get-ChildItem $SCOOP_DIRECTORY 'apps\*' -Exclude 'scoop' -Directory -Name) -like "$Filter*"
 }
 
-function script:Get-LocallyAvaialableApplicationsByScoop($Filter) {
+function script:Get-LocallyAvailableApplicationsByScoop($Filter) {
     $buckets = Get-ChildItem $SCOOP_DIRECTORY 'buckets\*' -Directory
 
     $manifests = @()
@@ -176,13 +176,13 @@ function script:ScoopTabExpansion($LastBlock) {
         }
 
         # Handles uninstall package names
-        '^(cleanup|hold|prefix|reset|uninstall|update|virustotal|unhold)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
+        '^(cleanup|hold|prefix|reset|uninstall|update|unhold|virustotal)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
             return Get-LocallyInstalledApplicationsByScoop $Matches['package']
         }
 
         # Handles install package names
         '^(cat|depends|download|info|install|home)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
-            return Get-LocallyAvaialableApplicationsByScoop $Matches['package']
+            return Get-LocallyAvailableApplicationsByScoop $Matches['package']
         }
 
         # Handles cache (rm/show) cache names

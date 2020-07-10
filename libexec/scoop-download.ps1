@@ -1,4 +1,4 @@
-# Usage: scoop download <app> [options]
+# Usage: scoop download <apps> [options]
 # Summary: Download manifest files into cache folder.
 #
 # Help: All manifest files will be downloaded into cache folder.
