@@ -4,10 +4,10 @@ local parser = clink.arg.new_parser
 local scoopEnvironment = os.getenv('SCOOP')
 local scoopGlobalEnvironment = os.getenv('SCOOP_GLOBAL')
 if not scoopEnvironment then
-    scoopEnvironment = os.getenv('userprofile')..'\\scoop'
+    scoopEnvironment = os.getenv('userprofile') .. '\\scoop'
 end
 if not scoopGlobalEnvironment then
-    scoopGlobalEnvironment = os.getenv('programdata')..'\\Scoop'
+    scoopGlobalEnvironment = os.getenv('programdata') .. '\\Scoop'
 end
 
 -- region Helpers
@@ -35,7 +35,7 @@ local configOptions = parser({
 
 -- region Functions
 local function getChildItemDirectory(path)
-    dir = clink.find_dirs(path)
+    local dir = clink.find_dirs(path)
     -- Remove .. and . from table of directories
     table.remove(dir, 1)
     table.remove(dir, 1)
@@ -44,7 +44,7 @@ local function getChildItemDirectory(path)
 end
 
 local function getChildItemFile(path)
-    files = clink.find_files(path)
+    local files = clink.find_files(path)
     -- Remove .. and . from table of files
     table.remove(files, 1)
     table.remove(files, 1)
