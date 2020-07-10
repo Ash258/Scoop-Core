@@ -207,7 +207,7 @@ local scoopHelpParser = parser({
     '/?',
     '-h', '--help',
     '--version',
-    'help' ..parser(scoopParser:flatten_argument(1))
+    'help' .. parser(scoopParser:flatten_argument(1))
 })
 
 clink.arg.register_parser('scoop', scoopParser)
