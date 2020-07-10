@@ -14,8 +14,26 @@ end
 local booleanParser = parser({'true', 'false'})
 local architectureParser = parser({'32bit', '64bit'})
 local utilityParser = parser({'native', 'aria2'})
--- region Functions
+local configOptions = parser({
+    '7ZIPEXTRACT_USE_EXTERNAL' .. booleanParser,
+    'aria2-enabled' .. booleanParser,
+    'aria2-retry-wait',
+    'aria2-split',
+    'aria2-max-connection-per-server',
+    'aria2-min-split-size',
+    'aria2-options',
+    'debug' .. booleanParser,
+    'default-architecture' .. architectureParser,
+    'MSIEXTRACT_USE_LESSMSI' .. booleanParser,
+    'NO_JUNCTIONS' .. booleanParser,
+    'SCOOP_REPO',
+    'SCOOP_BRANCH',
+    'show_update_log' .. booleanParser,
+    'virustotal_api_key',
+    'proxy'
+})
 
+-- region Functions
 local function getChildItemDirectory(path)
     dir = clink.find_dirs(path)
     -- Remove .. and . from table of directories
@@ -23,6 +41,15 @@ local function getChildItemDirectory(path)
     table.remove(dir, 1)
 
     return dir
+end
+
+local function getChildItemFile(path)
+    files = clink.find_files(path)
+    -- Remove .. and . from table of files
+    table.remove(files, 1)
+    table.remove(files, 1)
+
+    return files
 end
 
 local function getLocallyAddedBucket()
@@ -74,6 +101,35 @@ local function getLocallyInstalledApplicationsByScoop()
 
     return installed
 end
+
+local function getKnownBucket()
+    local known = {}
+    local i = 0
+    local file = io.open(scoopEnvironment .. '\\apps\\scoop\\current\\buckets.json')
+
+    if  file == nil then
+        return known
+    end
+
+    for line in file:lines() do
+        known[i] = string.match(line, '\"(.-)\"')
+        i = i + 1
+    end
+    file:close()
+
+    return known
+end
+
+local function getScoopCachedFile()
+    local cache = getChildItemFile(scoopEnvironment .. '\\cache\\*')
+
+    for i, name in pairs(cache) do
+        sign = string.find(name, '#')
+        cache[i] = sign and string.sub(name, 0, sign - 1) or nil
+    end
+
+    return cache
+end
 -- endregion Functions
 -- endregion Helpers
 
@@ -83,12 +139,23 @@ local scoopParser = parser({
         'list' .. parser({'-v', '--verbose'}),
         'rm'
     }),
+    'bucket' .. parser({
+        'add' .. parser({getKnownBucket}),
+        'known',
+        'list',
+        'rm' .. parser({getLocallyAddedBucket})
+    }),
     'cat' .. parser({getLocallyAvailableApplicationsByScoop}),
+    'cache' .. parser({'show', 'rm'} .. parser({getScoopCachedFile})),
     'checkup',
     'cleanup' .. parser({getLocallyInstalledApplicationsByScoop},
         '-g', '--global',
         '-k', '--cache'
     ):loop(1),
+    'config' .. parser({
+        'show',
+        'rm' .. parser({configOptions:flatten_argument(1)})
+    }),
     'depends' .. parser({getLocallyAvailableApplicationsByScoop}),
     'download' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
@@ -134,21 +201,7 @@ local scoopParser = parser({
         '-s', '--scan',
         '-n', '--no-depends'
     ):loop(1),
-    'which',
-
-
-
-
-
-
-
-
-
-    'bucket' ..parser({
-        'rm' ..parser({getLocallyAddedBucket})
-    }),
-    'cache',
-    'config'
+    'which'
 })
 local scoopHelpParser = parser({
     '/?',
