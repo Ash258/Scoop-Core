@@ -10,13 +10,12 @@ param([String] $Command)
 
 Reset-Alias
 
-if (!$command) { Write-UserMessage '<command> missing' -Err; my_usage; exit 1 }
+if (!$command) { Stop-ScoopExecution -Message '<command> missing' -Usage (my_usage) }
 
 try {
     $gcm = Get-Command $Command -ErrorAction Stop
 } catch {
-    # TODO: Stop-ScoopExecution
-    abort "Command '$command' not found" 3
+    Stop-ScoopExecution -Message "Command '$command' not found"
 }
 
 $userShims = shimdir $false | Resolve-Path
@@ -40,7 +39,10 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
 } else {
     switch ($gcm.CommandType) {
         'Application' { $FINAL_PATH = $gcm.Source }
-        'Alias' { $FINAL_PATH = exec 'which'  @{ 'Command' = $gcm.ResolvedCommandName } }
+        'Alias' {
+            $FINAL_PATH = Invoke-ScoopCommand 'which'  @{ 'Command' = $gcm.ResolvedCommandName }
+            $exitCode = 3
+        }
         default {
             Write-UserMessage -Message 'Not a scoop shim'
             $FINAL_PATH = $gcm.Path
@@ -49,6 +51,6 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
     }
 }
 
-if ($FINAL_PATH) { Write-UserMessage $FINAL_PATH }
+if ($FINAL_PATH) { Write-UserMessage -Message $FINAL_PATH -Output }
 
 exit $exitCode

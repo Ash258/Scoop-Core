@@ -26,11 +26,13 @@ if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
     }
 } elseif ((@($null, '--help', '/?') -contains $cmd) -or ($args[0] -contains '-h')) {
     Invoke-ScoopCommand 'help' $args
+    $exitCode = $LASTEXITCODE
 } elseif ((commands) -contains $cmd) {
     Invoke-ScoopCommand $cmd $args
+    $exitCode = $LASTEXITCODE
 } else {
     Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'." -Output
-    $exitCode = 1
+    $exitCode = 2
 }
 
 exit $exitCode

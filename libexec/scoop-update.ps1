@@ -20,8 +20,7 @@
 Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gfiksq' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
-# TODO: Stop-ScoopExecution
-if ($err) { Write-UserMessage -Message "scoop update: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop update: $err" -ExitCode 2 }
 
 # Flags/Parameters
 $global = $opt.g -or $opt.global
@@ -33,15 +32,12 @@ $independent = $opt.i -or $opt.independent
 
 $exitCode = 0
 if (!$apps) {
-    # TODO: Stop-ScoopExecution
-    if ($global) { Write-UserMessage -Message 'scoop update: --global is invalid when <app> is not specified.' -Err; exit 2 }
-    if (!$useCache) { Write-UserMessage -Message 'scoop update: --no-cache is invalid when <app> is not specified.' -Err; exit 2 }
+    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global is invalid when <app> is not specified.' -ExitCode 2 }
+    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache is invalid when <app> is not specified.' -ExitCode 2 }
 
     Update-Scoop
 } else {
-    # TODO: Stop-ScoopExecution
-    if ($global -and !(is_admin)) { Write-UserMessage -Message 'You need admin rights to update global apps.' -Err; exit 4 }
-
+    if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
     if (is_scoop_outdated) { Update-Scoop }
     $outdatedApplications = @()
     $applicationsParam = $apps

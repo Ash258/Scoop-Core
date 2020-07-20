@@ -12,26 +12,17 @@
 
 Reset-Alias
 
-# options
 $opt, $apps, $err = getopt $args 'gp' 'global', 'purge'
 
-if ($err) {
-    Write-UserMessage -Message "scoop uninstall: $err" -Err
-    exit 2
-}
+if ($err) { Stop-ScoopExecution -Message "scoop uninstall: $err" -ExitCode 2 }
 
 $global = $opt.g -or $opt.global
 $purge = $opt.p -or $opt.purge
 
-if (!$apps) {
-    Write-UserMessage -Message '<app> missing' -Err
-    my_usage
-    exit 1
-}
+if (!$apps) { Stop-ScoopExecution -Message '<app> missing' -Usage (my_usage) }
 
 if ($global -and !(is_admin)) {
-    Write-UserMessage -Message 'Administrator privileges are required to uninstall global apps.' -Err
-    exit 4
+    Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall global apps.' -ExitCode 4
 }
 
 if ($apps -eq 'scoop') {
@@ -41,8 +32,7 @@ if ($apps -eq 'scoop') {
 
 $apps = Confirm-InstallationStatus $apps -Global:$global
 if (!$apps) {
-    Write-UserMessage -Message 'No application to uninstall' -Warning
-    exit 3
+    Stop-ScoopExecution -Message 'No application to uninstall' -ExitCode 3 -SkipSeverity
 }
 
 $exitCode = 0

@@ -99,13 +99,14 @@ function Stop-ScoopExecution {
         [String[]] $Message,
         [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
         [Int] $ExitCode = 3,
-        [String[]] $Usage
+        [String[]] $Usage,
+        [Switch] $SkipSeverity
     )
 
     begin { if ($Usage) { $ExitCode = 1 } }
 
     process {
-        Write-UserMessage -Message $Message -Err
+        Write-UserMessage -Message $Message -Err:(!$SkipSeverity)
         if ($Usage) {
             Write-UserMessage -Message $Usage -Output
         }
