@@ -120,8 +120,7 @@ Get-LocalBucket | ForEach-Object {
 
 if (!$local_results -and !(github_ratelimit_reached)) {
     $remote_results = search_remotes $query
-    # FIXME
-    if (!$remote_results) { Write-UserMessage -Message 'No matches found.' -Warning; exit 3 }
+    if (!$remote_results) { Stop-ScoopExecution -Message 'No matches found' }
     $remote_results
 }
 
