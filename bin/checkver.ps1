@@ -81,9 +81,9 @@ function next($AppName, $Err) {
 }
 
 function Invoke-Check {
-    param([Parameter(Mandatory, ValueFromPipeline)] [System.Management.Automation.PSEventArgs] $Event)
+    param([Parameter(Mandatory, ValueFromPipeline)] [System.Management.Automation.PSEventArgs] $EventToCheck)
 
-    $state = $Event.SourceEventArgs.UserState
+    $state = $EventToCheck.SourceEventArgs.UserState
 
     debug $state.url
     debug $state.regex
@@ -101,8 +101,8 @@ function Invoke-Check {
     $expectedVersion = $json.version
     $ver = ''
 
-    $page = $Event.SourceEventArgs.Result
-    $err = $Event.SourceEventArgs.Error
+    $page = $EventToCheck.SourceEventArgs.Result
+    $err = $EventToCheck.SourceEventArgs.Error
 
     if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-page.html' | Out-UTF8Content -Content $page }
     if ($json.checkver.script) {

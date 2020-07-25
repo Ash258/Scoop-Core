@@ -176,12 +176,12 @@ function script:ScoopTabExpansion($LastBlock) {
         }
 
         # Handles uninstall package names
-        '^(cleanup|hold|prefix|reset|uninstall|update|unhold|virustotal)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
+        '^(cleanup|hold|prefix|reset|uninstall|update|unhold)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
             return Get-LocallyInstalledApplicationsByScoop $Matches['package']
         }
 
         # Handles install package names
-        '^(cat|depends|download|info|install|home)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
+        '^(cat|depends|download|info|install|home|virustotal)\s+(?:.+\s+)?(?<package>[\w][\-.\w]*)?$' {
             return Get-LocallyAvailableApplicationsByScoop $Matches['package']
         }
 
