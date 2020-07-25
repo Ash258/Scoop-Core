@@ -85,11 +85,6 @@ function Invoke-Check {
 
     $state = $EventToCheck.SourceEventArgs.UserState
 
-    debug $state.url
-    debug $state.regex
-    debug $state.reverse
-    debug $state.replace
-
     $appName = $state.app
     $json = $state.json
     $url = $state.url
@@ -110,7 +105,14 @@ function Invoke-Check {
         if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-page-script.html' | Out-UTF8Content -Content $page }
     }
 
-    if ($err) { next $appName "$($err.Message)`r`nURL $url is not valid" }
+    if ($err) {
+        debug $state.url
+        debug $state.regex
+        debug $state.reverse
+        debug $state.replace
+
+        next $appName "$($err.Message)`r`nURL $url is not valid"
+    }
     if (!$regex -and $replace) { next $appName "'replace' requires 're' or 'regex'" }
 
     if ($jsonpath) {
