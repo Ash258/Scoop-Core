@@ -6,7 +6,8 @@
 # You can use
 #   scoop cache show
 # to see what's in the cache, and
-#   scoop cache rm <app> to remove downloads for a specific app.
+#   scoop cache rm <app>
+# to remove downloads for a specific app.
 #
 # To clear everything in your cache, use:
 #   scoop cache rm *
