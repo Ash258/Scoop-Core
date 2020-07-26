@@ -47,11 +47,8 @@ switch ($cmd) {
     'show' {
         show $app
     }
-    '' {
-        show
-    }
     default {
-        Stop-ScoopExecution -Message '' -Usage (my_usage)
+        show
     }
 }
 
