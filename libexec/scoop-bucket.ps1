@@ -27,7 +27,15 @@ Reset-Alias
 
 $exitCode = 0
 switch ($Cmd) {
-    'add' { add_bucket $Name $Repo }
+    'add' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <name> is missing' -Usage (my_usage) }
+
+        try {
+            Add-Bucket -Name $Name -RepositoryUrl $Repo
+        } catch {
+            Stop-ScoopExecution -Message $_.Exception.Message
+        }
+    }
     'rm' {
         if (!$Name) { Stop-ScoopExecution -Message 'Parameter <name> missing' -Usage (my_usage) }
 

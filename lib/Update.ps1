@@ -108,7 +108,7 @@ function Update-ScoopLocalBucket {
             # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
             if (($b -eq 'main') -and !(Test-Path $g -PathType Container)) {
                 Remove-Bucket -Name 'main'
-                add_bucket 'main'
+                Add-Bucket -Name 'main'
             }
 
             # Skip not git repositories
@@ -130,8 +130,7 @@ function Update-Scoop {
     #>
     param()
 
-    # TODO: Stop-ScoopExecution
-    if (!(Test-CommandAvailable -Command 'git')) { abort 'Scoop uses Git to update itself. Run ''scoop install git'' and try again.' }
+    if (!(Test-CommandAvailable -Command 'git')) { Stop-ScoopExecution -Message 'Scoop uses Git to update itself. Run ''scoop install git'' and try again.' }
     Write-UserMessage -Message 'Updating Scoop...' -Output
 
     # TODO: CONFIG refactor adoption
@@ -166,7 +165,7 @@ function Update-Scoop {
     # Add main bucket if not already added
     if ((Get-LocalBucket) -notcontains 'main') {
         Write-UserMessage -Message 'The main bucket has been separated', 'Adding main bucket...' -Output
-        add_bucket 'main'
+        Add-Bucket -Name 'main'
     }
 
     ensure_scoop_in_path
