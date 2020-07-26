@@ -119,16 +119,15 @@ function add_bucket($name, $repo) {
     Write-UserMessage -Message "The $name bucket was added successfully." -Success
 }
 
-function rm_bucket($name) {
-    # TODO: Stop-ScoopExecution: throw
-    if (!$name) { "<name> missing"; $usage_rm; exit 1 }
-    $dir = Find-BucketDirectory $name -Root
-    if (!(Test-Path $dir)) {
-        # TODO: Stop-ScoopExecution: throw
-        abort "'$name' bucket not found."
-    }
+function Remove-Bucket {
+    [CmdletBinding()]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $Name)
 
-    Remove-Item $dir -ErrorAction Stop -Force -Recurse
+    $bucketDirectory = Find-BucketDirectory $Name -Root
+
+    if (!(Test-Path $bucketDirectory)) { throw "'$Name' bucket not found" }
+
+    Remove-Item $bucketDirectory -Force -Recurse
 }
 
 # TODO: Migrate to helpers
@@ -183,7 +182,14 @@ function buckets {
 }
 
 function known_buckets {
+    Show-DeprecatedWarning $MyInvocation 'Get-KnownBucket'
+
     return Get-KnownBucket
 }
 
+function rm_bucket($name) {
+    Show-DeprecatedWarning $MyInvocation 'Remove-Bucket'
+
+    Remove-Bucket -Name $name
+}
 #endregion Deprecated

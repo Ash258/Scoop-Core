@@ -28,10 +28,24 @@ Reset-Alias
 $exitCode = 0
 switch ($Cmd) {
     'add' { add_bucket $Name $Repo }
-    'rm' { rm_bucket $Name }
-    'known' { Get-KnownBucket }
-    'list' { Get-LocalBucket }
-    default { Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage) }
+    'rm' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <name> missing' -Usage (my_usage) }
+
+        try {
+            Remove-Bucket -Name $Name
+        } catch {
+            Stop-ScoopExecution -Message $_.Exception.Message
+        }
+    }
+    'known' {
+        Get-KnownBucket
+    }
+    'list' {
+        Get-LocalBucket
+    }
+    default {
+        Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage)
+    }
 }
 
 exit $exitCode

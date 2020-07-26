@@ -107,7 +107,7 @@ function Update-ScoopLocalBucket {
 
             # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
             if (($b -eq 'main') -and !(Test-Path $g -PathType Container)) {
-                rm_bucket 'main'
+                Remove-Bucket -Name 'main'
                 add_bucket 'main'
             }
 
