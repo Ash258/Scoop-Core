@@ -1,5 +1,5 @@
 # Usage: scoop home <app>
-# Summary: Opens the app homepage
+# Summary: Opens the app homepage in default browser
 
 param($app)
 
@@ -23,6 +23,8 @@ if ($app) {
         $exitCode = 3
         Write-UserMessage -Message "Could not find manifest for '$app'." -Err
     }
-} else { my_usage; $exitCode = 1 }
+} else {
+    Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage)
+}
 
 exit $exitCode

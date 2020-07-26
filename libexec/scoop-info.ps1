@@ -9,7 +9,7 @@ param($app)
 
 Reset-Alias
 
-if (!$app) { my_usage; exit 1 }
+if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
 
 if ($app -match '^(ht|f)tps?://|\\\\') {
     # check if $app is a URL or UNC path
@@ -27,8 +27,7 @@ if ($app -match '^(ht|f)tps?://|\\\\') {
     $manifest, $bucket = find_manifest $app $bucket
 }
 
-# TODO: Stop-ScoopExecution
-if (!$manifest) { abort "Could not find manifest for '$(show_app $app $bucket)'." }
+if (!$manifest) { Stop-ScoopExecution -Message "Could not find manifest for '$(show_app $app $bucket)'." }
 
 $install = install_info $app $status.version $global
 $status.installed = $install.bucket -eq $bucket

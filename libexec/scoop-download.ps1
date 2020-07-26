@@ -17,35 +17,21 @@ Reset-Alias
 
 #region Parameter validation
 $opt, $application, $err = getopt $args 'sba:u:' 'skip', 'all-architectures', 'arch=', 'utility='
-if ($err) {
-    # TODO: Stop-ScoopExecution
-    Write-UserMessage -Message "scoop install: $err" -Err
-    exit 2
-}
+if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
 
 $checkHash = -not ($opt.s -or $opt.skip)
 $utility = $opt.u, $opt.utility, 'native' | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
 
+if (!$application) { Stop-ScoopExecution -Message 'Parameter <apps> missing' }
+if (($utility -eq 'aria2') -and (!(Test-HelperInstalled -Helper Aria2))) { Stop-ScoopExecution -Message 'Aria2 is not installed' }
+
 try {
     $architecture = ensure_architecture ($opt.a + $opt.arch)
 } catch {
-    # TODO: Stop-ScoopExecution
-    abort "ERROR: $_" 2
+    Stop-ScoopExecution -Message "$_" -ExitCode 2
 }
 # Add both architectures
 if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit' }
-
-if (-not $application) {
-    # TODO:? Extend Stop-ScoopExecution with -Usage switch
-    Write-UserMessage -Message '<app> missing' -Err
-    my_usage
-    exit 1
-}
-
-if (($utility -eq 'aria2') -and (-not (Test-HelperInstalled -Helper Aria2))) {
-    # TODO: Stop-ScoopExecution
-    abort 'Aria2 is not installed'
-}
 #endregion Parameter validation
 
 $exitCode = 0
@@ -127,9 +113,8 @@ foreach ($app in $application) {
         }
 
         default {
-            # abort could be called without any issue as it is used for all applications
-            # TODO: Stop-ScoopExecution
-            abort 'Not supported download utility' 2
+            # Could be called without any issue as it is used for all applications
+            Stop-ScoopExecution -Message 'Not supported download utility' 2
         }
     }
 }

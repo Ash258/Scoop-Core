@@ -12,8 +12,6 @@ if (!$Application) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Us
 $exitCode = 0
 $problems = 0
 foreach ($app in $Application) {
-    Write-UserMessage -Message "Showing manifest for $app" -Color Green
-
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
 
@@ -34,6 +32,8 @@ foreach ($app in $Application) {
     }
 
     if ($manifest) {
+        Write-UserMessage -Message "Showing manifest for $app" -Color Green
+
         $manifest | ConvertToPrettyJson | Write-UserMessage -Output
     } else {
         Write-UserMessage -Message "Manifest for $app not found" -Err

@@ -34,13 +34,6 @@ function search_bucket($bucket, $query) {
     }
 
     if ($query) {
-        try {
-            $query = New-Object System.Text.RegularExpressions.Regex $query, 'IgnoreCase'
-        } catch {
-            # TODO: Stop-ScoopExecution
-            abort "Invalid regular expression: $($_.Exception.InnerException.Message)"
-        }
-
         $apps = $apps | Where-Object {
             if ($_.name -match $query) { return $true }
             $bin = bin_match (manifest $_.name $bucket) $query
@@ -74,9 +67,9 @@ function search_remote($bucket, $query) {
         $result = download_json $api_link | Select-Object -ExpandProperty tree | Where-Object {
             $_.path -match "(^(.*$query.*).json$)"
         } | ForEach-Object { $matches[2] }
-    }
+}
 
-    return $result
+return $result
 }
 
 function search_remotes($query) {
@@ -87,19 +80,25 @@ function search_remotes($query) {
         @{'bucket' = $_; 'results' = (search_remote $_ $query) }
     } | Where-Object { $_.results }
 
-    if ($results.count -gt 0) {
-        Write-UserMessage -Message @(
-            'Results from other known buckets...'
-            '(add them using ''scoop bucket add <name>'')'
-            ''
-        )
-    }
+if ($results.count -gt 0) {
+    Write-UserMessage -Message @(
+        'Results from other known buckets...'
+        '(add them using ''scoop bucket add <name>'')'
+        ''
+    )
+}
 
-    $results | ForEach-Object {
-        "'$($_.bucket)' bucket:"
-        $_.results | ForEach-Object { "    $_" }
-        ""
-    }
+$results | ForEach-Object {
+    "'$($_.bucket)' bucket:"
+    $_.results | ForEach-Object { "    $_" }
+    ""
+}
+}
+
+try {
+    $query = New-Object System.Text.RegularExpressions.Regex $query, 'IgnoreCase'
+} catch {
+    Stop-ScoopExecution -Message "Invalid regular expression: $($_.Exception.InnerException.Message)"
 }
 
 Get-LocalBucket | ForEach-Object {
@@ -120,7 +119,7 @@ Get-LocalBucket | ForEach-Object {
 
 if (!$local_results -and !(github_ratelimit_reached)) {
     $remote_results = search_remotes $query
-    if (!$remote_results) { Stop-ScoopExecution -Message 'No matches found' }
+    if (!$remote_results) { Stop-ScoopExecution -Message 'No matches found' -SkipSeverity }
     $remote_results
 }
 

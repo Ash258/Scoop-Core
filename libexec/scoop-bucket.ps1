@@ -10,7 +10,7 @@
 #   scoop bucket add <name> [<repo>]
 #
 # e.g.:
-#   scoop bucket add extras https://github.com/lukesampson/scoop-extras.git
+#   scoop bucket add Ash258 https://github.com/Ash258/Scoop-Ash258.git
 #
 # Since the 'extras' bucket is known to Scoop, this can be shortened to:
 #   scoop bucket add extras
@@ -34,9 +34,9 @@ $exitCode = 0
 switch ($Cmd) {
     'add' { add_bucket $Name $Repo }
     'rm' { rm_bucket $Name }
-    'list' { Get-LocalBucket }
     'known' { known_buckets }
-    default { my_usage; $exitCode = 1 }
+    'list' { Get-LocalBucket }
+    default { Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage) }
 }
 
 exit $exitCode

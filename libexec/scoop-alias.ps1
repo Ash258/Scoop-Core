@@ -46,8 +46,12 @@ switch ($Option) {
             $exitCode = 3
         }
     }
-    'list' { Get-ScoopAlias -Verbose:$Verbose }
-    default { Stop-ScoopExecution -Message 'No parameters provided' -Usage (my_usage) }
+    'list' {
+        Get-ScoopAlias -Verbose:$Verbose
+    }
+    default {
+        Stop-ScoopExecution -Message 'No parameters provided' -Usage (my_usage)
+    }
 }
 
 exit $exitCode

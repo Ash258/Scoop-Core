@@ -32,7 +32,9 @@ if ($apps -eq 'scoop') {
 
 $apps = Confirm-InstallationStatus $apps -Global:$global
 if (!$apps) {
-    Stop-ScoopExecution -Message 'No application to uninstall' -ExitCode 3 -SkipSeverity
+    # This is not strict error
+    # Keeping it with zero exit code will allow chaining of commands in such use case (mainly vscode tasks dependencies)
+    Stop-ScoopExecution -Message 'No application to uninstall' -ExitCode 0 -SkipSeverity
 }
 
 $exitCode = 0
