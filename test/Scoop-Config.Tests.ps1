@@ -50,6 +50,7 @@ Describe "config" -Tag 'Scoop' {
         }
     }
 
+    <#
     It "set_config should create a new PSObject and ensure existing directory" {
         $scoopConfig = $null
         $configFile = "$PSScriptRoot\.scoop"
@@ -78,4 +79,5 @@ Describe "config" -Tag 'Scoop' {
 
         Assert-VerifiableMock
     }
+    #>
 }
