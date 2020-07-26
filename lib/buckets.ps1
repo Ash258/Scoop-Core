@@ -45,8 +45,15 @@ function known_bucket_repo($name) {
     return $buckets.$name
 }
 
-function known_buckets {
-    known_bucket_repos | ForEach-Object { $_.PSObject.Properties | Select-Object -ExpandProperty 'name' }
+function Get-KnownBucket {
+    <#
+    .SYNOPSIS
+        List names of all known buckets
+    #>
+    [CmdletBinding()]
+    param()
+
+    return known_bucket_repos | ForEach-Object { $_.PSObject.Properties | Select-Object -ExpandProperty 'Name' }
 }
 
 function apps_in_bucket($dir) {
@@ -174,4 +181,9 @@ function buckets {
 
     return Get-LocalBucket
 }
+
+function known_buckets {
+    return Get-KnownBucket
+}
+
 #endregion Deprecated
