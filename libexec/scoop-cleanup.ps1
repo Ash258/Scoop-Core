@@ -1,4 +1,4 @@
-# Usage: scoop cleanup <app> [options]
+# Usage: scoop cleanup <apps> [options]
 # Summary: Cleanup apps by removing old versions
 # Help: 'scoop cleanup' cleans Scoop apps by removing old versions.
 # 'scoop cleanup <app>' cleans up the old versions of that app if said versions exist.
@@ -16,13 +16,13 @@
 Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gk' 'global', 'cache'
-if ($err) { Write-UserMessage -Message "scoop cleanup: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop cleanup: $err" -ExitCode 2 }
+
 $global = $opt.g -or $opt.global
 $cache = $opt.k -or $opt.cache
 
-if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
-
-if ($global -and !(is_admin)) { Write-UserMessage -Message 'Admin privileges are required to manipulate with globally installed apps' -Err; exit 4 }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
 function cleanup($app, $global, $verbose, $cache) {
     $currentVersion = Select-CurrentVersion -AppName $app -Global:$global

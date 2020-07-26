@@ -40,9 +40,9 @@ function show($app) {
 $exitCode = 0
 switch ($cmd) {
     'rm' {
-        if (!$app) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
-        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*"|  Remove-Item -Force -Recurse
-        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"|  Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
+        if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*"| Remove-Item -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"| Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
     }
     'show' {
         show $app
@@ -51,8 +51,7 @@ switch ($cmd) {
         show
     }
     default {
-        my_usage
-        $exitCode = 1
+        Stop-ScoopExecution -Message '' -Usage (my_usage)
     }
 }
 

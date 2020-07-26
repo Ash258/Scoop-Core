@@ -16,8 +16,7 @@ $architecture = default_architecture
 try {
     $architecture = ensure_architecture ($opt.a + $opt.arch)
 } catch {
-    # TODO: Stop-ScoopExecution
-    abort "ERROR: $_" 2
+    Stop-ScoopExecution -Message "ERROR: $_" -ExitCode 2
 }
 
 $deps = @(deps $app $architecture)
