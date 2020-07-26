@@ -16,14 +16,12 @@
 Reset-Alias
 
 $opt, $query, $err = getopt $args 'iur' 'installed', 'updated', 'reverse'
-# TODO: Stop-ScoopExecution
-if ($err) { Write-UserMessage -Message "scoop install: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
 
 $orderInstalled = $opt.i -or $opt.installed
 $orderUpdated = $opt.u -or $opt.updated
 $reverse = $opt.r -or $opt.reverse
-# TODO: Stop-ScoopExecution
-if ($orderUpdated -and $orderInstalled) { Write-UserMessage -Message '--installed and --updated parameters cannot be used simultaneously' -Err; exit 2 }
+if ($orderUpdated -and $orderInstalled) { Stop-ScoopExecution -Message '--installed and --updated options cannot be used simultaneously' -ExitCode 2 }
 $def_arch = default_architecture
 
 $locA = appsdir $false

@@ -11,8 +11,8 @@
 Reset-Alias
 $opt, $apps, $err = getopt $args
 
-if ($err) { Write-UserMessage -Message "scoop reset: $err" -Err; exit 2 }
-if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
+if ($err) { Stop-ScoopExecution -Message "scoop reset: $err" -ExitCode 2 }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
 
 if ($apps -eq '*') {
     $local = installed_apps $false | ForEach-Object { , @($_, $false) }

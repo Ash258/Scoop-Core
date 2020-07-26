@@ -32,8 +32,8 @@ $independent = $opt.i -or $opt.independent
 
 $exitCode = 0
 if (!$apps) {
-    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global is invalid when <app> is not specified.' -ExitCode 2 }
-    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache is invalid when <app> is not specified.' -ExitCode 2 }
+    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global option is invalid when <app> is not specified.' -ExitCode 2 }
+    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache option is invalid when <app> is not specified.' -ExitCode 2 }
 
     Update-Scoop
 } else {

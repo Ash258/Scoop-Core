@@ -10,8 +10,9 @@ param($app)
 Reset-Alias
 $exitCode = 0
 
-if (!$app) { my_usage; exit 1 }
+if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
 
+# TODO: NO_JUNCTION
 $app_path = versiondir $app 'current' $false
 if (!(Test-Path $app_path)) { $app_path = versiondir $app 'current' $true }
 

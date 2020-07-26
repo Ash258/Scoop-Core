@@ -130,9 +130,9 @@ function generate_user_manifest($app, $bucket, $version) {
         "Attempting to generate manifest for '$app' ($version)"
     )
 
-    # TODO: Stop-ScoopExecution
     if (!($manifest.autoupdate)) {
-        abort "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'"
+        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'" -Warn
+        return
     }
 
     $path = usermanifestsdir | ensure
@@ -141,7 +141,7 @@ function generate_user_manifest($app, $bucket, $version) {
 
         return (usermanifest $app | Resolve-Path).Path
     } catch {
-        Write-UserMessage -Message "Could not install $app@$version" -Color DarkRed
+        throw "Could not install $app@$version"
     }
 
     return $null

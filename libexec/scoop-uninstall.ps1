@@ -19,7 +19,7 @@ if ($err) { Stop-ScoopExecution -Message "scoop uninstall: $err" -ExitCode 2 }
 $global = $opt.g -or $opt.global
 $purge = $opt.p -or $opt.purge
 
-if (!$apps) { Stop-ScoopExecution -Message '<app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
 
 if ($global -and !(is_admin)) {
     Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall global apps.' -ExitCode 4

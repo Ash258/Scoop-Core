@@ -11,7 +11,7 @@ Reset-Alias
 
 $opt, $apps, $err = getopt $args 'g' 'global'
 if ($err) { Stop-ScoopExecution -Message "scoop unhold: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message '<app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
 
 $global = $opt.g -or $opt.global
 

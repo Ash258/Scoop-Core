@@ -49,22 +49,23 @@ function is_installed($app, $global) {
 }
 
 $opt, $apps, $err = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
-if ($err) { Write-UserMessage -Message "scoop install: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
 
+$exitCode = 0
+$problems = 0
 $global = $opt.g -or $opt.global
 $check_hash = !($opt.s -or $opt.skip)
 $independent = $opt.i -or $opt.independent
 $use_cache = !($opt.k -or $opt.'no-cache')
 $architecture = default_architecture
+
 try {
     $architecture = ensure_architecture ($opt.a + $opt.arch)
 } catch {
-    abort "ERROR: $_" 2
+    Stop-ScoopExecution -Message "ERROR: $_" -ExitCode 2
 }
-
-if (!$apps) { Write-UserMessage -Message '<app> missing' -Err; my_usage; exit 1 }
-
-if ($global -and !(is_admin)) { abort 'Admin privileges are required to manipulate with globally installed apps' 4 }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
 if (is_scoop_outdated) { Update-Scoop }
 
@@ -75,26 +76,36 @@ if ($apps.length -eq 1) {
     }
 }
 
-# get any specific versions that we need to handle first
+# get any specific versions that need to handled first
 $specific_versions = $apps | Where-Object {
     $null, $null, $version = parse_app $_
     return $null -ne $version
 }
 
 # compare object does not like nulls
-if ($specific_versions.length -gt 0) {
+if ($specific_versions.Length -gt 0) {
     $difference = Compare-Object -ReferenceObject $apps -DifferenceObject $specific_versions -PassThru
 } else {
     $difference = $apps
 }
 
-$specific_versions_paths = $specific_versions | ForEach-Object {
-    $app, $bucket, $version = parse_app $_
+$specific_versions_paths = @()
+foreach ($sp in $specific_versions) {
+    $app, $bucket, $version = parse_app $sp
     if (installed_manifest $app $version) {
-        abort "'$app' ($version) is already installed.`nUse 'scoop update $app$global_flag' to install a new version."
+        Write-UserMessage -Warn -Message @(
+            "'$app' ($version) is already installed.",
+            "Use 'scoop update $app$global_flag' to install a new version."
+        )
+        continue
+    } else {
+        try {
+            $specific_versions_paths += generate_user_manifest $app $bucket $version
+        } catch {
+            Write-UserMessage -Message $_.Exception.Message -Color DarkRed
+            ++$problems
+        }
     }
-
-    generate_user_manifest $app $bucket $version
 }
 $apps = @(($specific_versions_paths + $difference) | Where-Object { $_ } | Sort-Object -Unique)
 
@@ -115,26 +126,20 @@ $skip | Where-Object { $explicit_apps -contains $_ } | ForEach-Object {
     Write-UserMessage -Message "'$app' ($version) is already installed. Skipping." -Warning
 }
 
-$suggested = @{ };
+$suggested = @{ }
 
-if (Test-Aria2Enabled) {
-    Write-UserMessage -Warning -Message @(
-        "Scoop uses 'aria2c' for multi-connection downloads."
-        "Should it cause issues, run 'scoop config aria2-enabled false' to disable it."
-    )
-}
-
-$exitCode = 0
 foreach ($app in $apps) {
     try {
         install_app $app $architecture $global $suggested $use_cache $check_hash
     } catch {
-        $exitCode = 3
+        ++$problems
         Write-UserMessage -Message $_.Exception.Message -Err
         continue
     }
 }
 
 show_suggestions $suggested
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
 
 exit $exitCode

@@ -42,7 +42,7 @@ Reset-Alias
 
 $opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
 if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Application missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Application parameter missing' -Usage (my_usage) }
 
 $architecture = ensure_architecture ($opt.a + $opt.arch)
 $DoScan = $opt.scan -or $opt.s
@@ -72,7 +72,7 @@ foreach ($app in $apps) {
             } else {
                 Write-UserMessage -Message "${app}: Can not find hash for $url" -Warning
             }
-        } catch [Exception] {
+        } catch {
             $exitCode = $exitCode -bor $VT_ERR.Exception
 
             if ($_.Exception.Message -like '*(404)*') {

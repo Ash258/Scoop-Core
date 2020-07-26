@@ -10,7 +10,7 @@ param([String] $Command)
 
 Reset-Alias
 
-if (!$command) { Stop-ScoopExecution -Message '<command> missing' -Usage (my_usage) }
+if (!$command) { Stop-ScoopExecution -Message 'Parameter <command> missing' -Usage (my_usage) }
 
 try {
     $gcm = Get-Command $Command -ErrorAction Stop
@@ -40,7 +40,7 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
     switch ($gcm.CommandType) {
         'Application' { $FINAL_PATH = $gcm.Source }
         'Alias' {
-            $FINAL_PATH = Invoke-ScoopCommand 'which'  @{ 'Command' = $gcm.ResolvedCommandName }
+            $FINAL_PATH = Invoke-ScoopCommand 'which' @{ 'Command' = $gcm.ResolvedCommandName }
             $exitCode = 3
         }
         default {
