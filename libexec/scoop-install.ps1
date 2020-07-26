@@ -76,13 +76,13 @@ if ($apps.length -eq 1) {
     }
 }
 
-# get any specific versions that need to handled first
+# Get any specific versions that need to be handled first
 $specific_versions = $apps | Where-Object {
     $null, $null, $version = parse_app $_
     return $null -ne $version
 }
 
-# compare object does not like nulls
+# Compare object does not like nulls
 if ($specific_versions.Length -gt 0) {
     $difference = Compare-Object -ReferenceObject $apps -DifferenceObject $specific_versions -PassThru
 } else {
