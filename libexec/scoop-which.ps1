@@ -41,7 +41,7 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
         'Application' { $FINAL_PATH = $gcm.Source }
         'Alias' {
             $FINAL_PATH = Invoke-ScoopCommand 'which' @{ 'Command' = $gcm.ResolvedCommandName }
-            $exitCode = 3
+            $exitCode = $LASTEXITCODE
         }
         default {
             Write-UserMessage -Message 'Not a scoop shim'
