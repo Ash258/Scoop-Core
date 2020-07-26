@@ -11,25 +11,26 @@ Reset-Alias
 
 $opt, $apps, $err = getopt $args 'g' 'global'
 if ($err) { Stop-ScoopExecution -Message "scoop hold: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message '<app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
 
 $global = $opt.g -or $opt.global
 
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed apps' -ExitCode 4 }
 
+$problems = 0
 $exitCode = 0
 foreach ($app in $apps) {
     # Not at all installed
     if (!(installed $app)) {
         Write-UserMessage -Message "'$app' is not installed." -Err
-        $exitCode = 3
+        ++$problems
         continue
     }
 
     # Global required, but not installed globally
     if ($global -and (!(installed $app $global))) {
         Write-UserMessage -Message "'$app' not installed globally" -Err
-        $exitCode = 3
+        ++$problems
         continue
     }
 
@@ -47,5 +48,7 @@ foreach ($app in $apps) {
     save_install_info $install $dir
     Write-UserMessage -Message "$app is now held and can not be updated anymore." -Success
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
 
 exit $exitCode
