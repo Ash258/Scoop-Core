@@ -95,7 +95,7 @@ Reset-Alias
 if (!$name) { Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage) }
 
 if ($name -eq 'rm') {
-    if (!$value) { Stop-ScoopExecution -Message '''rm'' require value parameter' -ExitCode 2 }
+    if (!$value) { Stop-ScoopExecution -Message '''rm'' requires value parameter' -ExitCode 2 }
 
     set_config $value $null | Out-Null
     Write-UserMessage -Message "'$value' has been removed"
