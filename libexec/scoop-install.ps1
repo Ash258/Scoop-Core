@@ -1,4 +1,4 @@
-# Usage: scoop install <app> [options]
+# Usage: scoop install <apps> [options]
 # Summary: Install apps
 # Help: e.g. The usual way to install an app (uses your local 'buckets'):
 #   scoop install git
@@ -64,7 +64,7 @@ try {
 } catch {
     Stop-ScoopExecution -Message "ERROR: $_" -ExitCode 2
 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
 if (is_scoop_outdated) { Update-Scoop }

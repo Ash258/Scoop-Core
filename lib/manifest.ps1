@@ -131,8 +131,8 @@ function generate_user_manifest($app, $bucket, $version) {
     )
 
     if (!($manifest.autoupdate)) {
-        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'" -Warn
-        return
+        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'" -Warning
+        return $null
     }
 
     $path = usermanifestsdir | ensure
