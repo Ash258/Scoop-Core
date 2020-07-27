@@ -80,7 +80,7 @@ function Expand-7zipArchive {
     try {
         $Status = Invoke-ExternalCommand $7zPath $ArgList -LogPath $LogPath
     } catch [System.Management.Automation.ParameterBindingException] {
-        Write-UserMessage -Message '''7zip'' is not installed or cannot be used' -Err
+        Set-TerminatingError -Title 'Ignore|-''7zip'' is not installed or cannot be used'
     }
 
     if (!$Status) {
@@ -222,20 +222,17 @@ function Expand-ZipArchive {
                 Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
                 return
             } else {
-                # TODO: Stop-ScoopExecution: throw
-                abort "Unzip failed: Windows can't handle the long paths in this zip file.`nRun 'scoop install 7zip' and try again."
+                Set-TerminatingError -Title "Ignore|-Unzip failed: Windows can not handle the long paths in this zip file.`nRun 'scoop install 7zip' and try again."
             }
         } catch [System.IO.IOException] {
             if (Test-HelperInstalled -Helper 7zip) {
                 Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
                 return
             } else {
-                # TODO: Stop-ScoopExecution: throw
-                abort "Unzip failed: Windows can't handle the file names in this zip file.`nRun 'scoop install 7zip' and try again."
+                Set-TerminatingError -Title "Ignore|-Unzip failed: Windows can not handle the file names in this zip file.`nRun 'scoop install 7zip' and try again."
             }
         } catch {
-            # TODO: Stop-ScoopExecution: throw
-            abort "Unzip failed: $_"
+            Set-TerminatingError -Title "Ignore|-Unzip failed: $_"
         }
     } else {
         # Use Expand-Archive to unzip in PowerShell 5+
@@ -269,11 +266,10 @@ function Expand-DarkArchive {
     try {
         $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Dark) $ArgList -LogPath $LogPath
     } catch [System.Management.Automation.ParameterBindingException] {
-        Write-UserMessage -Message '''dark'' is not installed or cannot be used' -Err
+        Set-TerminatingError -Title 'Ignore|-''dark'' is not installed or cannot be used' -Err
     }
     if (!$Status) {
-        # TODO: Stop-ScoopExecution: throw
-        abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
+        Set-TerminatingError -Title "Decompress Error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
     }
     if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
     # Remove original archive file

@@ -124,6 +124,9 @@ if (!$independent) {
         }
     }
 }
+
+# This should not be breaking error in case there are other apps specified
+if ($apps.Count -eq 0) { Stop-ScoopExecution -Message 'Nothing to install' }
 ensure_none_failed $apps $global
 
 $apps, $skip = prune_installed $apps $global
