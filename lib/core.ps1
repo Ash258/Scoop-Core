@@ -581,8 +581,7 @@ function warn_on_overwrite($shim_ps1, $path) {
 }
 
 function shim($path, $global, $name, $arg) {
-    # TODO: Stop-ScoopExecution: throw
-    if (!(Test-Path $path)) { abort "Can't shim '$(fname $path)': couldn't find '$path'." }
+    if (!(Test-Path $path)) { Set-TerminatingError -Message "Shim creation fail|-Can nott shim '$(fname $path)': could not find '$path'." }
 
     $abs_shimdir = shimdir $global | ensure
     if (!$name) { $name = strip_ext (fname $path) }

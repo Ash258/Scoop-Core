@@ -886,8 +886,7 @@ function create_shims($manifest, $dir, $global, $arch) {
         } else {
             $bin = search_in_path $target
         }
-        # TODO: Stop-ScoopExecution: throw
-        if (!$bin) { abort "Can't shim '$target': File doesn't exist." }
+        if (!$bin) { Set-TerminatingError -Title "Shim creation fail|-Can not shim '$target': File does not exist." }
 
         shim $bin $global $name (substitute $arg @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
     }
