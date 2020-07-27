@@ -55,8 +55,7 @@ function Expand-7zipArchive {
         try {
             $7zPath = (Get-Command '7z' -CommandType Application | Select-Object -First 1).Source
         } catch [System.Management.Automation.CommandNotFoundException] {
-            # TODO: Stop-ScoopExecution: throw
-            abort "Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
+            Set-TerminatingError -Title "Ignore|-Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
         }
     } else {
         $7zPath = Get-HelperPath -Helper 7zip
@@ -85,8 +84,7 @@ function Expand-7zipArchive {
     }
 
     if (!$Status) {
-        # TODO: Stop-ScoopExecution: throw
-        abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
+        Set-TerminatingError -Title "Decompress Error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
     }
     if (!$IsTar -and $ExtractDir) {
         movedir (Join-Path $DestinationPath $ExtractDir) $DestinationPath | Out-Null
@@ -100,8 +98,7 @@ function Expand-7zipArchive {
             $TarFile = (Get-Content -Path $LogPath)[-4] -replace '.{53}(.*)', '$1' # get inner tar file name
             Expand-7zipArchive -Path (Join-Path $DestinationPath $TarFile) -DestinationPath $DestinationPath -ExtractDir $ExtractDir -Removal
         } else {
-            # TODO: Stop-ScoopExecution
-            abort "Failed to list files in $Path.`nNot a 7-Zip supported archive file."
+            Set-TerminatingError -Title "Decompress Error|-Failed to list files in $Path.`nNot a 7-Zip supported archive file."
         }
     }
 

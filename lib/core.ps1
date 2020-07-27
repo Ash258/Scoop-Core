@@ -523,8 +523,12 @@ function isFileLocked([string]$path) {
 
 function is_directory([String] $path) { return (Test-Path $path) -and (Get-Item $path) -is [System.IO.DirectoryInfo] }
 
-function movedir($from, $to) {
+function movedir {
+    [CmdletBinding()]
+    param($from, $to)
+
     $from = $from.trimend('\')
+    $parent = Split-Path $from -Parent
     $to = $to.trimend('\')
 
     $proc = New-Object System.Diagnostics.Process
@@ -540,7 +544,7 @@ function movedir($from, $to) {
 
     if ($proc.ExitCode -ge 8) {
         debug $out
-        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from)'! (error $($proc.ExitCode))" -ID 'Scoop.Decompress'
+        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from) in $parent'! (error $($proc.ExitCode))" -ID 'Scoop.Decompress'
     }
 
     # Wait for robocopy to terminate its threads

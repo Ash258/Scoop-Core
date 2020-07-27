@@ -91,6 +91,8 @@ function Set-TerminatingError {
                 $MyObject # ???
             )
         )
+    } else {
+        throw [ScoopException]::new($Title)
     }
 }
 
