@@ -141,11 +141,11 @@ foreach ($app in $apps) {
         install_app $app $architecture $global $suggested $use_cache $check_hash
     } catch {
         ++$problems
+
         $title, $body = $_.Exception.Message -split '\|-'
         Write-UserMessage -Message $body -Err
-        if ($title -ne 'Ignore') {
-            New-IssuePrompt -Application $app -Title $title -Body $body
-        }
+        if ($title -ne 'Ignore') { New-IssuePrompt -Application $app -Title $title -Body $body }
+
         continue
     }
 }
