@@ -80,6 +80,17 @@ function Write-UserMessage {
 }
 
 function Set-TerminatingError {
+    <#
+    .SYNOPSIS
+        Short description
+    .DESCRIPTION
+        Long description
+    .PARAMETER Title
+        Specifies the exception message.
+        It should be in format '<Category>|-<detail>'.
+    .PARAMETER ID
+        Specifies the global identifier of the error condition.
+    #>
     param([String] $Title, [String] $ID = 'Scoop')
 
     if ($PSCmdlet) {
@@ -88,7 +99,7 @@ function Set-TerminatingError {
                 ([ScoopException]::new($Title)),
                 $ID,
                 [System.Management.Automation.ErrorCategory]::OpenError,
-                $MyObject # ???
+                $null
             )
         )
     } else {
@@ -286,6 +297,19 @@ function Reset-Alias {
 }
 
 function New-IssuePrompt {
+    <#
+    .SYNOPSIS
+        Prompt user to report a manifest problem to it's maintaners.
+        Post direct link in case of supported source control provides.
+    .PARAMETER Application
+        Specifies the application name.
+    .PARAMETER Bucket
+        Specifies the bucket to which application belong
+    .PARAMETER Title
+        Specifies the title of newly created issue.
+    .PARAMETER Body
+        Specifies more details to be posted as issue body.
+    #>
     param([String] $Application, [String] $Bucket, [String] $Title, [String[]] $Body)
 
     $app, $manifest, $Bucket, $url = Find-Manifest $Application $Bucket
