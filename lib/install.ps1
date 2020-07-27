@@ -16,15 +16,13 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
 
     if (!$manifest) {
-        # TODO: Stop-ScoopExecution: Throw
-        abort "Couldn't find manifest for '$app'$(if($url) { " at the URL $url" })."
+        throw [ScoopException]::new("Ignore|-Could not find manifest for '$app'$(if($url) { " at the URL $url" }).")
     }
 
     $version = $manifest.version
-    if (!$version) { abort "Manifest doesn't specify a version." }
+    if (!$version) { throw [ScoopException]::new("Version property missing|-Manifest '$app' does not specify a version.") }
     if ($version -match '[^\w\.\-\+_]') {
-        # TODO: Stop-ScoopExecution: throw
-        abort "Manifest version has unsupported character '$($matches[0])'."
+        throw [ScoopException]::new("Unsupported version|-Manifest version has unsupported character '$($matches[0])'.")
     }
 
     $is_nightly = $version -eq 'nightly'

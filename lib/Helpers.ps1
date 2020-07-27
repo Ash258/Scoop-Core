@@ -79,6 +79,21 @@ function Write-UserMessage {
     }
 }
 
+function Set-TerminatingError {
+    param([String] $Title, [String] $ID = 'Scoop')
+
+    if ($PSCmdlet) {
+        $PSCmdlet.ThrowTerminatingError(
+            [System.Management.Automation.ErrorRecord]::new(
+                ([ScoopException]::new($Title)),
+                $ID,
+                [System.Management.Automation.ErrorCategory]::OpenError,
+                $MyObject # ???
+            )
+        )
+    }
+}
+
 function Stop-ScoopExecution {
     <#
     .SYNOPSIS
@@ -267,3 +282,55 @@ function Reset-Alias {
     # Set default aliases
     $defautlAliases.Keys | ForEach-Object { _resetAlias $_ $defautlAliases[$_] }
 }
+
+function New-IssuePrompt {
+    param([String] $Application, [String] $Bucket, [String] $Title, [String[]] $Body)
+
+    $app, $manifest, $Bucket, $url = Find-Manifest $Application $Bucket
+    $url = known_bucket_repo $Bucket
+    $bucketPath = Join-Path $SCOOP_BUCKETS_DIRECTORY $bucket
+
+    if ((Test-Path $bucketPath) -and (Join-Path $bucketPath '.git' | Test-Path -PathType Container)) {
+        $remote = Invoke-GitCmd -Repository $bucketPath -Command 'config' -Argument '--get','remote.origin.url'
+        # Support ssh and http syntax
+        # git@PROVIDER:USER/REPO.git
+        # https://PROVIDER/USER/REPO.git
+        # https://regex101.com/r/OMEqfV
+        if ($remote -match '(?:@|:\/\/)(?<provider>.+?)[:\/](?<user>.*)\/(?<repo>.+?)(?:\.git)?$') {
+            $url = "https://$($Matches.Provider)/$($Matches.User)/$($Matches.Repo)"
+        }
+    }
+
+    if (!$url) {
+        Write-UserMessage -Message 'Please contact the manifest maintainer!' -Color DarkRed
+        return
+    }
+
+    $title = [System.Web.HttpUtility]::UrlEncode("$Application@$($Manifest.version): $Title")
+    $body = [System.Web.HttpUtility]::UrlEncode($Body)
+    $msg = "`nPlease try again"
+
+    switch -Wildcard ($url) {
+        '*github.*' {
+            $url = $url -replace '\.git$'
+            $url = "$url/issues/new?title=$title"
+            if ($body) { $url += "&body=$body" }
+            $msg = "$msg or create a new issue by using the following link and paste your console output:"
+        }
+        default {
+            Write-UserMessage -Message 'Not supported platform' -Info
+        }
+    }
+
+    Write-UserMessage -Message "$msg`n$url" -Color DarkRed
+}
+
+#region Exceptions
+class ScoopException: System.Exception {
+    $Message
+
+    ScoopException([String] $Message) {
+        $this.Message = $Message
+    }
+}
+#endregion Exceptions

@@ -540,7 +540,7 @@ function movedir($from, $to) {
 
     if ($proc.ExitCode -ge 8) {
         debug $out
-        throw "Could not find '$(fname $from)'! (error $($proc.ExitCode))"
+        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from)'! (error $($proc.ExitCode))" -ID 'Scoop.Decompress'
     }
 
     # Wait for robocopy to terminate its threads

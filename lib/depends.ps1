@@ -35,8 +35,8 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
         if (((Get-LocalBucket) -notcontains $bucket) -and $bucket) {
             Write-UserMessage -Message "Bucket '$bucket' not installed. Add it with 'scoop bucket add $bucket' or 'scoop bucket add $bucket <repo>'." -Warning
         }
-        # TODO: Stop-ScoopExecution: Throw
-        abort "Couldn't find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })"
+
+        throw [ScoopException]::new("Ignore|-Couldn't find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })")
     }
 
     $deps = @(install_deps $manifest $arch) + @(runtime_deps $manifest) | Select-Object -Unique

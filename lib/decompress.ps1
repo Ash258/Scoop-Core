@@ -1,3 +1,7 @@
+'core', 'Helpers' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
+}
+
 function Test-7zipRequirement {
     [CmdletBinding(DefaultParameterSetName = 'URL')]
     [OutputType([Boolean])]
