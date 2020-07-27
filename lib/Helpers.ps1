@@ -308,15 +308,15 @@ function New-IssuePrompt {
         return
     }
 
-    $title = [System.Web.HttpUtility]::UrlEncode("$Application@$($Manifest.version): $Title")
-    $body = [System.Web.HttpUtility]::UrlEncode($Body)
+    $Title = [System.Web.HttpUtility]::UrlEncode("$Application@$($Manifest.version): $Title")
+    $Body = [System.Web.HttpUtility]::UrlEncode($Body)
     $msg = "`nPlease try again"
 
     switch -Wildcard ($url) {
         '*github.*' {
             $url = $url -replace '\.git$'
-            $url = "$url/issues/new?title=$title"
-            if ($body) { $url += "&body=$body" }
+            $url = "$url/issues/new?title=$Title"
+            if ($body) { $url += "&body=$Body" }
             $msg = "$msg or create a new issue by using the following link and paste your console output:"
         }
         default {
