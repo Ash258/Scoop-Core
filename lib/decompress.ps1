@@ -137,8 +137,7 @@ function Expand-MsiArchive {
 
     $Status = Invoke-ExternalCommand $MsiPath $ArgList -LogPath $LogPath
     if (!$Status) {
-        # TODO: Stop-ScoopExecution
-        abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
+        Set-TerminatingError -Title "Decompress Error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
     }
 
     $sourceDir = Join-Path $DestinationPath 'SourceDir'
@@ -182,13 +181,14 @@ function Expand-InnoArchive {
     if ($Switches) { $ArgList += (-split $Switches) }
 
     try {
+        # TODO: Find out extract_dir issue.
+        # When there is no specified directory in archive innounp will just exit with 0 and version of file
         $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $ArgList -LogPath $LogPath
     } catch [System.Management.Automation.ParameterBindingException] {
-        Write-UserMessage -Message '''innounp'' is not installed or cannot be used' -Err
+        Set-TerminatingError -Title 'Ignore|-''innounp'' is not installed or cannot be used'
     }
     if (!$Status) {
-        # TODO: Stop-ScoopExecution: throw
-        abort "Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)`n$(new_issue_msg $app $bucket 'decompress error')"
+        Set-TerminatingError -Title "Decompress Error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
     }
     if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
     # Remove original archive file
