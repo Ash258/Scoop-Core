@@ -9,15 +9,13 @@ function install_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    # TODO: Stop-ScoopExecution throw
-    if ($global) { abort "Installing PowerShell modules globally is not implemented!" }
+    if ($global) { Set-TerminatingError -Title "Ignore|-Installing PowerShell modules globally is not implemented!" }
 
     $modulesdir = ensure $modulesdir
     ensure_in_psmodulepath $modulesdir $global
 
     $module_name = $psmodule.name
-    # TODO:Stop-ScoopExecution throw
-    if (!$module_name) { abort "Invalid manifest: The 'name' property is missing from 'psmodule'." }
+    if (!$module_name) { Set-TerminatingError -Title "Invalid manifest|-The 'name' property is missing from 'psmodule'." }
 
     $linkfrom = Join-Path $modulesdir $module_name
     Write-UserMessage -Message "Installing PowerShell module '$module_name'"

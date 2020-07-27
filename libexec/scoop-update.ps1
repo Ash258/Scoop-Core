@@ -81,7 +81,13 @@ if (!$apps) {
             Update-App -App $out[0] -Global:$out[1] -Suggested @{ } -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
         } catch {
             ++$problems
-            Write-UserMessage -Message $_.Exception.Message -Err
+
+            $title, $body = $_.Exception.Message -split '\|-'
+            if (!$body) { $body = $title }
+            Write-UserMessage -Message $body -Err
+            if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $out[0] -Title $title -Body $body }
+
+            continue
         }
     }
 }

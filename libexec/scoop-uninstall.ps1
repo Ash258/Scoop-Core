@@ -43,7 +43,19 @@ $problems = 0
 :app_loop foreach ($_ in $apps) {
     ($app, $global) = $_
 
-    $result = Uninstall-ScoopApplication -App $app -Global:$global -Purge:$purge -Older
+    try {
+        $result = Uninstall-ScoopApplication -App $app -Global:$global -Purge:$purge -Older
+    } catch {
+        ++$problems
+
+        $title, $body = $_.Exception.Message -split '\|-'
+        if (!$body) { $body = $title }
+        Write-UserMessage -Message $body -Err
+        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Title $title -Body $body }
+
+        continue
+    }
+
     if ($result -eq $false) {
         ++$problems
         continue

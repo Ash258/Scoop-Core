@@ -36,6 +36,7 @@ function is_installed($app, $global) {
                 "It looks like a previous installation of $app failed."
                 "Run 'scoop uninstall $app$(gf $global)' before retrying the install."
             )
+            continue
         }
         Write-UserMessage -Warning -Message @(
             "'$app' ($version) is already installed.",
@@ -69,12 +70,13 @@ if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges a
 
 if (is_scoop_outdated) { Update-Scoop }
 
-if ($apps.length -eq 1) {
-    $app, $null, $version = parse_app $apps
-    if ($null -eq $version -and (is_installed $app $global)) {
-        return
-    }
-}
+# TODO: ???
+# if ($apps.Length -eq 1) {
+#     $app, $null, $version = parse_app $apps
+#     if ($null -eq $version -and (is_installed $app $global)) {
+#         ++$problems
+#     }
+# }
 
 # Get any specific versions that need to be handled first
 $specific_versions = $apps | Where-Object {
@@ -127,7 +129,10 @@ if (!$independent) {
 
 # This should not be breaking error in case there are other apps specified
 if ($apps.Count -eq 0) { Stop-ScoopExecution -Message 'Nothing to install' }
-ensure_none_failed $apps $global
+
+$apps = ensure_none_failed $apps $global
+
+if ($apps.Count -eq 0) { Stop-ScoopExecution -Message 'Nothing to install' }
 
 $apps, $skip = prune_installed $apps $global
 
@@ -146,8 +151,9 @@ foreach ($app in $apps) {
         ++$problems
 
         $title, $body = $_.Exception.Message -split '\|-'
+        if (!$body) { $body = $title }
         Write-UserMessage -Message $body -Err
-        if ($title -ne 'Ignore') { New-IssuePrompt -Application $app -Title $title -Body $body }
+        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Title $title -Body $body }
 
         continue
     }

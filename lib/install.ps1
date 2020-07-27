@@ -1112,12 +1112,17 @@ function failed($app, $global) {
 }
 
 function ensure_none_failed($apps, $global) {
+    $new = @()
     foreach ($app in $apps) {
         if (failed $app $global) {
-            # TODO: Stop-ScoopExecution: throw
-            abort "'$app' install failed previously. Please uninstall it and try again."
+            Write-UserMessage -Message "'$app' install failed previously. Please uninstall it and try again." -Err
+            continue
+        } else {
+            $new += $app
         }
     }
+
+    return $new
 }
 
 function show_suggestions($suggested) {

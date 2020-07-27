@@ -34,8 +34,7 @@ function Update-ScoopCoreClone {
     Invoke-GitCmd -Command 'clone' -Argument '--quiet', '--single-branch', '--branch', """$Branch""", $Repo, """$newDir""" -Proxy
 
     # Check if scoop was successful downloaded
-    # TODO: Stop-ScoopExecution
-    if (!(Test-Path $newDir -PathType Container)) { abort 'Scoop update failed.' }
+    if (!(Test-Path $newDir -PathType Container)) { Stop-ScoopExecution -Message 'Scoop update failed.' }
 
     # Replace non-git scoop with the git version
     Remove-Item $TargetDirectory -ErrorAction Stop -Force -Recurse
@@ -92,8 +91,7 @@ function Update-ScoopCorePull {
     $res = $LASTEXITCODE
     if ($SHOW_UPDATE_LOG) { Invoke-GitCmd @target -Command 'UpdateLog' -Argument """$previousCommit..HEAD""" }
 
-    # TODO: Stop-ScoopExecution
-    if ($res -ne 0) { abort 'Update failed.' }
+    if ($res -ne 0) { Stop-ScoopExecution -Message 'Update failed.' }
 }
 
 function Update-ScoopLocalBucket {
@@ -308,6 +306,5 @@ function Update-App {
 
     $toUpdate = if ($install.url) { $install.url } else { "$bucket/$App" }
 
-    # TODO: Try catch
     install_app $toUpdate $architecture $Global $Suggested (!$SkipCache) (!$SkipHashCheck)
 }
