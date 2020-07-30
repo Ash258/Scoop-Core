@@ -143,12 +143,27 @@ $skip | Where-Object { $explicit_apps -contains $_ } | ForEach-Object {
 }
 
 $suggested = @{ }
+$failedDependencies = @()
 
 foreach ($app in $apps) {
+    $applicationSpecificDependencies = @(deps $app $architecture)
+    $cmp = Compare-Object $applicationSpecificDependencies $failedDependencies -ExcludeDifferent
+    # Skip Installation because required depency failed
+    if ($cmp -and ($cmp.InputObject.Count -gt 0)) {
+        $f = $cmp.InputObject -join ', '
+        Write-UserMessage -Message "'$app' cannot be installed due to failed dependency installation ($f)" -Err
+        ++$problems
+        continue
+    }
+
+    # Install
     try {
         install_app $app $architecture $global $suggested $use_cache $check_hash
     } catch {
         ++$problems
+
+        # Register failed dependencies
+        if ($explicit_apps -notcontains $app) { $failedDependencies += $app }
 
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
