@@ -52,7 +52,7 @@ param(
     [Switch] $SkipCheckver
 )
 
-'manifest', 'json' | ForEach-Object {
+'Helpers', 'manifest', 'json' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -77,17 +77,14 @@ Optional options:
 }
 
 if (!(Get-Command -Name 'hub' -CommandType Application -ErrorAction SilentlyContinue)) {
-    # TODO: Stop-ScoopExecution
-    Write-UserMessage -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.' -Warning
-    exit 1
+    Stop-ScoopExecution -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.'
 }
 
 function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd
 
-    # TODO: Stop-ScoopExecution
-    if ($LASTEXITCODE -gt 0) { abort "^^^ Error! See above ^^^ (last command: $cmd)" }
+    if ($LASTEXITCODE -gt 0) { Stop-ScoopExecution -Message "^^^ Error! See above ^^^ (last command: $cmd)" }
 
     return $output
 }
@@ -137,7 +134,7 @@ a new version of [$app]($homepage) is available.
     hub pull-request -m "$msg" -b '$upstream' -h '$branch'
     if ($LASTEXITCODE -gt 0) {
         execute 'hub reset'
-        abort "Pull Request failed! (hub pull-request -m '${app}: Update to version $version' -b '$upstream' -h '$branch')"
+        Stop-ScoopExecution -Message "Pull Request failed! (hub pull-request -m '${app}: Update to version $version' -b '$upstream' -h '$branch')"
     }
 }
 

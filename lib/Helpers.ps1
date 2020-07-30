@@ -79,6 +79,36 @@ function Write-UserMessage {
     }
 }
 
+function Set-TerminatingError {
+    <#
+    .SYNOPSIS
+        Throw [ScoopException] helper for universal exception handling.
+    .DESCRIPTION
+        Format <Category>|-<detail> should be respected all the time as it will allow to dynamically post new issue prompts
+        in manifest scripts and mainly it is easy and unified way how to detect reportable problems.
+        Use 'Ignore|-<details>' If you do not want to show new issue prompt. Usually in problems not related to specific manifest
+    .PARAMETER Title
+        Specifies the exception message.
+        It should be in format '<Category>|-<detail>'.
+    .PARAMETER ID
+        Specifies the global identifier of the error condition.
+    #>
+    param([String] $Title, [String] $ID = 'Scoop')
+
+    if ($PSCmdlet) {
+        $PSCmdlet.ThrowTerminatingError(
+            [System.Management.Automation.ErrorRecord]::new(
+                ([ScoopException]::new($Title)),
+                $ID,
+                [System.Management.Automation.ErrorCategory]::OpenError,
+                $null
+            )
+        )
+    } else {
+        throw [ScoopException]::new($Title)
+    }
+}
+
 function Stop-ScoopExecution {
     <#
     .SYNOPSIS
@@ -267,3 +297,68 @@ function Reset-Alias {
     # Set default aliases
     $defautlAliases.Keys | ForEach-Object { _resetAlias $_ $defautlAliases[$_] }
 }
+
+function New-IssuePrompt {
+    <#
+    .SYNOPSIS
+        Prompt user to report a manifest problem to it's maintaners.
+        Post direct link in case of supported source control provides.
+    .PARAMETER Application
+        Specifies the application name.
+    .PARAMETER Bucket
+        Specifies the bucket to which application belong
+    .PARAMETER Title
+        Specifies the title of newly created issue.
+    .PARAMETER Body
+        Specifies more details to be posted as issue body.
+    #>
+    param([String] $Application, [String] $Bucket, [String] $Title, [String[]] $Body)
+
+    $app, $manifest, $Bucket, $url = Find-Manifest $Application $Bucket
+    $url = known_bucket_repo $Bucket
+    $bucketPath = Join-Path $SCOOP_BUCKETS_DIRECTORY $bucket
+
+    if ((Test-Path $bucketPath) -and (Join-Path $bucketPath '.git' | Test-Path -PathType Container)) {
+        $remote = Invoke-GitCmd -Repository $bucketPath -Command 'config' -Argument '--get','remote.origin.url'
+        # Support ssh and http syntax
+        # git@PROVIDER:USER/REPO.git
+        # https://PROVIDER/USER/REPO.git
+        # https://regex101.com/r/OMEqfV
+        if ($remote -match '(?:@|:\/\/)(?<provider>.+?)[:\/](?<user>.*)\/(?<repo>.+?)(?:\.git)?$') {
+            $url = "https://$($Matches.Provider)/$($Matches.User)/$($Matches.Repo)"
+        }
+    }
+
+    if (!$url) {
+        Write-UserMessage -Message 'Please contact the manifest maintainer!' -Color DarkRed
+        return
+    }
+
+    $Title = [System.Web.HttpUtility]::UrlEncode("$Application@$($Manifest.version): $Title")
+    $Body = [System.Web.HttpUtility]::UrlEncode($Body)
+    $msg = "`nPlease try again"
+
+    switch -Wildcard ($url) {
+        '*github.*' {
+            $url = $url -replace '\.git$'
+            $url = "$url/issues/new?title=$Title"
+            if ($body) { $url += "&body=$Body" }
+            $msg = "$msg or create a new issue by using the following link and paste your console output:"
+        }
+        default {
+            Write-UserMessage -Message 'Not supported platform' -Info
+        }
+    }
+
+    Write-UserMessage -Message "$msg`n$url" -Color DarkRed
+}
+
+#region Exceptions
+class ScoopException: System.Exception {
+    $Message
+
+    ScoopException([String] $Message) {
+        $this.Message = $Message
+    }
+}
+#endregion Exceptions

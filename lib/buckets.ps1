@@ -135,7 +135,7 @@ function Remove-Bucket {
     }
 }
 
-# TODO: Migrate to helpers
+# TODO: Drop/Deprecate
 function new_issue_msg($app, $bucket, $title, $body) {
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
     $url = known_bucket_repo $bucket

@@ -82,6 +82,7 @@ if (!$apps) {
         } catch {
             ++$problems
             Write-UserMessage -Message $_.Exception.Message -Err
+            continue
         }
     }
 }

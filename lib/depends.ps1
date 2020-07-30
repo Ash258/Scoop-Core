@@ -49,7 +49,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
             dep_resolve $dep $arch $resolved $unresolved
         }
     }
-    $resolved.add($app) | Out-Null
+    $resolved.Add($app) | Out-Null
     $unresolved = $unresolved -ne $app # Remove from unresolved
 }
 
