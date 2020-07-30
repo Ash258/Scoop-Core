@@ -43,6 +43,7 @@ $problems = 0
 :app_loop foreach ($_ in $apps) {
     ($app, $global) = $_
 
+    $result = $false
     try {
         $result = Uninstall-ScoopApplication -App $app -Global:$global -Purge:$purge -Older
     } catch {
