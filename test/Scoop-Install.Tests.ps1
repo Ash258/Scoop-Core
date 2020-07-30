@@ -57,7 +57,7 @@ Describe "url_remote_filename" -Tag 'Scoop' {
         url_remote_filename "http://example.org/foo.txt?var=123" | Should -be "foo.txt"
     }
 
-    It "can not be tricked with a hash to override the real filename" {
+    It "cannot be tricked with a hash to override the real filename" {
         url_remote_filename "http://example.org/foo-v2.zip#/foo.zip" | Should -be "foo-v2.zip"
     }
 }

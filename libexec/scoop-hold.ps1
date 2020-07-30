@@ -46,7 +46,7 @@ foreach ($app in $apps) {
     $json | Get-Member -MemberType Properties | ForEach-Object { $install.Add($_.Name, $json.($_.Name)) }
     $install.hold = $true
     save_install_info $install $dir
-    Write-UserMessage -Message "$app is now held and can not be updated anymore." -Success
+    Write-UserMessage -Message "$app is now held and cannot be updated anymore." -Success
 }
 
 if ($problems -gt 0) { $exitCode = 10 + $problems }

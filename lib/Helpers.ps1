@@ -93,7 +93,7 @@ function Set-TerminatingError {
     .PARAMETER ID
         Specifies the global identifier of the error condition.
     #>
-    param([String] $Title, [String] $ID = 'Scoop')
+    param([Alias('Message')] [String] $Title, [String] $ID = 'Scoop')
 
     if ($PSCmdlet) {
         $PSCmdlet.ThrowTerminatingError(
@@ -248,7 +248,7 @@ function _resetAlias($name, $value) {
 
     if ($existing -and ($existing | Where-Object -Property Options -Match 'readonly')) {
         if ($existing.Definition -ne $value) {
-            Write-UserMessage "Alias $name is read-only; can't reset it." -Warning
+            Write-UserMessage "Alias $name is read-only; cannot reset it." -Warning
         }
 
         # Already set

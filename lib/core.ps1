@@ -525,11 +525,11 @@ function is_directory([String] $path) { return (Test-Path $path) -and (Get-Item 
 
 function movedir {
     [CmdletBinding()]
-    param($from, $to)
+    param ($from, $to)
 
-    $from = $from.trimend('\')
+    $from = $from.TrimEnd('\')
     $parent = Split-Path $from -Parent
-    $to = $to.trimend('\')
+    $to = $to.TrimEnd('\')
 
     $proc = New-Object System.Diagnostics.Process
     $proc.StartInfo.FileName = 'robocopy.exe'
@@ -544,7 +544,8 @@ function movedir {
 
     if ($proc.ExitCode -ge 8) {
         debug $out
-        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from) in $parent'! (error $($proc.ExitCode))" -ID 'Scoop.Decompress'
+        # TODO: Consider different title
+        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from) in $parent'! (error $($proc.ExitCode))"
     }
 
     # Wait for robocopy to terminate its threads
@@ -577,11 +578,11 @@ function warn_on_overwrite($shim_ps1, $path) {
     if ($shim_app -eq $path_app) { return }
 
     $filename = [System.IO.Path]::GetFileName($path)
-    warn "Overwriting shim to $filename installed from $shim_app"
+    Write-UserMessage -Message "Overwriting shim to $filename installed from $shim_app" -Warning
 }
 
 function shim($path, $global, $name, $arg) {
-    if (!(Test-Path $path)) { Set-TerminatingError -Message "Shim creation fail|-Can nott shim '$(fname $path)': could not find '$path'." }
+    if (!(Test-Path $path)) { Set-TerminatingError -Title "Shim creation fail|-Cannot shim '$(fname $path)': could not find '$path'" }
 
     $abs_shimdir = shimdir $global | ensure
     if (!$name) { $name = strip_ext (fname $path) }

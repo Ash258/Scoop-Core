@@ -70,7 +70,7 @@ foreach ($app in $apps) {
             if ($hash) {
                 $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
             } else {
-                Write-UserMessage -Message "${app}: Can not find hash for $url" -Warning
+                Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
             }
         } catch {
             $exitCode = $exitCode -bor $VT_ERR.Exception
