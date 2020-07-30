@@ -36,7 +36,7 @@ function is_installed($app, $global) {
                 "It looks like a previous installation of $app failed."
                 "Run 'scoop uninstall $app$(gf $global)' before retrying the install."
             )
-            continue
+            return $true
         }
         Write-UserMessage -Warning -Message @(
             "'$app' ($version) is already installed.",
@@ -69,14 +69,6 @@ if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
 if (is_scoop_outdated) { Update-Scoop }
-
-# TODO: ???
-# if ($apps.Length -eq 1) {
-#     $app, $null, $version = parse_app $apps
-#     if ($null -eq $version -and (is_installed $app $global)) {
-#         ++$problems
-#     }
-# }
 
 # Get any specific versions that need to be handled first
 $specific_versions = $apps | Where-Object {
@@ -111,7 +103,7 @@ foreach ($sp in $specific_versions) {
 }
 $apps = @(($specific_versions_paths + $difference) | Where-Object { $_ } | Sort-Object -Unique)
 
-# remember which were explictly requested so that we can
+# Remember which were explictly requested so that we can
 # differentiate after dependencies are added
 $explicit_apps = $apps
 

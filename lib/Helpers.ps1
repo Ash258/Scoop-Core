@@ -82,9 +82,11 @@ function Write-UserMessage {
 function Set-TerminatingError {
     <#
     .SYNOPSIS
-        Short description
+        Throw [ScoopException] helper for universal exception handling.
     .DESCRIPTION
-        Long description
+        Format <Category>|-<detail> should be respected all the time as it will allow to dynamically post new issue prompts
+        in manifest scripts and mainly it is easy and unified way how to detect reportable problems.
+        Use 'Ignore|-<details>' If you do not want to show new issue prompt. Usually in problems not related to specific manifest
     .PARAMETER Title
         Specifies the exception message.
         It should be in format '<Category>|-<detail>'.

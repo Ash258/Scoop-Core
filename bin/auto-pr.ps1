@@ -84,8 +84,7 @@ function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd
 
-    # TODO: Stop-ScoopExecution
-    if ($LASTEXITCODE -gt 0) { abort "^^^ Error! See above ^^^ (last command: $cmd)" }
+    if ($LASTEXITCODE -gt 0) { Stop-ScoopExecution -Message "^^^ Error! See above ^^^ (last command: $cmd)" }
 
     return $output
 }

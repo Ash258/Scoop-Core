@@ -306,5 +306,6 @@ function Update-App {
 
     $toUpdate = if ($install.url) { $install.url } else { "$bucket/$App" }
 
+    # Error catching should be handled on upper scope
     install_app $toUpdate $architecture $Global $Suggested (!$SkipCache) (!$SkipHashCheck)
 }
