@@ -338,6 +338,8 @@ function app_status($app, $global) {
     }
 
     $status.missing_deps = @()
+    # TODO: Eliminate
+    . (Join-Path $PSScriptRoot 'depends.ps1')
     $deps = @(runtime_deps $manifest) | Where-Object {
         $app, $bucket, $null = parse_app $_
         return !(installed $app)
@@ -690,9 +692,10 @@ function Confirm-InstallationStatus {
     $Installed = @()
     $Apps | Select-Object -Unique | Where-Object { $_.Name -ne 'scoop' } | ForEach-Object {
         $App, $null, $null = parse_app $_
+        $buc = (app_status $App $Global).bucket
         if ($Global) {
             if (installed $App $true) {
-                $Installed += , @($App, $true)
+                $Installed += , @($App, $true, $buc)
             } elseif (installed $App $false) {
                 Write-UserMessage -Message "'$App' isn't installed globally, but it is installed for your account." -Err
                 Write-UserMessage -Message "Try again without the --global (or -g) flag instead." -Warning
@@ -701,7 +704,7 @@ function Confirm-InstallationStatus {
             }
         } else {
             if (installed $App $false) {
-                $Installed += , @($App, $false)
+                $Installed += , @($App, $false, $buc)
             } elseif (installed $App $true) {
                 Write-UserMessage -Message "'$App' isn't installed for your account, but it is installed globally." -Err
                 Write-UserMessage -Message "Try again with the --global (or -g) flag instead." -Warning

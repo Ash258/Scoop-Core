@@ -50,16 +50,16 @@ if ($apps) {
     $verbose = $true
     if ($apps -eq '*') {
         $verbose = $false
-        $apps = applist (installed_apps $false) $false
+        $apps = applist (installed_apps $false) $false $null
         if ($global) {
-            $apps += applist (installed_apps $true) $true
+            $apps += applist (installed_apps $true) $true $null
         }
     } else {
         $apps = Confirm-InstallationStatus $apps -Global:$global
     }
 
-    # $apps is now a list of ($app, $global) tuples
-    $apps | ForEach-Object { cleanup @_ $verbose $cache }
+    # $apps is now a list of ($app, $global, $bucket?) tuples
+    $apps | ForEach-Object { cleanup $_[0] $_[1] $verbose $cache }
 
     if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction Ignore }
     if (!$verbose) { Write-UserMessage -Message 'Everything is shiny now!' -Success }

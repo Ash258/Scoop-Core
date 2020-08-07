@@ -138,6 +138,7 @@ $suggested = @{ }
 $failedDependencies = @()
 
 foreach ($app in $apps) {
+    $bucket = $cleanApp = $null
     $applicationSpecificDependencies = @(deps $app $architecture)
     $cmp = Compare-Object $applicationSpecificDependencies $failedDependencies -ExcludeDifferent
     # Skip Installation because required depency failed
@@ -147,6 +148,8 @@ foreach ($app in $apps) {
         ++$problems
         continue
     }
+
+    $cleanApp, $bucket = parse_app $app
 
     # Install
     try {
@@ -160,7 +163,7 @@ foreach ($app in $apps) {
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
         Write-UserMessage -Message $body -Err
-        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Title $title -Body $body }
+        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $cleanApp -Bucket $bucket -Title $title -Body $body }
 
         continue
     }

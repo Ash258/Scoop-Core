@@ -38,6 +38,9 @@ function Invoke-ScoopCommand {
 
 #region Deprecated
 function exec($cmd, $arguments) {
+    # Show-DeprecatedWarning $MyInvocation 'Invoke-ScoopCommand'
+    # Invoke-ScoopCommand $cmd $arguments
+
     $cmd_path = command_path $cmd
 
     & $cmd_path @arguments

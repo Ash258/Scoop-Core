@@ -41,7 +41,7 @@ $exitCode = 0
 $problems = 0
 # TODO: remove label
 :app_loop foreach ($_ in $apps) {
-    ($app, $global) = $_
+    ($app, $global, $bucket) = $_
 
     $result = $false
     try {
@@ -52,7 +52,7 @@ $problems = 0
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
         Write-UserMessage -Message $body -Err
-        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Title $title -Body $body }
+        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Bucket $bucket -Title $title -Body $body }
 
         continue
     }
