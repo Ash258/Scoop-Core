@@ -326,6 +326,7 @@ function app_status($app, $global) {
     $status.hold = ($install_info.hold -eq $true)
 
     $manifest = manifest $app $install_info.bucket $install_info.url
+    $status.bucket = $install_info.bucket
     $status.removed = (!$manifest)
     if ($manifest.version) {
         $status.latest_version = $manifest.version
@@ -342,11 +343,9 @@ function app_status($app, $global) {
         return !(installed $app)
     }
 
-if ($deps) {
-    $status.missing_deps += , $deps
-}
+    if ($deps) { $status.missing_deps += , $deps }
 
-return $status
+    return $status
 }
 
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
@@ -642,11 +641,11 @@ set invalid=`"='
 if !args! == !invalid! ( set args= )
 powershell -noprofile -ex unrestricted `"& '$resolved_path' $arg %args%;exit `$LASTEXITCODE`"" | Out-File "$shim.cmd" -Encoding Ascii
 
-    "#!/bin/sh`npowershell.exe -noprofile -ex unrestricted `"& '$resolved_path'`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
-} elseif ($path -match '\.jar$') {
-    "@java -jar `"$resolved_path`" $arg %*" | Out-File "$shim.cmd" -Encoding Ascii
-    "#!/bin/sh`njava -jar `"$resolved_path`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
-}
+        "#!/bin/sh`npowershell.exe -noprofile -ex unrestricted `"& '$resolved_path'`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
+    } elseif ($path -match '\.jar$') {
+        "@java -jar `"$resolved_path`" $arg %*" | Out-File "$shim.cmd" -Encoding Ascii
+        "#!/bin/sh`njava -jar `"$resolved_path`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
+    }
 }
 
 function search_in_path($target) {
@@ -765,19 +764,14 @@ function wraptext($text, $width) {
             elseif ($line.length + $_.length + 1 -le $width) { $line += " $_" }
             else { $lines += , $line; $line = $_ }
         }
-    $lines += , $line
-}
+        $lines += , $line
+    }
 
-$lines -join "`n"
+    $lines -join "`n"
 }
 
 function pluralize($count, $singular, $plural) {
     if ($count -eq 1) { $singular } else { $plural }
-}
-
-function reset_aliases() {
-    Show-DeprecatedWarning $MyInvocation 'Reset-Alias'
-    Reset-Alias
 }
 
 # convert list of apps to list of ($app, $global) tuples
@@ -914,6 +908,11 @@ function handle_special_urls($url) {
 }
 
 #region Deprecated
+function reset_aliases() {
+    Show-DeprecatedWarning $MyInvocation 'Reset-Alias'
+    Reset-Alias
+}
+
 function file_path($app, $file) {
     Show-DeprecatedWarning $MyInvocation 'Get-AppFilePath'
     return Get-AppFilePath -App $app -File $file
