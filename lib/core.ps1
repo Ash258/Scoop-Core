@@ -619,6 +619,7 @@ function shim($path, $global, $name, $arg) {
 
     if ($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
+        # TODO: Use relative path from this file
         versiondir 'scoop' 'current' | Join-Path -ChildPath 'supporting\shimexe\bin\shim.exe' | Copy-Item -Destination "$shim.exe" -Force
         $result = @("path = $resolved_path")
         if ($arg) { $result += "args = $arg" }
@@ -711,7 +712,7 @@ function Confirm-InstallationStatus {
         }
     }
 
-return , $Installed
+    return , $Installed
 }
 
 function strip_path($orig_path, $dir) {

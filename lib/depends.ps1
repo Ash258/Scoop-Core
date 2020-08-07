@@ -35,6 +35,9 @@ function deps($app, $arch) {
 }
 
 function dep_resolve($app, $arch, $resolved, $unresolved) {
+    #[out]$resolved
+    #[out]$unresolved
+
     $app, $bucket, $null = parse_app $app
     $unresolved += $app
     $null, $manifest, $null, $null = Find-Manifest $app $bucket
@@ -44,7 +47,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
             Write-UserMessage -Message "Bucket '$bucket' not installed. Add it with 'scoop bucket add $bucket' or 'scoop bucket add $bucket <repo>'." -Warning
         }
 
-        Set-TerminatingError -Title "Could not find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })"
+        Set-TerminatingError -Title "Ignore|-Could not find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })"
     }
 
     $deps = @(install_deps $manifest $arch) + @(runtime_deps $manifest) | Select-Object -Unique
@@ -52,7 +55,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
     foreach ($dep in $deps) {
         if ($resolved -notcontains $dep) {
             if ($unresolved -contains $dep) {
-                Set-TerminatingError -Title  "Circular dependency detected: '$app' -> '$dep'."
+                Set-TerminatingError -Title  "Invalid Manifest|-Circular dependency detected: '$app' -> '$dep'."
             }
             dep_resolve $dep $arch $resolved $unresolved
         }
