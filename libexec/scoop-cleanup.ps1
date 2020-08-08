@@ -50,9 +50,9 @@ if ($apps) {
     $verbose = $true
     if ($apps -eq '*') {
         $verbose = $false
-        $apps = applist (installed_apps $false) $false $null
+        $apps = applist (installed_apps $false) $false
         if ($global) {
-            $apps += applist (installed_apps $true) $true $null
+            $apps += applist (installed_apps $true) $true
         }
     } else {
         $apps = Confirm-InstallationStatus $apps -Global:$global

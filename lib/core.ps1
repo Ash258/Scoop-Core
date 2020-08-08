@@ -777,10 +777,10 @@ function pluralize($count, $singular, $plural) {
     if ($count -eq 1) { $singular } else { $plural }
 }
 
-# convert list of apps to list of ($app, $global) tuples
-function applist($apps, $global) {
+# convert list of apps to list of ($app, $global, $bucket) tuples
+function applist($apps, $global, $bucket = $null) {
     if (!$apps) { return @() }
-    return , @($apps | ForEach-Object { , @($_, $global) })
+    return , @($apps | ForEach-Object { , @($_, $global, $bucket) })
 }
 
 function parse_app([string] $app) {
