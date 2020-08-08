@@ -78,35 +78,63 @@ foreach ($app in $application) {
 
     Write-UserMessage "Starting download for $app" -Color Green
 
+    $registered = $false
     # TODO: Rework with proper wrappers after #3149
     switch ($utility) {
         'aria2' {
             foreach ($arch in $architecture) {
-                dl_with_cache_aria2 $appName $version $manifest $arch $cachedir $manifest.cookie $true $checkHash
+                try {
+                    dl_with_cache_aria2 $appName $version $manifest $arch $cachedir $manifest.cookie $true $checkHash
+                } catch {
+                    # Do not count specific architectures or URLs
+                    if (!$registered) {
+                        $registered = $true
+                        ++$problems
+                    }
+
+                    $title, $body = $_.Exception.Message -split '\|-'
+                    if (!$body) { $body = $title }
+                    Write-UserMessage -Message $body -Err
+                    if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $appName -Bucket $bucket -Title $title -Body $body }
+
+                    continue
+                }
             }
         }
 
         'native' {
             foreach ($arch in $architecture) {
                 foreach ($url in (url $manifest $arch)) {
-                    dl_with_cache $appName $version $url $null $manifest.cookie $true
+                    try {
+                        dl_with_cache $appName $version $url $null $manifest.cookie $true
 
-                    if ($checkHash) {
-                        $manifestHash = hash_for_url $manifest $url $arch
-                        $source = cache_path $appName $version $url
-                        $ok, $err = check_hash $source $manifestHash (show_app $appName $bucket)
+                        if ($checkHash) {
+                            $manifestHash = hash_for_url $manifest $url $arch
+                            $source = cache_path $appName $version $url
+                            $ok, $err = check_hash $source $manifestHash (show_app $appName $bucket)
 
-                        if (!$ok) {
-                            Write-UserMessage -Message $err -Err
-                            if (Test-Path $source) { Remove-Item $source -Force }
-                            if ($url -like '*sourceforge.net*') {
-                                Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
+                            if (!$ok) {
+                                if (Test-Path $source) { Remove-Item $source -Force }
+                                if ($url -like '*sourceforge.net*') {
+                                    Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
+                                }
+
+                                Set-TerminatingError -Title "Hash check failed|-$err"
                             }
-                            Write-UserMessage -Message (new_issue_msg $appName $bucket 'hash check failed') -Err
-                            ++$problems
-
-                            continue
                         }
+                    } catch {
+                        # Do not count specific architectures or URLs
+                        if (!$registered) {
+                            $registered = $true
+                            ++$problems
+                        }
+
+                        $title, $body = $_.Exception.Message -split '\|-'
+                        if (!$body) { $body = $title }
+                        Write-UserMessage -Message $body -Err
+                        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $appName -Bucket $bucket -Title $title -Body $body }
+
+                        continue
                     }
                 }
             }
