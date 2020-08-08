@@ -51,7 +51,7 @@ if (!$apps) {
 
     if ($apps) {
         foreach ($_ in $apps) {
-            ($app, $global) = $_
+            ($app, $global, $bb) = $_
             $status = app_status $app $global
             if ($force -or $status.outdated) {
                 if ($status.hold) {

@@ -269,15 +269,12 @@ function Update-App {
                 $ok, $err = check_hash $source $manifest_hash (show_app $App $bucket)
 
                 if (!$ok) {
-                    Write-UserMessage -Message $err -Err
-
                     # Remove cached file
                     if (Test-Path $source) { Remove-Item $source -Force }
                     if ($url -like '*sourceforge.net*') {
                         Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
                     }
-                    # TODO: Stop-ScoopExecution
-                    abort (new_issue_msg $App $bucket 'hash check failed')
+                    Set-TerminatingError -Title "Hash check failed|-$err"
                 }
             }
         }

@@ -55,7 +55,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
     foreach ($dep in $deps) {
         if ($resolved -notcontains $dep) {
             if ($unresolved -contains $dep) {
-                Set-TerminatingError -Title  "Invalid Manifest|-Circular dependency detected: '$app' -> '$dep'."
+                Set-TerminatingError -Title  "Invalid manifest|-Circular dependency detected: '$app' -> '$dep'."
             }
             dep_resolve $dep $arch $resolved $unresolved
         }
