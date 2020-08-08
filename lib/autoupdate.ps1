@@ -274,8 +274,8 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
 
     try {
         dl_with_cache $app $version $url $null $null $true
-    } catch [system.net.webexception] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+    } catch {
+        Write-UserMessage -Message "URL $url is not valid" -Color DarkRed
         return $null
     }
     $file = cache_path $app $version $url

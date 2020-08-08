@@ -95,7 +95,7 @@ function Set-TerminatingError {
     #>
     param([Alias('Message')] [String] $Title, [String] $ID = 'Scoop')
 
-    if ($PSCmdlet) {
+    if ($PSCmdlet -and $IsWindows) {
         $PSCmdlet.ThrowTerminatingError(
             [System.Management.Automation.ErrorRecord]::new(
                 ([ScoopException]::new($Title)),
