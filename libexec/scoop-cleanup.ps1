@@ -24,6 +24,9 @@ $cache = $opt.k -or $opt.cache
 if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
+$problems = 0
+$exitCode = 0
+
 function cleanup($app, $global, $verbose, $cache) {
     $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
     if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Exclude "$app#$currentVersion#*" }
@@ -59,10 +62,20 @@ if ($apps) {
     }
 
     # $apps is now a list of ($app, $global, $bucket?) tuples
-    $apps | ForEach-Object { cleanup $_[0] $_[1] $verbose $cache }
+    $apps | ForEach-Object {
+        try {
+            cleanup $_[0] $_[1] $verbose $cache
+        } catch {
+            Write-UserMessage -Message $_.Exception.Message -Err
+            ++$problems
+            continue
+        }
+    }
 
     if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction Ignore }
     if (!$verbose) { Write-UserMessage -Message 'Everything is shiny now!' -Success }
 }
 
-exit 0
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+
+exit $exitCode
