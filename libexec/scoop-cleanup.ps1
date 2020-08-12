@@ -62,11 +62,12 @@ if ($apps) {
     }
 
     # $apps is now a list of ($app, $global, $bucket?) tuples
-    $apps | ForEach-Object {
+    foreach ($a in $apps) {
         try {
-            cleanup $_[0] $_[1] $verbose $cache
+            cleanup $a[0] $a[1] $verbose $cache
         } catch {
-            Write-UserMessage -Message $_.Exception.Message -Err
+            # TODO: Consider not breaking whole application cleanup
+            Write-UserMessage -Message '', $_.Exception.Message -Err
             ++$problems
             continue
         }
