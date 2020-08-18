@@ -366,7 +366,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
         }
 
         # Copy or move file to target location
-        if (!(Test-Path $data.$url.source) ) { Set-TerminatingError -Title 'Ignore|-cached file not found' }
+        if (!(Test-Path $data.$url.source) ) { Set-TerminatingError -Title 'Ignore|-Cached file not found' }
 
         if ($dir -ne $SCOOP_CACHE_DIRECTORY) {
             if ($use_cache) {
@@ -651,7 +651,7 @@ function hash_for_url($manifest, $url, $arch) {
     $urls = @(url $manifest $arch)
 
     $index = [array]::IndexOf($urls, $url)
-    if ($index -eq -1) { Set-TerminatingError -Title "Invalid manifest|-Couldn't find hash in manifest for '$url'." }
+    if ($index -eq -1) { Set-TerminatingError -Title "Invalid manifest|-Could not find hash in manifest for '$url'." }
 
     @($hashes)[$index]
 }
@@ -739,7 +739,7 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
 function install_msi($fname, $dir, $msi) {
     $msifile = Join-Path $dir (coalesce $msi.File "$fname")
 
-    if (!(is_in_dir $dir $msifile)) { Set-TerminatingError -Title "Invalid manifest|-MSI file $msifile is outside the app directory." }
+    if (!(is_in_dir $dir $msifile)) { Set-TerminatingError -Title "Invalid manifest|-MSI file '$msifile' is outside the app directory." }
     if (!($msi.code)) { Set-TerminatingError -Title 'Invalid manifest|-Could not find MSI code.' }
     if (msi_installed $msi.code) { Set-TerminatingError -Title 'Ignore|-The MSI package is already installed on this system.' }
 
@@ -777,12 +777,13 @@ function msi_installed($code) {
 function install_prog($fname, $dir, $installer, $global) {
     $prog = Join-Path $dir (coalesce $installer.file "$fname")
     if (!(is_in_dir $dir $prog)) {
-        Set-TerminatingError -Title "Invalid manifest|-Error in manifest: Installer $prog is outside the app directory."
+        Set-TerminatingError -Title "Invalid manifest|-Error in manifest: Installer '$prog' is outside the app directory."
     }
     $arg = @(args $installer.args $dir $global)
 
-    if ($prog.endswith('.ps1')) {
+    if ($prog.EndsWith('.ps1')) {
         & $prog @arg
+        # TODO: Handle $LASTEXITCODE
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
