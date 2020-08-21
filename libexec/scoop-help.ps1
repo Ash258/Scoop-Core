@@ -3,42 +3,20 @@
 
 param($cmd)
 
-'core', 'commands', 'help' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'help', 'Helpers' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
-
-function print_help($cmd) {
-    $file = Get-Content (command_path $cmd) -raw
-
-    $usage = usage $file
-    $summary = summary $file
-    $help = scoop_help $file
-
-    if ($usage) { "$usage`n" }
-    if ($help) { $help }
-}
-
-function print_summaries {
-    $commands = @{ }
-
-    command_files | ForEach-Object {
-        $command = command_name $_
-        $summary = summary (Get-Content (command_path $command) -raw)
-        if (!($summary)) { $summary = '' }
-        $commands.add("$command ", $summary) # add padding
-    }
-
-    $commands.getenumerator() | Sort-Object name | Format-Table -hidetablehead -autosize -wrap
-}
+Reset-Alias
 
 $exitCode = 0
 $commands = commands
 
 if (!($cmd)) {
-    Write-UserMessage -Message @(
+    Write-UserMessage -Output -Message @(
         'Usage: scoop <command> [<args>]'
+        ''
+        'Windows command line installer'
         ''
         'General exit codes'
         '   0 - Everything OK'

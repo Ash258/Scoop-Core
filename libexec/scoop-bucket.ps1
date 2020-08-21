@@ -1,4 +1,4 @@
-# Usage: scoop bucket add|list|known|rm [<args>]
+# Usage: scoop bucket [add|list|known|rm] [<args>]
 # Summary: Manage Scoop buckets
 # Help: Add, list or remove buckets.
 #
@@ -8,35 +8,52 @@
 #
 # To add a bucket:
 #   scoop bucket add <name> [<repo>]
-#
-# e.g.:
-#   scoop bucket add extras https://github.com/lukesampson/scoop-extras.git
-#
-# Since the 'extras' bucket is known to Scoop, this can be shortened to:
+# eg:
+#   scoop bucket add Ash258 https://github.com/Ash258/Scoop-Ash258.git
 #   scoop bucket add extras
 #
+# To remove a bucket:
+#   scoop bucket rm versions
 # To list all known buckets, use:
 #   scoop bucket known
 
 param($Cmd, $Name, $Repo)
 
 'buckets', 'help' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
-
-# TODO: Remove
-$usage_add = 'usage: scoop bucket add <name> [<repo>]'
-$usage_rm = 'usage: scoop bucket rm <name>'
+Reset-Alias
 
 $exitCode = 0
 switch ($Cmd) {
-    'add' { add_bucket $Name $Repo }
-    'rm' { rm_bucket $Name }
-    'list' { Get-LocalBucket }
-    'known' { known_buckets }
-    default { my_usage; $exitCode = 1 }
+    'add' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <name> is missing' -Usage (my_usage) }
+
+        try {
+            Add-Bucket -Name $Name -RepositoryUrl $Repo
+        } catch {
+            Stop-ScoopExecution -Message $_.Exception.Message
+        }
+    }
+    'rm' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <name> missing' -Usage (my_usage) }
+
+        try {
+            Remove-Bucket -Name $Name
+        } catch {
+            Stop-ScoopExecution -Message $_.Exception.Message
+        }
+    }
+    'known' {
+        Get-KnownBucket
+    }
+    'list' {
+        Get-LocalBucket
+    }
+    default {
+        Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage)
+    }
 }
 
 exit $exitCode

@@ -6,26 +6,28 @@
 #>
 param([String] $Supporting = '*')
 
-'decompress', 'manifest', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'decompress', 'Helpers', 'manifest', 'install' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-$Sups = (Get-ChildItem "$PSScriptRoot\..\supporting\*" -File -Include "$Supporting.json").FullName
+$Sups = Join-Path $PSScriptRoot '..\supporting\*' | Get-ChildItem -File -Include "$Supporting.*"
 
 foreach ($sup in $Sups) {
-    $name = ((Split-Path $sup -Leaf) -split '\.')[0]
-    $folder = Split-Path $sup -Parent
-    $dir = "$folder\$name\bin"
+    $name = $sup.BaseName
+    $folder = $sup.Directory
+    $dir = Join-Path $folder "$name\bin"
 
-    Write-Host "Updating $name" -ForegroundColor Magenta
+    Write-UserMessage -Message "Updating $name" -Color Magenta
 
-    Invoke-Expression "$PSScriptRoot\checkver.ps1 -App $name -Dir $folder -Update"
-    $manifest = parse_json $sup
-    if (!(Test-Path $dir)) { New-Item $dir -ItemType Directory | Out-Null }
+    $checkver = Join-Path $PSScriptRoot 'checkver.ps1'
+    Invoke-Expression "& $checkver -App $name -Dir $folder -Update"
 
-    $fname = dl_urls $name $manifest.version $manifest '' default_architecture $dir $true $true
+    $manifest = parse_json $sup.FullName
+    ensure $dir | Out-Null
+
+    dl_urls $name $manifest.version $manifest '' default_architecture $dir $true $true | Out-Null
     # Pre install is enough now
     pre_install $manifest $architecture
 
-    Write-Host "$name done" -ForegroundColor Green
+    Write-UserMessage -Message "$name done" -Success
 }

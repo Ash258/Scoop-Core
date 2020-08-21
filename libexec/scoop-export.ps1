@@ -1,22 +1,20 @@
 # Usage: scoop export > filename
 # Summary: Exports (an importable) list of installed apps
-# Help: Lists all installed apps.
 
 'core', 'Versions', 'manifest', 'buckets' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 $def_arch = default_architecture
 
-$local = installed_apps $false | ForEach-Object { @{ name = $_; global = $false } }
-$global = installed_apps $true | ForEach-Object { @{ name = $_; global = $true } }
+$local = installed_apps $false | ForEach-Object { @{ 'name' = $_; 'global' = $false } }
+$global = installed_apps $true | ForEach-Object { @{ 'name' = $_; 'global' = $true } }
 
 $apps = @($local) + @($global)
-$count = 0
 
 if ($apps) {
-    $apps | Sort-Object { $_.name } | Where-Object { !$query -or ($_.name -match $query) } | ForEach-Object {
+    $apps | Sort-Object { $_.Name } | ForEach-Object {
         $app = $_.name
         $global = $_.global
         $ver = Select-CurrentVersion -AppName $app -Global:$global
@@ -37,8 +35,6 @@ if ($apps) {
 
         # "$app (v:$ver) global:$($global.toString().tolower())"
         "$app (v:$ver)$global_display$bucket$arch"
-
-        $count++
     }
 }
 

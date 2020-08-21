@@ -11,13 +11,12 @@ param(
     [bool] $purge
 )
 
-'core', 'install', 'shortcuts', 'versions', 'manifest', 'uninstall' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'Helpers', 'install', 'shortcuts', 'Versions', 'manifest', 'uninstall' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 if ($global -and !(is_admin)) {
-    Write-UserMessage -Message 'You need admin rights to uninstall globally.' -Err
-    exit 1
+    Stop-ScoopExecution -Message 'Admin privileges are required for globall uninstallation.' -ExitCode 4
 }
 
 $message = 'This will uninstall Scoop and all the programs that have been installed with Scoop!'
@@ -33,9 +32,9 @@ $errors = 0
 
 function rm_dir($dir) {
     try {
-        Remove-Item $dir -Recurse -Force -ErrorAction Stop
+        Remove-Item $dir -ErrorAction Stop -Recurse -Force
     } catch {
-        abort "Couldn't remove $(friendly_path $dir): $_"
+        Stop-ScoopExecution -Message "Couldn't remove $(friendly_path $dir): $_"
     }
 }
 
@@ -58,14 +57,14 @@ installed_apps $false | ForEach-Object { # local apps
     if ($result -eq $false) { $errors += 1 }
 }
 
-if ($errors -gt 0) { abort 'Not all apps could be deleted. Try again or restart.' }
+if ($errors -gt 0) { Stop-ScoopExecution -Message 'Not all apps could be deleted. Try again or restart.' }
 
 if ($purge) {
-    rm_dir $scoopdir
-    if ($global) { rm_dir $globaldir }
+    rm_dir $SCOOP_ROOT_DIRECTORY
+    if ($global) { rm_dir $SCOOP_GLOBAL_ROOT_DIRECTORY }
 } else {
-    keep_onlypersist $scoopdir
-    if ($global) { keep_onlypersist $globaldir }
+    keep_onlypersist $SCOOP_ROOT_DIRECTORY
+    if ($global) { keep_onlypersist $SCOOP_GLOBAL_ROOT_DIRECTORY }
 }
 
 remove_from_path (shimdir $false)

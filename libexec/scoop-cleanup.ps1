@@ -1,4 +1,4 @@
-# Usage: scoop cleanup <app> [options]
+# Usage: scoop cleanup <apps> [options]
 # Summary: Cleanup apps by removing old versions
 # Help: 'scoop cleanup' cleans Scoop apps by removing old versions.
 # 'scoop cleanup <app>' cleans up the old versions of that app if said versions exist.
@@ -10,23 +10,26 @@
 #   -k, --cache        Remove outdated download cache
 
 'core', 'manifest', 'buckets', 'Versions', 'getopt', 'help', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gk' 'global', 'cache'
-if ($err) { Write-UserMessage -Message "scoop cleanup: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop cleanup: $err" -ExitCode 2 }
+
 $global = $opt.g -or $opt.global
 $cache = $opt.k -or $opt.cache
 
-if (!$apps) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
-if ($global -and !(is_admin)) { Write-UserMessage -Message 'ERROR: you need admin rights to cleanup global apps' -Err; exit 4 }
+$problems = 0
+$exitCode = 0
 
 function cleanup($app, $global, $verbose, $cache) {
-    $currentVersion = Select-CurrentVerison -AppName $app -Global:$global
-    if ($cache) { Remove-Item "$cachedir\$app#*" -Exclude "$app#$currentVersion#*" }
+    $currentVersion = Select-CurrentVersion -AppName $app -Global:$global
+    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Exclude "$app#$currentVersion#*" }
 
     $versions = Get-InstalledVersion -AppName $app -Global:$global | Where-Object { $_ -ne $currentVersion }
     if (!$versions) {
@@ -34,10 +37,10 @@ function cleanup($app, $global, $verbose, $cache) {
         return
     }
 
-    Write-Host -f yellow "Removing $app`:" -nonewline
+    Write-Host "Removing ${app}:" -ForegroundColor Yellow -NoNewLine
     $versions | ForEach-Object {
         $version = $_
-        Write-Host " $version" -nonewline
+        Write-Host " $version" -NoNewLine
         $dir = versiondir $app $version $global
         # unlink all potential old link before doing recursive Remove-Item
         unlink_persist_data $dir
@@ -58,12 +61,22 @@ if ($apps) {
         $apps = Confirm-InstallationStatus $apps -Global:$global
     }
 
-    # $apps is now a list of ($app, $global) tuples
-    $apps | ForEach-Object { cleanup @_ $verbose $cache }
+    # $apps is now a list of ($app, $global, $bucket?) tuples
+    foreach ($a in $apps) {
+        try {
+            cleanup $a[0] $a[1] $verbose $cache
+        } catch {
+            # TODO: Consider not breaking whole application cleanup
+            Write-UserMessage -Message '', $_.Exception.Message -Err
+            ++$problems
+            continue
+        }
+    }
 
-    if ($cache) { Remove-Item "$cachedir\*.download" -ErrorAction Ignore }
-
+    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction Ignore }
     if (!$verbose) { Write-UserMessage -Message 'Everything is shiny now!' -Success }
 }
 
-exit 0
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+
+exit $exitCode

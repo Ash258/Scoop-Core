@@ -16,11 +16,8 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
+        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+        $true
     })]
     [String] $Dir,
     [Int] $Timeout = 5,
@@ -28,14 +25,16 @@ param(
 )
 
 'core', 'manifest', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
+
+$Timeout | Out-Null # PowerShell/PSScriptAnalyzer#1472
 
 $Dir = Resolve-Path $Dir
 $Queue = @()
 
-Get-ChildItem $Dir "$App.json" | ForEach-Object {
-    $manifest = parse_json "$Dir\$($_.Name)"
+Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
+    $manifest = parse_json $_.FullName
     $Queue += , @($_.Name, $manifest)
 }
 
@@ -54,9 +53,9 @@ function test_dl([String] $url, $cookies) {
     # Trim renaming suffix, prevent getting 40x response
     $url = ($url -split '#/')[0]
 
-    $wreq = [Net.WebRequest]::Create($url)
+    $wreq = [System.Net.WebRequest]::Create($url)
     $wreq.Timeout = $Timeout * 1000
-    if ($wreq -is [Net.HttpWebRequest]) {
+    if ($wreq -is [System.Net.HttpWebRequest]) {
         $wreq.UserAgent = Get-UserAgent
         $wreq.Referer = strip_filename $url
         if ($cookies) {
@@ -74,7 +73,7 @@ function test_dl([String] $url, $cookies) {
 
         return $url, 'Error', $e.Message
     } finally {
-        if ($null -ne $wres -and $wres -isnot [Net.FtpWebResponse]) {
+        if ($null -ne $wres -and $wres -isnot [System.Net.FtpWebResponse]) {
             $wres.Close()
         }
     }
@@ -108,23 +107,20 @@ foreach ($man in $Queue) {
     Write-Host ']' -NoNewLine
 
     # Okay
-    Write-Host '[' -NoNewLine
+    $okColor = 'Yellow'
     if ($ok -eq $urls.Length) {
-        Write-Host $ok -NoNewLine -ForegroundColor Green
+        $okColor = 'Green'
     } elseif ($ok -eq 0) {
-        Write-Host $ok -NoNewLine -ForegroundColor Red
-    } else {
-        Write-Host $ok -NoNewLine -ForegroundColor Yellow
+        $okColor = 'Red'
     }
+    Write-Host '[' -NoNewLine
+    Write-Host $ok -ForegroundColor $okColor -NoNewLine
     Write-Host ']' -NoNewLine
 
     # Failed
+    $fColor = if ($failed -eq 0) { 'Green' } else { 'Red' }
     Write-Host '[' -NoNewLine
-    if ($failed -eq 0) {
-        Write-Host $failed -NoNewLine -ForegroundColor Green
-    } else {
-        Write-Host $failed -NoNewLine -ForegroundColor Red
-    }
+    Write-Host $failed -ForegroundColor $fColor -NoNewline
     Write-Host '] ' -NoNewLine
     Write-Host (strip_ext $name)
 

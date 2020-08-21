@@ -14,19 +14,18 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
+        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+        $true
     })]
     [String] $Dir,
     [Switch] $SkipSupported
 )
 
 'core', 'manifest' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
+
+$SkipSupported | Out-Null # PowerShell/PSScriptAnalyzer#1472
 
 $Dir = Resolve-Path $Dir
 
@@ -38,8 +37,8 @@ Write-Host 'A' -NoNewLine -ForegroundColor Cyan
 Write-Host ']utoupdate'
 Write-Host ' |  |'
 
-Get-ChildItem $Dir "$App.json" | ForEach-Object {
-    $json = parse_json "$Dir\$($_.Name)"
+Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
+    $json = parse_json $_.FullName
 
     if ($SkipSupported -and $json.checkver -and $json.autoupdate) { return }
 

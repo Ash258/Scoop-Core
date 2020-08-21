@@ -13,15 +13,14 @@
 #   -s, --skip                Skip hash validation (use with caution!)
 #   -q, --quiet               Hide extraneous messages
 
-'depends', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'depends', 'Helpers', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gfiksq' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
-# TODO: Stop-ScoopExecution
-if ($err) { Write-UserMessage -Message "scoop update: $err" -Err; exit 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop update: $err" -ExitCode 2 }
 
 # Flags/Parameters
 $global = $opt.g -or $opt.global
@@ -33,15 +32,12 @@ $independent = $opt.i -or $opt.independent
 
 $exitCode = 0
 if (!$apps) {
-    # TODO: Stop-ScoopExecution
-    if ($global) { Write-UserMessage -Message 'scoop update: --global is invalid when <app> is not specified.' -Err; exit 2 }
-    if (!$useCache) { Write-UserMessage -Message 'scoop update: --no-cache is invalid when <app> is not specified.' -Err; exit 2 }
+    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global option is invalid when <app> is not specified.' -ExitCode 2 }
+    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache option is invalid when <app> is not specified.' -ExitCode 2 }
 
     Update-Scoop
 } else {
-    # TODO: Stop-ScoopExecution
-    if ($global -and !(is_admin)) { Write-UserMessage -Message 'You need admin rights to update global apps.' -Err; exit 4 }
-
+    if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
     if (is_scoop_outdated) { Update-Scoop }
     $outdatedApplications = @()
     $applicationsParam = $apps
@@ -55,26 +51,21 @@ if (!$apps) {
 
     if ($apps) {
         foreach ($_ in $apps) {
-            ($app, $global) = $_
+            ($app, $global, $bb) = $_
             $status = app_status $app $global
+            $bb = $status.bucket
+
             if ($force -or $status.outdated) {
                 if ($status.hold) {
                     Write-UserMessage "'$app' is held to version $($status.version)"
                 } else {
-                    $outdatedApplications += applist $app $global
+                    $outdatedApplications += applist $app $global $bb
                     $globText = if ($global) { ' (global)' } else { '' }
                     Write-UserMessage -Message "${app}: $($status.version) -> $($status.latest_version)$globText" -Warning -SkipSeverity
                 }
             } elseif ($applicationsParam -ne '*') {
                 Write-UserMessage -Message "${app}: $($status.version) (latest available version)" -Color Green
             }
-        }
-
-        if ($outdatedApplications -and (Test-Aria2Enabled)) {
-            Write-UserMessage -Warning -Message @(
-                'Scoop uses ''aria2c'' for multi-conneciton downloads.'
-                'In case of issues with downloading, run ''scoop config aria2-enabled $false'' to disable aria2.'
-            )
         }
 
         $c = $outdatedApplications.Count
@@ -87,12 +78,17 @@ if (!$apps) {
     }
 
     foreach ($out in $outdatedApplications) {
-        # $outdated is a list of ($app, $global) tuples
         try {
             Update-App -App $out[0] -Global:$out[1] -Suggested @{ } -Quiet:$quiet -Independent:$independent -SkipCache:(!$useCache) -SkipHashCheck:(!$checkHash)
         } catch {
             ++$problems
-            Write-UserMessage -Message $_.Exception.Message -Err
+
+            $title, $body = $_.Exception.Message -split '\|-'
+            if (!$body) { $body = $title }
+            Write-UserMessage -Message $body -Err
+            if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $out[0] -Bucket $out[2] -Title $title -Body $body }
+
+            continue
         }
     }
 }

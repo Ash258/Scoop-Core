@@ -1,5 +1,5 @@
-'core', 'manifest' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'core', 'Helpers', 'manifest' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 $VT_ERR = @{
@@ -16,7 +16,7 @@ function Get-VirusTotalResult {
         Specifies the hash of file to search for.
     .PARAMETER App
         Specifies the name of application.
-    .OUTPUTs Int
+    .OUTPUTS Int
         Exit code
     #>
     [CmdletBinding()]
@@ -31,7 +31,7 @@ function Get-VirusTotalResult {
     $Hash = $Hash.ToLower()
     $url = "https://www.virustotal.com/ui/files/$hash"
     $detectionUrl = $url -replace '/ui/files/', '/#/file/'
-    $wc = New-Object Net.Webclient
+    $wc = New-Object System.Net.Webclient
     $wc.Headers.Add('User-Agent', (Get-UserAgent))
     $result = $wc.DownloadString($url)
 
@@ -42,15 +42,16 @@ function Get-VirusTotalResult {
     $unsafe = [int]$malicious + [int]$suspicious
 
     switch ($unsafe) {
-        0 { if ($undetected -eq 0) { $fg = 'Yellow' } else { $fg = 'DarkGreen' } }
+        0 { $fg = if ($undetected -eq 0) { 'Yellow' } else { 'DarkGreen' } }
         1 { $fg = 'DarkYellow' }
         2 { $fg = 'Yellow' }
         default { $fg = 'Red' }
     }
-    Write-Host "${App}: $unsafe/$undetected, see '$detectionUrl" -ForegroundColor $fg
-    if ($unsafe -gt 0) { return $VT_ERR.Unsafe }
 
-    return 0
+    Write-UserMessage -Message "${App}: $unsafe/$undetected, see '$detectionUrl" -Color $fg
+    $ret = if ($unsafe -gt 0) { $VT_ERR.Unsafe } else { 0 }
+
+    return $ret
 }
 
 function Search-VirusTotal {
@@ -61,7 +62,7 @@ function Search-VirusTotal {
         Specifies the hash of file to search for.
     .PARAMETER App
         Specifies the name of application.
-    .OUTPUTs Int
+    .OUTPUTS Int
         Exit code
     #>
     [CmdletBinding()]
@@ -98,21 +99,23 @@ function Submit-RedirectedUrl {
     #>
     [CmdletBinding()]
     [OutputType([String])]
-    param (
-        [Parameter(Mandatory)]
-        [String] $URL
-    )
-    $request = [System.Net.WebRequest]::Create($url)
-    $request.AllowAutoRedirect = $false
-    $response = $request.GetResponse()
-    if (([int]$response.StatusCode -ge 300) -and ([int]$response.StatusCode -lt 400)) {
-        $redir = $response.GetResponseHeader('Location')
-    } else {
-        $redir = $URL
-    }
-    $response.Close()
+    param ([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
 
-    return $redir
+    process {
+        $request = [System.Net.WebRequest]::Create($url)
+        $request.AllowAutoRedirect = $false
+        $response = $request.GetResponse()
+
+        if (([int]$response.StatusCode -ge 300) -and ([int]$response.StatusCode -lt 400)) {
+            $redir = $response.GetResponseHeader('Location')
+        } else {
+            $redir = $URL
+        }
+
+        $response.Close()
+
+        return $redir
+    }
 }
 
 function Submit-ToVirusTotal {
@@ -142,7 +145,12 @@ function Submit-ToVirusTotal {
     $apiKey = get_config 'virustotal_api_key'
 
     if ($DoScan -and !$apiKey) {
-        Write-UserMessage -Message 'Submitting unknown apps needs a VirusTotal API key. You can configure it with:', "scoop config virustotal_api_key <API key>" -Info
+        Write-UserMessage -Warning -Message @(
+            'Submitting unknown apps requires the VirusTotal API key.'
+            'You can configure it with:'
+            '  scoop config virustotal_api_key <API key>'
+        )
+
         return
     }
 
@@ -156,7 +164,7 @@ function Submit-ToVirusTotal {
             $newRedir = Submit-RedirectedUrl $origRedir
         } while ($origRedir -ne $newRedir)
         $requests += 1
-        $result = Invoke-WebRequest -Uri "https://www.virustotal.com/vtapi/v2/url/scan" -Body @{'apikey' = $apiKey; 'url' = $newRedir } -Method Post -UseBasicParsing
+        $result = Invoke-WebRequest -Uri 'https://www.virustotal.com/vtapi/v2/url/scan' -Body @{ 'apikey' = $apiKey; 'url' = $newRedir } -Method Post -UseBasicParsing
         if ($result.StatusCode -eq 200) {
             Write-UserMessage -Message "${app}: not found. Submitted $url" -Warning
             return
@@ -166,8 +174,8 @@ function Submit-ToVirusTotal {
         $explained = $false
         if (!$Retry) {
             if (!$explained) {
-                $explained = $true
                 Write-UserMessage -Message 'Sleeping 60+ seconds between requests due to VirusTotal''s 4/min limit'
+                $explained = $true
             }
             Start-Sleep -Seconds (60 + $requests)
             Submit-ToVirusTotal $newRedir $app -DoScan:$DoScan -Retry

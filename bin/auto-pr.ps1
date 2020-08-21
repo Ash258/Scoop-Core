@@ -21,6 +21,8 @@
     An array of manifests, which should be updated all the time. (-ForceUpdate parameter to checkver)
 .PARAMETER SkipUpdated
     Updated manifests will not be shown.
+.PARAMETER SkipCheckver
+    Specifies to skip checkver execution.
 .EXAMPLE
     PS BUCKETROOT > .\bin\auto-pr.ps1 'someUsername/repository:branch' -Request
 .EXAMPLE
@@ -31,32 +33,30 @@
 param(
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!($_ -match '^(.*)\/(.*):(.*)$')) {
-            throw 'Upstream must be in this format: <user>/<repo>:<branch>'
-        }
+        if (!($_ -match '^(.*)\/(.*):(.*)$')) { throw 'Upstream must be in this format: <user>/<repo>:<branch>' }
         $true
     })]
     [String] $Upstream,
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) {
-            throw "$_ is not a directory!"
-        } else {
-            $true
-        }
+        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
+        $true
     })]
     [String] $Dir,
     [Switch] $Push,
     [Switch] $Request,
     [Switch] $Help,
     [string[]] $SpecialSnowflakes,
-    [Switch] $SkipUpdated
+    [Switch] $SkipUpdated,
+    [Switch] $SkipCheckver
 )
 
-'manifest', 'json' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'Helpers', 'manifest', 'json' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
+
+$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
 
 $Dir = Resolve-Path $Dir
 
@@ -77,18 +77,14 @@ Optional options:
 }
 
 if (!(Get-Command -Name 'hub' -CommandType Application -ErrorAction SilentlyContinue)) {
-    # TODO: Stop-ScoopExecution
-    Write-UserMessage -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.' -Warning
-    exit 1
+    Stop-ScoopExecution -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.'
 }
 
 function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd
 
-    if ($LASTEXITCODE -gt 0) {
-        abort "^^^ Error! See above ^^^ (last command: $cmd)"
-    }
+    if ($LASTEXITCODE -gt 0) { Stop-ScoopExecution -Message "^^^ Error! See above ^^^ (last command: $cmd)" }
 
     return $output
 }
@@ -138,7 +134,7 @@ a new version of [$app]($homepage) is available.
     hub pull-request -m "$msg" -b '$upstream' -h '$branch'
     if ($LASTEXITCODE -gt 0) {
         execute 'hub reset'
-        abort "Pull Request failed! (hub pull-request -m '${app}: Update to version $version' -b '$upstream' -h '$branch')"
+        Stop-ScoopExecution -Message "Pull Request failed! (hub pull-request -m '${app}: Update to version $version' -b '$upstream' -h '$branch')"
     }
 }
 
@@ -151,11 +147,13 @@ if ($Push) {
     execute 'hub push origin master'
 }
 
-. "$PSScriptRoot\checkver.ps1" -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
-if ($SpecialSnowflakes) {
-    Write-Host "Forcing update on our special snowflakes: $($SpecialSnowflakes -join ',')" -ForegroundColor DarkCyan
-    $SpecialSnowflakes -split ',' | ForEach-Object {
-        . "$PSScriptRoot\checkver.ps1" $_ -Dir $Dir -ForceUpdate
+if (!$SkipCheckver) {
+    . "$PSScriptRoot\checkver.ps1" -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
+    if ($SpecialSnowflakes) {
+        Write-UserMessage -Message "Forcing update on our special snowflakes: $($SpecialSnowflakes -join ',')" -Color DarkCyan
+        $SpecialSnowflakes -split ',' | ForEach-Object {
+            . "$PSScriptRoot\checkver.ps1" $_ -Dir $Dir -ForceUpdate
+        }
     }
 }
 

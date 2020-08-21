@@ -1,4 +1,4 @@
-# Usage: scoop cache show|rm [app]
+# Usage: scoop cache [rm|show] [app]
 # Summary: Show or clear the download cache
 # Help: Scoop caches downloads so you don't need to download the same files
 # when you uninstall and re-install the same version of an app.
@@ -6,33 +6,34 @@
 # You can use
 #   scoop cache show
 # to see what's in the cache, and
-#   scoop cache rm <app> to remove downloads for a specific app.
+#   scoop cache rm <app>
+# to remove downloads for a specific app.
 #
 # To clear everything in your cache, use:
 #   scoop cache rm *
 
 param($cmd, $app)
 
-. "$PSScriptRoot\..\lib\help.ps1"
+. (Join-Path $PSScriptRoot "..\lib\help.ps1")
 
-reset_aliases
+Reset-Alias
 
 function cacheinfo($file) {
     $app, $version, $url = $file.name -split '#'
     $size = filesize $file.length
-    return New-Object psobject -prop @{ app = $app; version = $version; url = $url; size = $size }
+    return New-Object PSObject -prop @{ 'app' = $app; 'version' = $version; 'url' = $url; 'size' = $size }
 }
 
 function show($app) {
-    $files = @(Get-ChildItem "$cachedir" | Where-Object { $_.name -match "^$app" })
+    $files = @(Get-ChildItem $SCOOP_CACHE_DIRECTORY | Where-Object -Property Name -Match "^$app")
     $total_length = ($files | Measure-Object length -sum).sum -as [double]
 
-    $f_app = @{ expression = { "$($_.app) ($($_.version))" } }
-    $f_url = @{ expression = { $_.url }; alignment = 'right' }
-    $f_size = @{ expression = { $_.size }; alignment = 'right' }
+    $f_app = @{ 'Expression' = { "$($_.app) ($($_.version))" } }
+    $f_url = @{ 'Expression' = { $_.url }; 'Alignment' = 'Right' }
+    $f_size = @{ 'Expression' = { $_.size }; 'Alignment' = 'Right' }
 
 
-    $files | ForEach-Object { cacheinfo $_ } | Format-Table $f_size, $f_app, $f_url -auto -hide
+    $files | ForEach-Object { cacheinfo $_ } | Format-Table $f_size, $f_app, $f_url -AutoSize -HideTableHeaders
 
     "Total: $($files.length) $(pluralize $files.length 'file' 'files'), $(filesize $total_length)"
 }
@@ -40,21 +41,15 @@ function show($app) {
 $exitCode = 0
 switch ($cmd) {
     'rm' {
-        if (!$app) { Write-UserMessage -Message 'ERROR: <app> missing' -Err; my_usage; exit 1 }
-        Remove-Item "$cachedir\$app#*"
-        if (Test-Path("$cachedir\$app.txt")) {
-            Remove-Item "$cachedir\$app.txt"
-        }
+        if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*"| Remove-Item -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"| Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
     }
     'show' {
         show $app
     }
-    '' {
-        show
-    }
     default {
-        my_usage
-        $exitCode = 1
+        show
     }
 }
 

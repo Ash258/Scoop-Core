@@ -1,5 +1,5 @@
 'core', 'commands', 'help', 'install' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+    . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 $ALIAS_CMD_ALIAS = 'alias'
@@ -38,10 +38,10 @@ function Add-ScoopAlias {
 
     if ($aliases.$Name) { throw "Alias $Name already exists" }
 
-    @"
+    Join-Path $shimDir "$aliasFileName.ps1" | Out-UTF8Content -Content @"
 # Summary: $Description
 $Command
-"@ | Out-UTF8File "$shimDir\$aliasFileName.ps1"
+"@
 
     # Add alias to config
     $aliases | Add-Member -Name $Name -Value $aliasFileName -MemberType NoteProperty
@@ -78,7 +78,10 @@ function Get-ScoopAlias {
     param([Switch] $Verbose)
     $aliases = @()
 
-    (Get-AliasesFromConfig).PSObject.Properties.GetEnumerator() | ForEach-Object {
+    $props = @((Get-AliasesFromConfig).PSObject.Properties | Where-Object -Property MemberType -EQ -Value NoteProperty)
+    if ($props.Count -eq 0) { $props = @() }
+
+    $props.GetEnumerator() | ForEach-Object {
         $content = Get-Content (command_path $_.Name)
         $cmd = ($content | Select-Object -Skip 1).Trim()
         $sum = (summary $content).Trim()

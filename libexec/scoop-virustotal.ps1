@@ -35,18 +35,17 @@
 #                    to avoid it.
 
 'core', 'depends', 'getopt', 'help', 'VirusTotal' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
-if ($err) { Write-UserMessage "scoop virustotal: $err"; exit 1 }
-if (!$apps) { my_usage; exit 1 }
+if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
+if (!$apps) { Stop-ScoopExecution -Message 'Application parameter missing' -Usage (my_usage) }
 
 $architecture = ensure_architecture ($opt.a + $opt.arch)
 $DoScan = $opt.scan -or $opt.s
-if (is_scoop_outdated) { scoop update }
 
 if ($apps -eq '*') {
     $apps = installed_apps $false
@@ -61,7 +60,7 @@ foreach ($app in $apps) {
     if (!$manifest) {
         $exitCode = $exitCode -bor $VT_ERR.NoInfo
         Write-UserMessage "${app}: manifest not found"
-        return
+        continue
     }
 
     foreach ($url in (url $manifest $architecture)) {
@@ -71,19 +70,20 @@ foreach ($app in $apps) {
             if ($hash) {
                 $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
             } else {
-                Write-UserMessage -Message "${app}: Can't find hash for $url" -Warning
+                Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
             }
-        } catch [Exception] {
+        } catch {
             $exitCode = $exitCode -bor $VT_ERR.Exception
 
             if ($_.Exception.Message -like '*(404)*') {
                 Submit-ToVirusTotal -Url $url -App $app -DoScan:$DoScan
             } else {
                 if ($_.Exception.Message -match '\(204|429\)') {
-                    # TODO: Stop-ScoopExecution
-                    abort "${app}: VirusTotal request failed`: $($_.Exception.Message)" $exit_code
+                    Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
+                    $exitCode = 3
+                    continue
                 }
-                Write-UserMessage -Message "${app}: VirusTotal requeest failed: $($_.Exception.Message)"
+                Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
             }
         }
     }

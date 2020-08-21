@@ -1,24 +1,17 @@
-# Usage: scoop cat <app>
+# Usage: scoop cat <apps>
 # Summary: Show content of specified manifest.
 
-param([Parameter(ValueFromRemainingArguments)][String[]] $Application)
+param([Parameter(ValueFromRemainingArguments)] [String[]] $Application)
 
 'help', 'Helpers', 'install', 'manifest' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-if (!$Application) {
-    # TODO:? Extend Stop-ScoopExecution with -Usage switch
-    Write-UserMessage -Message '<app> missing' -Err
-    my_usage
-    exit 1
-}
+if (!$Application) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
 
 $exitCode = 0
 $problems = 0
 foreach ($app in $Application) {
-    Write-UserMessage -Message "Showing manifest for $app" -Color Green
-
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
 
@@ -34,12 +27,14 @@ foreach ($app in $Application) {
         debug $foundBucket
         debug $appName
         Write-UserMessage -Message 'Found application name or bucket is not same as requested' -Err
-        $exitCode = 3
+        ++$problems
         continue
     }
 
     if ($manifest) {
-        $manifest | ConvertToPrettyJson | Write-UserMessage
+        Write-UserMessage -Message "Showing manifest for $app" -Color Green
+
+        $manifest | ConvertToPrettyJson | Write-UserMessage -Output
     } else {
         Write-UserMessage -Message "Manifest for $app not found" -Err
         ++$problems

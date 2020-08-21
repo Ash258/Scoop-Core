@@ -1,23 +1,23 @@
 # Usage: scoop status
 # Summary: Show status and check for new app versions
 
-'core', 'manifest', 'buckets', 'Versions', 'depends', 'git' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'Helpers', 'manifest', 'buckets', 'Versions', 'depends', 'Git' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 # check if scoop needs updating
 $currentdir = versiondir 'scoop' 'current'
 $needs_update = $false
 
-if (test-path "$currentdir\.git") {
-    Push-Location $currentdir
-    git_fetch -q origin
-    # TODO: Fix me
-    $commits = $(git log "HEAD..origin/$(scoop config SCOOP_BRANCH)" --oneline)
+if (Join-Path $currentdir '.git' | Test-Path -PathType Container) {
+    $target = @{ 'Repository' = $currentdir }
+
+    Invoke-GitCmd @target -Command 'fetch' -Argument '--quiet', 'origin' -Proxy
+    $commits = Invoke-GitCmd @target -Command 'log' -Argument '--oneline', "HEAD..origin/$(get_config SCOOP_BRANCH)"
+
     if ($commits) { $needs_update = $true }
-    Pop-Location
 } else {
     $needs_update = $true
 }
@@ -35,11 +35,11 @@ $missing_deps = @()
 $onhold = @()
 $exitCode = 0
 
-foreach ($global in $true, $false) { # local and global apps
+foreach ($global in ($true, $false)) { # local and global apps
     $dir = appsdir $global
-    if (!(test-path $dir)) { return }
+    if (!(Test-Path $dir)) { continue }
 
-    foreach ($application in Get-ChildItem $dir | Where-Object name -ne 'scoop'){
+    foreach ($application in (Get-ChildItem $dir | Where-Object -Property Name -NE -Value 'scoop')){
         $app = $application.name
         $status = app_status $app $global
         if ($status.failed) {
@@ -61,33 +61,33 @@ foreach ($global in $true, $false) { # local and global apps
 }
 
 if ($outdated) {
-    write-host -f DarkCyan 'Updates are available for:'
     $exitCode = 3
+    Write-UserMessage -Message 'Updates are available for:' -Color DarkCyan
     $outdated.keys | ForEach-Object {
         $versions = $outdated.$_
-        "    $_`: $($versions[0]) -> $($versions[1])"
+        "    ${_}: $($versions[0]) -> $($versions[1])"
     }
 }
 
 if ($onhold) {
-    write-host -f DarkCyan 'These apps are outdated and on hold:'
+    Write-UserMessage -Message 'These apps are outdated and on hold:' -Color DarkCyan
     $onhold.keys | ForEach-Object {
         $versions = $onhold.$_
-        "    $_`: $($versions[0]) -> $($versions[1])"
+        "    ${_}: $($versions[0]) -> $($versions[1])"
     }
 }
 
 if ($removed) {
-    write-host -f DarkCyan 'These app manifests have been removed:'
     $exitCode = 3
+    Write-UserMessage -Message 'These app manifests have been removed:' -Color DarkCyan
     $removed.keys | ForEach-Object {
         "    $_"
     }
 }
 
 if ($failed) {
-    write-host -f DarkCyan 'These apps failed to install:'
     $exitCode = 3
+    Write-UserMessage 'These apps failed to install:' -Color DarkCyan
     $failed.keys | ForEach-Object {
         "    $_"
     }
@@ -95,10 +95,10 @@ if ($failed) {
 
 if ($missing_deps) {
     $exitCode = 3
-    write-host -f DarkCyan 'Missing runtime dependencies:'
+    Write-UserMessage 'Missing runtime dependencies:' -Color DarkCyan
     $missing_deps | ForEach-Object {
         $app, $deps = $_
-        "    '$app' requires '$([string]::join("', '", $deps))'"
+        "    '$app' requires '$([String]::Join(', ', $deps))'"
     }
 }
 

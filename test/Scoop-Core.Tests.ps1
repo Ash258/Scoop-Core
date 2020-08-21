@@ -196,7 +196,7 @@ Describe "shim" -Tag 'Scoop' {
     }
 
     AfterEach {
-        rm_shim "shim-test" $shimdir
+        rm_shim "shim-test" $shimdir 6>&1 | Out-Null
     }
 }
 
@@ -257,7 +257,7 @@ Describe "ensure_robocopy_in_path" -Tag 'Scoop' {
     Mock versiondir { $repo_dir }
 
     BeforeAll {
-        reset_aliases
+        Reset-Alias
     }
 
     Context "robocopy is not in path" {

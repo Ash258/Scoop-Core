@@ -8,11 +8,11 @@
 param($query)
 
 # TODO: Refactor
-'core', 'buckets', 'manifest', 'Versions' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+'core', 'buckets', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
 $exitCode = 0
 
@@ -20,7 +20,7 @@ function bin_match($manifest, $query) {
     if (!$manifest.bin) { return $false }
     foreach ($bin in $manifest.bin) {
         $exe, $alias, $args = $bin
-        $fname = split-path $exe -leaf -ea stop
+        $fname = Split-Path $exe -Leaf -ErrorAction Stop
 
         if ((strip_ext $fname) -match $query) { return $fname }
         if ($alias -match $query) { return $alias }
@@ -34,12 +34,6 @@ function search_bucket($bucket, $query) {
     }
 
     if ($query) {
-        try {
-            $query = new-object regex $query, 'IgnoreCase'
-        } catch {
-            abort "Invalid regular expression: $($_.exception.innerexception.message)"
-        }
-
         $apps = $apps | Where-Object {
             if ($_.name -match $query) { return $true }
             $bin = bin_match (manifest $_.name $bucket) $query
@@ -48,49 +42,50 @@ function search_bucket($bucket, $query) {
             }
         }
     }
-    $apps | ForEach-Object { $_.version = (latest_version $_.name $bucket); $_ }
+    $apps | ForEach-Object { $_.version = (Get-LatestVersion -App $_.Name -Bucket $bucket); $_ }
 }
 
 function download_json($url) {
-    $progressPreference = 'silentlycontinue'
-    $result = invoke-webrequest $url -UseBasicParsing | Select-Object -exp content | convertfrom-json
-    $progressPreference = 'continue'
-    $result
+    $ProgressPreference = 'SilentlyContinue'
+    $result = Invoke-WebRequest $url -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json
+    $ProgressPreference = 'Continue'
+    return $result
 }
 
 function github_ratelimit_reached {
-    $api_link = "https://api.github.com/rate_limit"
-    (download_json $api_link).rate.remaining -eq 0
+    return (download_json "https://api.github.com/rate_limit").Rate.Remaining -eq 0
 }
 
 function search_remote($bucket, $query) {
     $repo = known_bucket_repo $bucket
 
-    $uri = [system.uri]($repo)
-    if ($uri.absolutepath -match '/([a-zA-Z0-9]*)/([a-zA-Z0-9-]*)(.git|/)?') {
+    $uri = [System.Uri]($repo)
+    if ($uri.AbsolutePath -match '/([a-zA-Z0-9]*)/([a-zA-Z0-9-]*)(.git|/)?') {
         $user = $matches[1]
         $repo_name = $matches[2]
         $api_link = "https://api.github.com/repos/$user/$repo_name/git/trees/HEAD?recursive=1"
-        $result = download_json $api_link | Select-Object -exp tree | Where-Object {
+        $result = download_json $api_link | Select-Object -ExpandProperty tree | Where-Object {
             $_.path -match "(^(.*$query.*).json$)"
         } | ForEach-Object { $matches[2] }
     }
 
-    $result
+    return $result
 }
 
 function search_remotes($query) {
     $buckets = known_bucket_repos
-    $names = $buckets | get-member -m noteproperty | Select-Object -exp name
+    $names = $buckets | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
 
-    $results = $names | Where-Object { !(test-path $(Find-BucketDirectory $_)) } | ForEach-Object {
-        @{"bucket" = $_; "results" = (search_remote $_ $query) }
+    $results = $names | Where-Object { !(Test-Path $(Find-BucketDirectory $_)) } | ForEach-Object {
+        @{'bucket' = $_; 'results' = (search_remote $_ $query) }
     } | Where-Object { $_.results }
 
     if ($results.count -gt 0) {
-        "Results from other known buckets..."
-        "(add them using 'scoop bucket add <name>')"
-        ""
+        Write-UserMessage -Message @(
+            'Results from other known buckets...'
+            '(add them using ''scoop bucket add <name>'')'
+            ''
+        )
     }
 
     $results | ForEach-Object {
@@ -98,6 +93,12 @@ function search_remotes($query) {
         $_.results | ForEach-Object { "    $_" }
         ""
     }
+}
+
+try {
+    $query = New-Object System.Text.RegularExpressions.Regex $query, 'IgnoreCase'
+} catch {
+    Stop-ScoopExecution -Message "Invalid regular expression: $($_.Exception.InnerException.Message)"
 }
 
 Get-LocalBucket | ForEach-Object {
@@ -118,8 +119,7 @@ Get-LocalBucket | ForEach-Object {
 
 if (!$local_results -and !(github_ratelimit_reached)) {
     $remote_results = search_remotes $query
-    # FIXME
-    if (!$remote_results) { Write-UserMessage -Message 'No matches found.' -Warning; exit 3 }
+    if (!$remote_results) { Stop-ScoopExecution -Message 'No matches found' -SkipSeverity }
     $remote_results
 }
 

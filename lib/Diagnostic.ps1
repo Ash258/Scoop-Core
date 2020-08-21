@@ -4,8 +4,30 @@ Return $true if the test passed, otherwise $false.
 Use 'Write-UserMessage -Warning' to highlight the issue, and follow up with the recommended actions to rectify.
 #>
 
-'core', 'buckets', 'decompress' | ForEach-Object {
-    . "$PSScriptRoot\$_.ps1"
+'core', 'buckets', 'decompress', 'Helpers' | ForEach-Object {
+    . (Join-Path $PSScriptRoot "$_.ps1")
+}
+
+function Test-Drive {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $result = $true
+
+    if ((New-Object System.IO.DriveInfo($SCOOP_GLOBAL_ROOT_DIRECTORY)).DriveFormat -ne 'NTFS') {
+        Write-UserMessage -Message 'Scoop requires an NTFS volume to work!' -Warning
+        Write-UserMessage -Message '  Please configure SCOOP_GLOBAL environment variable to NTFS volume'
+        $result = $false
+    }
+
+    if ((New-Object System.IO.DriveInfo($SCOOP_ROOT_DIRECTORY)).DriveFormat -ne 'NTFS') {
+        Write-UserMessage -Message 'Scoop requires an NTFS volume to work!' -Warning
+        Write-UserMessage -Message '  Please install scoop to NTFS volume'
+        $result = $false
+    }
+
+    return $result
 }
 
 function Test-WindowsDefender {
@@ -32,7 +54,6 @@ function Test-WindowsDefender {
         }
     }
 
-
     return $true
 }
 
@@ -58,6 +79,12 @@ function Test-LongPathEnabled {
     [CmdletBinding()]
     [OutputType([bool])]
     param()
+
+    # Verify supported windows version
+    if ([System.Environment]::OSVersion.Version.Major -lt 10 -or [System.Environment]::OSVersion.Version.Build -lt 1607) {
+        Write-UserMessage -Message 'LongPath configuration is not supported in older Windows versions' -Warning
+        return $false
+    }
 
     $key = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -ErrorAction SilentlyContinue
     if (!$key -or ($key.LongPathsEnabled -eq 0)) {
@@ -166,28 +193,6 @@ function Test-HelpersInstalled {
     return $result
 }
 
-function Test-Drive {
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param()
-
-    $result = $true
-
-    if ((New-Object System.IO.DriveInfo($SCOOP_GLOBAL_ROOT_DIRECTORY)).DriveFormat -ne 'NTFS') {
-        Write-UserMessage -Message 'Scoop requires an NTFS volume to work!' -Warning
-        Write-UserMessage -Message '  Please configure SCOOP_GLOBAL environment variable to NTFS volume'
-        $result = $false
-    }
-
-    if ((New-Object System.IO.DriveInfo($SCOOP_ROOT_DIRECTORY)).DriveFormat -ne 'NTFS') {
-        Write-UserMessage -Message 'Scoop requires an NTFS volume to work!' -Warning
-        Write-UserMessage -Message '  Please install scoop to NTFS volume'
-        $result = $false
-    }
-
-    return $result
-}
-
 function Test-Config {
     [CmdletBinding()]
     [OutputType([bool])]
@@ -198,10 +203,27 @@ function Test-Config {
         Write-UserMessage -Message '''lsessmsi'' should be used for extraction of msi installers!' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
-            '    scoop config MSIEXTRACT_USE_LESSMSI $true'
+            '    scoop install lessmsi; scoop config MSIEXTRACT_USE_LESSMSI $true'
         )
         $result = $false
     }
 
     return $result
+}
+
+function Test-CompletionRegistered {
+    $module = Get-Module 'Scoop-Completion'
+
+    if (($null -eq $module) -or ($module.Author -notlike 'Jakub*')) {
+        $path = Join-Path $PSScriptRoot '..\supporting\completion\Scoop-Completion.psd1' -Resolve
+        Write-UserMessage -Message 'Native tab completion module is not imported' -Warning
+        Write-UserMessage -Message @(
+            '  Consider importing native module for automatic commands/parameters completion:'
+            "    Add-Content `$PROFILE 'Import-Module ''$path'' -ErrorAction SilentlyContinue'"
+        )
+
+        return $false
+    }
+
+    return $true
 }

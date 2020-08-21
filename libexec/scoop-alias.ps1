@@ -1,4 +1,4 @@
-# Usage: scoop alias add|list|rm [<args>]
+# Usage: scoop alias [add|list|rm] [<args>]
 # Summary: Manage scoop aliases
 # Help: Add, remove or list Scoop aliases
 #
@@ -24,7 +24,7 @@ param(
 )
 
 'core', 'help', 'Alias' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 $exitCode = 0
@@ -46,8 +46,12 @@ switch ($Option) {
             $exitCode = 3
         }
     }
-    'list' { Get-ScoopAlias -Verbose:$Verbose }
-    default { my_usage; $exitCode = 1 }
+    'list' {
+        Get-ScoopAlias -Verbose:$Verbose
+    }
+    default {
+        Stop-ScoopExecution -Message 'No parameters provided' -Usage (my_usage)
+    }
 }
 
 exit $exitCode

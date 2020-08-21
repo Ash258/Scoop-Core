@@ -1,20 +1,19 @@
-# Scoop
+# ~~Scoop~~ Shovel
 
 Command-line installer for Windows
 
 ## Goals
 
-Scoop installs programs from the command line with a minimal amount of friction.
-It tries to eliminate things like:
+Scriptable, user-friendly command line installation of applications with a minimal amount of friction.
 
-- Permission popup windows
-- GUI wizard-style installers
-- Path pollution from installing lots of programs
-- Unexpected side-effects from installing and uninstalling programs
-- The need to find and install dependencies
-- The need to perform extra setup steps to get a working program
-
-Scoop is very scriptable, so you can run repeatable setups to get your environment just the way you like, e.g.:
+- Eliminate permission/UAC popup
+- Avoid GUI wizard-style installers
+    - Use [winget][winget] for interactive installations
+- Do not pollute `PATH`
+- Skip unexpected side-effects from installing and uninstalling programs
+    - Applications installed by scoop usually do not execute application specific installers
+        - If you are looking for command line tool for executing application specific installers, refer to [chocolatey][choco] or [winget][winget]
+- Dependencies resolving for other scoop installed applications
 
 ```powershell
 scoop install sudo
@@ -22,8 +21,6 @@ sudo scoop install 7zip git openssh --global
 scoop install aria2 curl grep sed less touch
 scoop install python ruby go perl
 ```
-
-If you've built software that you'd like others to use, Scoop is an alternative to building an installer (e.g. MSI or InnoSetup) — you just need to zip your program and provide a JSON manifest that describes how to install it.
 
 ## Requirements
 
@@ -40,6 +37,7 @@ As soon as base scoop is installed do the following:
 1. `scoop install 7zip git`
 1. `scoop config SCOOP_REPO 'https://github.com/Ash258/Scoop-Core'`
 1. `scoop update`
+1. `scoop checkup`
 
 Once installed, run `scoop help` for additional information.
 
@@ -70,12 +68,15 @@ The following buckets are known to scoop:
 
 - [main](https://github.com/ScoopInstaller/Main) - Default bucket for the most common command line utilities
 - [extras](https://github.com/lukesampson/scoop-extras) - GUI applications
-- [games](https://github.com/Calinou/scoop-games) - Open source/freeware games and game-related tools
 - [nerd-fonts](https://github.com/matthewjberger/scoop-nerd-fonts) - Nerd Fonts
 - [nirsoft](https://github.com/Ash258/Scoop-NirSoft) - All [Nirsoft](https://nirsoft.net) utilites
 - [java](https://github.com/ScoopInstaller/Java) - Installers for Oracle Java, OpenJDK, Zulu, ojdkbuild, AdoptOpenJDK, Amazon Corretto, BellSoft Liberica & SapMachine
 - [jetbrains](https://github.com/Ash258/Scoop-JetBrains) - Installers for all JetBrains utilities and IDEs
 - [sysinternals](https://github.com/Ash258/Scoop-Sysinternals) - All Sysinternals tools separately
 - [nonportable](https://github.com/TheRandomLabs/scoop-nonportable) - Non-portable apps (may require UAC)
-- [php](https://github.com/ScoopInstaller/PHP) - Installers for most versions of PHP
+- [php](https://github.com/ScoopInstaller/PHP) - Installers for various versions of PHP
 - [versions](https://github.com/ScoopInstaller/Versions) - Alternative versions of apps found in other buckets
+- [games](https://github.com/Calinou/scoop-games) - Open source/freeware games and game-related tools
+
+[winget]: https://github.com/microsoft/winget-cli
+[choco]: https://chocolatey.org/

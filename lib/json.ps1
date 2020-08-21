@@ -5,28 +5,24 @@
 
 function ConvertToPrettyJson {
     [CmdletBinding()]
+    param ([Parameter(Mandatory, ValueFromPipeline)] $data )
 
-    Param (
-        [Parameter(Mandatory, ValueFromPipeline)]
-        $data
-    )
-
-    Process {
+    process {
         $data = normalize_values $data
 
-        # convert to string
-        [String]$json = $data | ConvertTo-Json -Depth 8 -Compress
-        [String]$output = ''
+        # Convert to string
+        [String] $json = $data | ConvertTo-Json -Depth 8 -Compress
+        [String] $output = ''
 
-        # state
-        [String]$buffer = ''
-        [Int]$depth = 0
-        [Bool]$inString = $false
+        # State
+        [String] $buffer = ''
+        [Int] $depth = 0
+        [Bool] $inString = $false
 
-        # configuration
-        [String]$indent = ' ' * 4
-        [Bool]$unescapeString = $true
-        [String]$eol = "`r`n"
+        # Configuration
+        [String] $indent = ' ' * 4
+        [Bool] $unescapeString = $true
+        [String] $eol = "`r`n"
 
         for ($i = 0; $i -lt $json.Length; $i++) {
             # read current char
@@ -41,11 +37,9 @@ function ConvertToPrettyJson {
             $quote = $buffer.Equals('"')
             $escape = $buffer.Equals('\')
 
-            if ($quote) {
-                $inString = !$inString
-            }
+            if ($quote) { $inString = !$inString }
 
-            # skip escape sequences
+            # Skip escape sequences
             if ($escape) {
                 $buffer = $json.Substring($i, 2)
                 ++$i
@@ -59,7 +53,7 @@ function ConvertToPrettyJson {
                     } elseif ($buffer.Equals('\t')) {
                         $buffer = "`t"
                     } elseif ($buffer.Equals('\u')) {
-                        $buffer = [regex]::Unescape($json.Substring($i - 1, 6))
+                        $buffer = [System.Text.RegularExpressions.Regex]::Unescape($json.Substring($i - 1, 6))
                         $i += 4
                     }
                 }
@@ -68,7 +62,7 @@ function ConvertToPrettyJson {
                 continue
             }
 
-            # indent / outdent
+            # Indent / outdent
             if ($objectStart -or $arrayStart) {
                 ++$depth
             } elseif ($objectEnd -or $arrayEnd) {
@@ -76,10 +70,10 @@ function ConvertToPrettyJson {
                 $output += $eol + ($indent * $depth)
             }
 
-            # add content
+            # Add content
             $output += $buffer
 
-            # add whitespace and newlines after the content
+            # Add whitespace and newlines after the content
             if ($colon) {
                 $output += ' '
             } elseif ($comma -or $arrayStart -or $objectStart) {
@@ -93,10 +87,9 @@ function ConvertToPrettyJson {
 }
 
 function json_path([String] $json, [String] $jsonpath, [Hashtable] $substitutions) {
-    Add-Type -Path "$PSScriptRoot\..\supporting\validator\bin\Newtonsoft.Json.dll"
-    if ($null -ne $substitutions) {
-        $jsonpath = substitute $jsonpath $substitutions ($jsonpath -like "*=~*")
-    }
+    Add-Type -Path (Join-Path $PSScriptRoot '\..\supporting\validator\bin\Newtonsoft.Json.dll')
+
+    if ($null -ne $substitutions) { $jsonpath = substitute $jsonpath $substitutions ($jsonpath -like '*=~*') }
     try {
         $obj = [Newtonsoft.Json.Linq.JObject]::Parse($json)
     } catch [Newtonsoft.Json.JsonReaderException] {
@@ -115,7 +108,7 @@ function json_path([String] $json, [String] $jsonpath, [Hashtable] $substitution
         }
         return $result.ToString()
     } catch [System.Management.Automation.MethodInvocationException] {
-        write-host -f DarkRed $_
+        Write-UserMessage -Message $_  -Color DarkRed
         return $null
     }
 
@@ -123,22 +116,18 @@ function json_path([String] $json, [String] $jsonpath, [Hashtable] $substitution
 }
 
 function json_path_legacy([String] $json, [String] $jsonpath, [Hashtable] $substitutions) {
-    $result = $json | ConvertFrom-Json -ea stop
+    $result = $json | ConvertFrom-Json -ErrorAction Stop
     $isJsonPath = $jsonpath.StartsWith('$')
     $jsonpath.split('.') | ForEach-Object {
         $el = $_
 
-        # substitute the basename and version varibales into the jsonpath
-        if ($null -ne $substitutions) {
-            $el = substitute $el $substitutions
-        }
+        # Substitute the basename and version varibales into the jsonpath
+        if ($null -ne $substitutions) { $el = substitute $el $substitutions }
 
-        # skip $ if it's jsonpath format
-        if ($el -eq '$' -and $isJsonPath) {
-            return
-        }
+        # Skip $ if it's jsonpath format
+        if ($el -eq '$' -and $isJsonPath) { return }
 
-        # array detection
+        # Array detection
         if ($el -match '^(?<property>\w+)?\[(?<index>\d+)\]$') {
             $property = $matches['property']
             if ($property) {
@@ -151,6 +140,7 @@ function json_path_legacy([String] $json, [String] $jsonpath, [Hashtable] $subst
 
         $result = $result.$el
     }
+
     return $result
 }
 

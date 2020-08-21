@@ -1,13 +1,13 @@
 # Usage: scoop home <app>
-# Summary: Opens the app homepage
+# Summary: Opens the app homepage in default browser
 
 param($app)
 
 'core', 'help', 'manifest', 'buckets' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 $exitCode = 0
 
 if ($app) {
@@ -23,6 +23,8 @@ if ($app) {
         $exitCode = 3
         Write-UserMessage -Message "Could not find manifest for '$app'." -Err
     }
-} else { my_usage; $exitCode = 1 }
+} else {
+    Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage)
+}
 
 exit $exitCode

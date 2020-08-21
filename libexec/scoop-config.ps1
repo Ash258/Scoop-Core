@@ -1,4 +1,4 @@
-# Usage: scoop config [rm] name [value]
+# Usage: scoop config [rm|show] [name [value]]
 # Summary: Get or set configuration values
 # Help: The scoop configuration file is saved at ~/.config/scoop/config.json.
 #
@@ -10,6 +10,9 @@
 #
 # To remove a configuration setting:
 #   scoop config rm <name>
+#
+# To show full configuration file:
+#   scoop config show
 #
 # Settings
 # --------
@@ -84,26 +87,28 @@
 param($name, $value)
 
 'core', 'help' | ForEach-Object {
-    . "$PSScriptRoot\..\lib\$_.ps1"
+    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-reset_aliases
+Reset-Alias
 
-if (!$name) { my_usage; exit 1 }
+if (!$name) { Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage) }
 
-if ($name -like 'rm') {
+if ($name -eq 'rm') {
+    if (!$value) { Stop-ScoopExecution -Message '''rm'' requires value parameter' -ExitCode 2 }
+
     set_config $value $null | Out-Null
     Write-UserMessage -Message "'$value' has been removed"
+} elseif ($name -eq 'show') {
+    Get-Content $SCOOP_CONFIGURATION_FILE -Raw
 } elseif ($null -ne $value) {
     set_config $name $value | Out-Null
     Write-UserMessage -Message "'$name' has been set to '$value'"
 } else {
     $value = get_config $name
-    if ($null -eq $value) {
-        Write-UserMessage -Message "'$name' is not set"
-    } else {
-        Write-UserMessage -Message $value
-    }
+    $mes =  if ($null -eq $value) { "'$name' is not set" } else { $value }
+
+    Write-UserMessage -Message $mes -Output
 }
 
 exit 0

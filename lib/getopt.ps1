@@ -9,24 +9,21 @@
 #    a parameter should end with '='
 # returns @(opts hash, remaining_args array, error string)
 function getopt($argv, $shortopts, $longopts) {
-    $opts = @{ }; $rem = @()
+    $opts = @{ }
+    $rem = @()
 
-    function err($msg) {
-        $opts, $rem, $msg
-    }
+    function err($msg) { return $opts, $rem, $msg }
 
-    function regex_escape($str) {
-        return [regex]::escape($str)
-    }
+    function regex_escape($str) { return [System.Text.RegularExpressions.Regex]::Escape($str) }
 
-    # ensure these are arrays
+    # Ensure these are arrays
     $argv = @($argv)
     $longopts = @($longopts)
 
     for ($i = 0; $i -lt $argv.length; $i++) {
         $arg = $argv[$i]
         if ($null -eq $arg) { continue }
-        # don't try to parse array arguments
+        # Don't try to parse array arguments
         if ($arg -is [array]) { $rem += , $arg; continue }
         if ($arg -is [int]) { $rem += $arg; continue }
         if ($arg -is [decimal]) { $rem += $arg; continue }
@@ -38,7 +35,7 @@ function getopt($argv, $shortopts, $longopts) {
 
             if ($longopt) {
                 if ($longopt.endswith('=')) {
-                    # requires arg
+                    # Requires arg
                     if ($i -eq $argv.length - 1) {
                         return err "Option --$name requires an argument."
                     }
@@ -72,5 +69,5 @@ function getopt($argv, $shortopts, $longopts) {
         }
     }
 
-    $opts, $rem
+    return $opts, $rem
 }
