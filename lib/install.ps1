@@ -1,4 +1,4 @@
-'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress', 'ManifestHelpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
