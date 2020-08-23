@@ -18,6 +18,7 @@ function Find-BucketDirectory {
     [CmdletBinding()]
     [OutputType([String])]
     param(
+        [Alias('Bucket')]
         [String] $Name = 'main',
         [Switch] $Root
     )

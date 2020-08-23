@@ -100,17 +100,6 @@ foreach ($sp in $specific_versions) {
             ++$problems
         }
     }
-
-    # TODO: Extract to function
-    $bucketFolder = Find-BucketDirectory $bucket
-    # TODO: YML
-    $oldManifest = Join-Path $bucketFolder "old\$app\$version.json"
-    if (Test-Path $oldManifest -PathType Leaf) {
-        return $oldManifest
-    } else {
-        # Try to generate the manifest if older do not exists
-        return generate_user_manifest $app $bucket $version
-    }
 }
 $apps = @(($specific_versions_paths + $difference) | Where-Object { $_ } | Sort-Object -Unique)
 
@@ -162,12 +151,12 @@ foreach ($app in $apps) {
 
     $cleanApp, $bucket = parse_app $app
 
-    if (is_installed $cleanApp $global) { continue }
+    if ($specific_versions -contains $app) {
+        if (is_installed $cleanApp $global) { continue }
+    }
 
     # Install
     try {
-        # TODO: Resolve $appName as it is get from path
-        # old/bat/0.14.0.json -> 0.14.0/current/install...
         install_app $app $architecture $global $suggested $use_cache $check_hash
     } catch {
         ++$problems

@@ -350,7 +350,16 @@ function app_status($app, $global) {
     return $status
 }
 
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
+function appname_from_url($url) {
+    # TODO: Generic extension
+    $appName = (Split-Path $url -Leaf) -replace '\.json$'
+    $br = '[/\\]'
+    if ($url -match "${br}bucket${br}old${br}(.+)${br}.+\.json") {
+        $appName = $Matches[1]
+    }
+
+    return $appName
+}
 
 # paths
 function fname($path) { return Split-Path $path -Leaf }
@@ -784,8 +793,11 @@ function applist($apps, $global, $bucket = $null) {
 }
 
 function parse_app([string] $app) {
-    if ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
-        return $matches['app'], $matches['bucket'], $matches['version']
+    $br = '[/\\]'
+    if ($app -match "${br}bucket${br}old${br}(?<app>.*?)${br}(?<version>.*?)\.json") {
+        return $Matches['app'], $null, $Matches['version']
+    } elseif ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
+        return $Matches['app'], $Matches['bucket'], $Matches['version']
     }
     return $app, $null, $null
 }

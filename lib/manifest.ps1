@@ -123,9 +123,22 @@ function supports_architecture($manifest, $architecture) {
 }
 
 function generate_user_manifest($app, $bucket, $version) {
-    $null, $manifest, $bucket, $null = Find-Manifest $app $bucket
+    $cleanApp, $manifest, $bucket, $null = Find-Manifest $app $bucket
 
     if ($manifest.version -eq $version) { return manifest_path $app $bucket }
+
+    Write-UserMessage -Warning -Message "Looking for archived manifest for '$app' ($version)"
+
+    # Seach local path
+    # TODO: Generic manifest extension
+    $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp\$version.json"
+    if (Test-Path $archivedManifest) {
+        Write-UserMessage -Message 'Found archived version' -Success
+        $workspace = Join-Path (usermanifestsdir) "$app.json"
+        Copy-Item $archivedManifest $workspace -Force
+
+        return $workspace
+    }
 
     Write-UserMessage -Warning -Message @(
         "Given version ($version) does not match manifest ($($manifest.version))"
