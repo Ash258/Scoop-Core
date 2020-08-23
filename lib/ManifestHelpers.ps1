@@ -59,7 +59,44 @@ function Test-Persistence {
     }
 }
 
+function Copy-ToPersist {
+    <#
+    .SYNOPSIS
+        Manually "persist" file.
+    .PARAMETER Item
+        Specifies the items to be copied from $dir into $persist_dir
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [SupportsWildcards()]
+        [ValidateNotNullOrEmpty()]
+        [System.IO.FileInfo[]] $Item
+    )
+    begin { ensure $persist_dir | Out-Null }
 
+    process {
+        Get-ChildItem -Path "$dir\*" -Include $Item -Force | Copy-Item -Destination $persist_dir -Force
+    }
+}
+
+function Copy-FromPersist {
+    <#
+    .SYNOPSIS
+        Manually "persist" file.
+    .PARAMETER Item
+        Specifies the items to be copied from $persist_dir into $dir
+    #>
+    [CmdletBinding()]
+    [SupportsWildcards()]
+    param([Parameter(Mandatory, ValueFromPipeline)] [System.IO.FileInfo[]] $Item)
+
+    begin { ensure $persist_dir | Out-Null }
+
+    process {
+        Get-ChildItem -Path "$persist_dir\*" -Include $Item -Force | Copy-Item -Destination $dir -ErrorAction SilentlyContinue -Force
+    }
+}
 #endregion Persistence
 
 function Remove-AppDirItem {
@@ -86,6 +123,62 @@ function Remove-AppDirItem {
     }
 }
 
+function Edit-File {
+    <#
+    .SYNOPSIS
+        Finds and replaces text in given file.
+    .PARAMETER File
+        Specifies the file, which will be loaded.
+        File could be passed as full path (used for changing files outside $dir) or just relative path to $dir.
+    .PARAMETER Find
+        Specifies the string to be replaced.
+    .PARAMETER Replace
+        Specifies the string for replacing all occurrences.
+        Empty string is default => Found string will be removed.
+    .PARAMETER Regex
+        Specifies if regular expression should be used instead of simple match.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [System.IO.FileInfo] $File,
+        [Parameter(Mandatory)]
+        [String[]] $Find,
+        [String[]] $Replace,
+        [Switch] $Regex
+    )
+
+    begin {
+        # Use file from $dir
+        if (Join-Path $dir $File | Test-Path -PathType Leaf) { $File = Join-Path $dir $File }
+    }
+
+    process {
+        if (!(Test-Path $File)) {
+            Write-UserMessage -Message "File '$File' does not exist" -Err
+            return
+        }
+
+        $content = Get-Content $File
+
+        for ($i = 0; $i -lt $Find.Count; ++$i) {
+            $toFind = $Find[$i]
+            if (!$Replace -or ($null -eq $Replace[$i])) {
+                $toReplace = ''
+            } else {
+                $toReplace = $Replace[$i]
+            }
+
+            if ($Regex) {
+                $content = $content -replace $toFind, $toReplace
+            } else {
+                $content = $content.Replace($toFind, $toReplace)
+            }
+        }
+
+        Out-UTF8File -Path $File -Value $content
+    }
+}
 
 function New-JavaShortcutWrapper {
     <#
