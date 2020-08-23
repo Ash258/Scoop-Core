@@ -357,6 +357,7 @@ function get_version_substitutions([String] $version, [Hashtable] $customMatches
 
 function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable) {
     Write-UserMessage -Message "Autoupdating $app" -Color DarkCyan
+    $oldVersion = $json.version
     $has_changes = $false
     $has_errors = $false
     [bool] $valid = $true
@@ -426,16 +427,17 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
         $path = Join-Path $dir "$app.json"
 
         # Archive older version
-        # TODO: Handle workspace manifests
         if ($json.autoupdate.archive) {
+            $oldJson = $json.PSObject.Copy()
             $appOldPath = Join-Path $dir "old\$app"
             $manifestOldPath = Join-Path $appOldPath "$oldVersion.json"
             Write-UserMessage -Message "Archiving manifest with version $oldVersion to $manifestOldPath" -Info
 
-            New-Item $appOldPath -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
-            Copy-Item $path $manifestOldPath
+            $oldJson.PSObject.Properties.Remove('checkver')
+            $oldJson.PSObject.Properties.Remove('autoupdate')
 
-            # TODO: Remove checkver, autoupdate
+            New-Item $appOldPath -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
+            $oldJson | ConvertToPrettyJson | Out-UTF8File -Path $manifestOldPath
         }
 
         $json | ConvertToPrettyJson | Out-UTF8File -Path $path
