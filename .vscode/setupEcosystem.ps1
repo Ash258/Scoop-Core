@@ -2,18 +2,20 @@
 param($Folder)
 
 $REPOSITORIES = @(
-    @('Ash258/Scoop-Ash258.git', 'Ash258'),
     @('Ash258/Scoop-Core', 'CORE'),
-    @('lukesampson/scoop-extras.git', 'Extras', 'Ash258/Scoop-Extras.git'),
     @('Ash258/GenericBucket', 'GenericBucket'),
     @('Ash258/Scoop-GithubActions', 'GithubActions'),
-    @('Ash258/GithubActionsBucketForTesting', 'GithubActionsBucketForTesting'),
-    @('Ash258/Scoop-JetBrains.git', 'JetBrains'),
-    @('Ash258/Scoop-Licenses.git', 'Licenses'),
-    @('ScoopInstaller/Main.git', 'Main', 'Ash258/Scoop-Main.git'),
-    @('Ash258/Scoop-Sysinternals.git', 'Sysinternals'),
+    @('Ash258/Scoop-Dockers', 'Dockers'),
+    @('Ash258/Scoop-Vagrants', 'Vagrants'),
+    @('Ash258/Scoop-Ash258.git', 'Ash258'),
     @('Ash258/Scoop-NirSoft.git', 'NirSoft'),
-    @('ScoopInstaller/PHP.git', 'PHP', 'Ash258/Scoop-PHP.git')
+    @('Ash258/Scoop-Licenses.git', 'Licenses'),
+    @('Ash258/Scoop-JetBrains.git', 'JetBrains'),
+    @('Ash258/Scoop-Sysinternals.git', 'Sysinternals'),
+    @('ScoopInstaller/PHP.git', 'PHP', 'Ash258/Scoop-PHP.git'),
+    @('ScoopInstaller/Main.git', 'Main', 'Ash258/Scoop-Main.git'),
+    @('lukesampson/scoop-extras.git', 'Extras', 'Ash258/Scoop-Extras.git'),
+    @('Ash258/GithubActionsBucketForTesting', 'GithubActionsBucketForTesting')
 )
 
 $GH = 'git@github.com:'
