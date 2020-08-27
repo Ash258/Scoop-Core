@@ -2,7 +2,7 @@
 .SYNOPSIS
     Updates manifests and pushes them or creates pull-requests.
 .DESCRIPTION
-    Updates manifests and pushes them directly to the master branch or creates pull-requests for upstream.
+    Updates manifests and pushes them directly to the master (main) branch or creates pull-requests for upstream.
 .PARAMETER Upstream
     Upstream repository with the target branch.
     Must be in format '<user>/<repo>:<branch>'
@@ -12,9 +12,9 @@
 .PARAMETER Dir
     The directory where to search for manifests.
 .PARAMETER Push
-    Push updates directly to 'origin master'.
+    Push updates directly to 'origin master' or 'origin main'.
 .PARAMETER Request
-    Create pull-requests on 'upstream master' for each update.
+    Create pull-requests on 'upstream master'/'upstream main' for each update.
 .PARAMETER Help
     Print help to console.
 .PARAMETER SpecialSnowflakes
@@ -65,12 +65,12 @@ if ((!$Push -and !$Request) -or $Help) {
 Usage: auto-pr.ps1 [OPTION]
 
 Mandatory options:
-  -p,  -push                       push updates directly to 'origin master'
-  -r,  -request                    create pull-requests on 'upstream master' for each update
+  -p,  -push                       push updates directly to 'origin master' or 'origin main'
+  -r,  -request                    create pull-requests on 'upstream master' 'upstream main' for each update
 
 Optional options:
   -u,  -upstream                   upstream repository with target branch
-                                   only used if -r is set (default: lukesampson/scoop:master)
+                                   only used if -r is set
   -h,  -help
 '@
     exit 0
@@ -89,12 +89,20 @@ function execute($cmd) {
     return $output
 }
 
+function _selectMasterBranch {
+    $branches = execute 'hub branch --all'
+    $master = if ($branches -like '*/origin/main') { 'main' } else { 'master' }
+
+    return $master
+}
+
 function pull_requests($json, [String] $app, [String] $upstream, [String] $manifest) {
     $version = $json.version
     $homepage = $json.homepage
     $branch = "manifest/$app-$version"
 
-    execute 'hub checkout master'
+    $master = _selectMasterBranch
+    execute "hub checkout $master"
     Write-Host "hub rev-parse --verify $branch" -ForegroundColor Green
     hub rev-parse --verify $branch
 
@@ -139,12 +147,13 @@ a new version of [$app]($homepage) is available.
 }
 
 Write-Host 'Updating ...' -ForegroundColor DarkCyan
+$master = _selectMasterBranch
 if ($Push) {
-    execute 'hub pull origin master'
-    execute 'hub checkout master'
+    execute "hub pull origin $master"
+    execute "hub checkout $master"
 } else {
-    execute 'hub pull upstream master'
-    execute 'hub push origin master'
+    execute "hub pull upstream $master"
+    execute "hub push origin $master"
 }
 
 if (!$SkipCheckver) {
@@ -188,10 +197,10 @@ hub diff --name-only | ForEach-Object {
 
 if ($Push) {
     Write-Host 'Pushing updates ...' -ForegroundColor DarkCyan
-    execute 'hub push origin master'
+    execute "hub push origin $master"
 } else {
-    Write-Host 'Returning to master branch and removing unstaged files ...' -ForegroundColor DarkCyan
-    execute 'hub checkout -f master'
+    Write-Host "Returning to $master branch and removing unstaged files ..." -ForegroundColor DarkCyan
+    execute "hub checkout -f $master"
 }
 
 execute 'hub reset --hard'
