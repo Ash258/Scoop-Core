@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-param($Folder)
+param($Folder, [Switch] $Https)
 
 $REPOSITORIES = @(
     @('Ash258/Scoop-Core', 'CORE'),
@@ -19,6 +19,7 @@ $REPOSITORIES = @(
 )
 
 $GH = 'git@github.com:'
+if ($Https) { $GH = 'https://github.com/' }
 
 $ind = 0
 foreach ($repo in $REPOSITORIES) {
@@ -33,7 +34,7 @@ foreach ($repo in $REPOSITORIES) {
 
     $target = Join-Path $Folder $targetname
 
-    git clone $origin $target
-    if ($Ash) { git -C $target remote add Ash "$GH$Ash" }
+    if (!(Test-Path $target)) { git clone $origin $target }
+    if ($Ash -and (!(git -C $target remote get-url --all Ash 2>$null))) { git -C $target remote add 'Ash' "$GH$Ash" }
     git fetch --all
 }

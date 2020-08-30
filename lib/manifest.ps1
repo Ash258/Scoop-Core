@@ -26,9 +26,9 @@ function url_manifest($url) {
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $str = $wc.DownloadString($url)
     } catch [System.Management.Automation.MethodInvocationException] {
-        Write-UserMessage -Message $_.Exception.InnerException.Message -Warning
+        Write-UserMessage -Message "${url}: $($_.Exception.InnerException.Message)" -Warning
     } catch {
-        throw
+        throw $_.Exception.Message
     }
     if (!$str) { return $null }
 
