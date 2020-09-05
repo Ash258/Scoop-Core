@@ -3,6 +3,7 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
+#region helpers
 function Test-7zipRequirement {
     [CmdletBinding(DefaultParameterSetName = 'URL')]
     [OutputType([Boolean])]
@@ -36,6 +37,7 @@ function Test-LessmsiRequirement {
         return $false
     }
 }
+#endregion helpers
 
 function Expand-7zipArchive {
     [CmdletBinding()]
@@ -52,59 +54,61 @@ function Expand-7zipArchive {
         [Switch] $Removal
     )
 
-    if (get_config '7ZIPEXTRACT_USE_EXTERNAL' $false) {
-        try {
-            $7zPath = (Get-Command '7z' -CommandType Application | Select-Object -First 1).Source
-        } catch [System.Management.Automation.CommandNotFoundException] {
-            Set-TerminatingError -Title "Ignore|-Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
-        }
-    } else {
-        $7zPath = Get-HelperPath -Helper 7zip
-    }
-
-    $LogPath = Split-Path $Path -Parent | Join-Path -ChildPath '7zip.log'
-    $ArgList = @('x', "`"$Path`"", "-o`"$DestinationPath`"", '-y')
-    $IsTar = ((strip_ext $Path) -match '\.tar$') -or ($Path -match '\.t[abgpx]z2?$')
-    if (!$IsTar -and $ExtractDir) {
-        $ArgList += "-ir!`"$ExtractDir\*`""
-    }
-    if ($Switches) {
-        $ArgList += (-split $Switches)
-    }
-
-    switch ($Overwrite) {
-        'All' { $ArgList += '-aoa' }
-        'Skip' { $ArgList += '-aos' }
-        'Rename' { $ArgList += '-aou' }
-    }
-
-    try {
-        $Status = Invoke-ExternalCommand $7zPath $ArgList -LogPath $LogPath
-    } catch [System.Management.Automation.ParameterBindingException] {
-        Set-TerminatingError -Title 'Ignore|-''7zip'' is not installed or cannot be used'
-    }
-
-    if (!$Status) {
-        Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
-    }
-    if (!$IsTar -and $ExtractDir) {
-        movedir (Join-Path $DestinationPath $ExtractDir) $DestinationPath | Out-Null
-    }
-    if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
-
-    if ($IsTar) {
-        # Check for tar
-        $Status = Invoke-ExternalCommand $7zPath @('l', "`"$Path`"") -LogPath $LogPath
-        if ($Status) {
-            $TarFile = (Get-Content -Path $LogPath)[-4] -replace '.{53}(.*)', '$1' # get inner tar file name
-            Expand-7zipArchive -Path (Join-Path $DestinationPath $TarFile) -DestinationPath $DestinationPath -ExtractDir $ExtractDir -Removal
+    begin {
+        if (get_config '7ZIPEXTRACT_USE_EXTERNAL' $false) {
+            try {
+                $7zPath = (Get-Command '7z' -CommandType Application | Select-Object -First 1).Source
+            } catch [System.Management.Automation.CommandNotFoundException] {
+                Set-TerminatingError -Title "Ignore|-Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
+            }
         } else {
-            Set-TerminatingError -Title "Decompress error|-Failed to list files in $Path.`nNot a 7-Zip supported archive file."
+            $7zPath = Get-HelperPath -Helper 7zip
         }
     }
 
-    # Remove original archive file
-    if ($Removal) { Remove-Item $Path -Force }
+    process {
+        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath '7zip.log'
+        $argList = @('x', "`"$Path`"", "-o`"$DestinationPath`"", '-y')
+        $isTar = ((strip_ext $Path) -match '\.tar$') -or ($Path -match '\.t[abgpx]z2?$')
+
+        if (!$isTar -and $ExtractDir) { $argList += "-ir!`"$ExtractDir\*`"" }
+        if ($Switches) { $argList += (-split $Switches) }
+
+        switch ($Overwrite) {
+            'All' { $argList += '-aoa' }
+            'Skip' { $argList += '-aos' }
+            'Rename' { $argList += '-aou' }
+        }
+
+        try {
+            $status = Invoke-ExternalCommand $7zPath $argList -LogPath $logPath
+        } catch [System.Management.Automation.ParameterBindingException] {
+            Set-TerminatingError -Title 'Ignore|-''7zip'' is not installed or cannot be used'
+        }
+
+        if (!$status) {
+            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
+        }
+        if (!$isTar -and $ExtractDir) {
+            movedir (Join-Path $DestinationPath $ExtractDir) $DestinationPath | Out-Null
+        }
+        if (Test-Path $logPath) { Remove-Item $logPath -Force }
+
+        if ($isTar) {
+            # Check for tar
+            $tarStatus = Invoke-ExternalCommand $7zPath @('l', "`"$Path`"") -LogPath $logPath
+            if ($tarStatus) {
+                # Get inner tar file name
+                $tarFile = (Get-Content -Path $logPath)[-4] -replace '.{53}(.*)', '$1'
+                Expand-7zipArchive -Path (Join-Path $DestinationPath $tarFile) -DestinationPath $DestinationPath -ExtractDir $ExtractDir -Removal
+            } else {
+                Set-TerminatingError -Title "Decompress error|-Failed to list files in $Path.`nNot a 7-Zip supported archive file."
+            }
+        }
+
+        # Remove original archive file
+        if ($Removal) { Remove-Item $Path -Force }
+    }
 }
 
 function Expand-MsiArchive {
@@ -173,7 +177,7 @@ function Expand-InnoArchive {
         [Switch] $Removal
     )
 
-    $LogPath =  Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
+    $LogPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
     $ArgList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
     switch -Regex ($ExtractDir) {
         '^[^{].*' { $ArgList += "-c{app}\$ExtractDir" }
