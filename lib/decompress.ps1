@@ -1,4 +1,4 @@
-# TODO: Core import is messing up with download progress 🤷‍♂️🤷‍♂️
+# TODO: Core import is messing up with download progress
 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
