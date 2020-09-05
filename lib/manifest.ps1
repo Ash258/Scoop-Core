@@ -81,7 +81,7 @@ function install_info($app, $version, $global) {
 
     if (!(Test-Path $path)) {
         if (Join-Path $d 'install.json' | Test-Path) {
-            Write-UserMessage -Message "Migrating install.json to scoop-install.json" -Info
+            Write-UserMessage -Message 'Migrating install.json to scoop-install.json' -Info
             Join-Path $d 'install.json' | Rename-Item -NewName 'scoop-install.json'
         } else {
             return $null

@@ -9,7 +9,7 @@ function install_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    if ($global) { Set-TerminatingError -Title "Ignore|-Installing PowerShell modules globally is not implemented!" }
+    if ($global) { Set-TerminatingError -Title 'Ignore|-Installing PowerShell modules globally is not implemented!' }
 
     $modulesdir = ensure $modulesdir
     ensure_in_psmodulepath $modulesdir $global

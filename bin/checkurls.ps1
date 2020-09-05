@@ -38,14 +38,14 @@ Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
     $Queue += , @($_.Name, $manifest)
 }
 
-Write-Host '[' -NoNewLine
-Write-Host 'U' -NoNewLine -ForegroundColor Cyan
+Write-Host '[' -NoNewline
+Write-Host 'U' -NoNewline -ForegroundColor Cyan
 Write-Host ']RLs'
-Write-Host ' | [' -NoNewLine
-Write-Host 'O' -NoNewLine -ForegroundColor Green
+Write-Host ' | [' -NoNewline
+Write-Host 'O' -NoNewline -ForegroundColor Green
 Write-Host ']kay'
-Write-Host ' |  | [' -NoNewLine
-Write-Host 'F' -NoNewLine -ForegroundColor Red
+Write-Host ' |  | [' -NoNewline
+Write-Host 'F' -NoNewline -ForegroundColor Red
 Write-Host ']ailed'
 Write-Host ' |  |  |'
 
@@ -102,9 +102,9 @@ foreach ($man in $Queue) {
     if (($ok -eq $urls.Length) -and $SkipValid) { continue }
 
     # URLS
-    Write-Host '[' -NoNewLine
-    Write-Host $urls.Length -NoNewLine -ForegroundColor Cyan
-    Write-Host ']' -NoNewLine
+    Write-Host '[' -NoNewline
+    Write-Host $urls.Length -NoNewline -ForegroundColor Cyan
+    Write-Host ']' -NoNewline
 
     # Okay
     $okColor = 'Yellow'
@@ -113,15 +113,15 @@ foreach ($man in $Queue) {
     } elseif ($ok -eq 0) {
         $okColor = 'Red'
     }
-    Write-Host '[' -NoNewLine
-    Write-Host $ok -ForegroundColor $okColor -NoNewLine
-    Write-Host ']' -NoNewLine
+    Write-Host '[' -NoNewline
+    Write-Host $ok -ForegroundColor $okColor -NoNewline
+    Write-Host ']' -NoNewline
 
     # Failed
     $fColor = if ($failed -eq 0) { 'Green' } else { 'Red' }
-    Write-Host '[' -NoNewLine
+    Write-Host '[' -NoNewline
     Write-Host $failed -ForegroundColor $fColor -NoNewline
-    Write-Host '] ' -NoNewLine
+    Write-Host '] ' -NoNewline
     Write-Host (strip_ext $name)
 
     $errors | ForEach-Object {

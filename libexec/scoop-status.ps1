@@ -25,7 +25,7 @@ if (Join-Path $currentdir '.git' | Test-Path -PathType Container) {
 if ($needs_update) {
     Write-UserMessage -Message "Scoop is out of date. Run 'scoop update' to get the latest changes." -Warning
 } else {
-    Write-UserMessage -Message "Scoop is up to date." -Success
+    Write-UserMessage -Message 'Scoop is up to date.' -Success
 }
 
 $failed = @()
@@ -35,11 +35,12 @@ $missing_deps = @()
 $onhold = @()
 $exitCode = 0
 
-foreach ($global in ($true, $false)) { # local and global apps
+# local and global apps
+foreach ($global in ($true, $false)) {
     $dir = appsdir $global
     if (!(Test-Path $dir)) { continue }
 
-    foreach ($application in (Get-ChildItem $dir | Where-Object -Property Name -NE -Value 'scoop')){
+    foreach ($application in (Get-ChildItem $dir | Where-Object -Property Name -NE -Value 'scoop')) {
         $app = $application.name
         $status = app_status $app $global
         if ($status.failed) {

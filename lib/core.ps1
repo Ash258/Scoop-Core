@@ -178,14 +178,14 @@ function debug($obj) {
         Write-Host "$prefix $param ($($obj.GetType()))" -ForegroundColor DarkCyan -NoNewline
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor DarkGray
         $msg | Where-Object { ![String]::IsNullOrWhiteSpace($_) } |
-        Select-Object -Skip 2 | # Skip headers
-        ForEach-Object {
-            Write-Host "$prefix $param.$($_)" -ForegroundColor DarkCyan
-        }
-} else {
-    Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor DarkCyan -NoNewline
-    Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
-}
+            Select-Object -Skip 2 | # Skip headers
+            ForEach-Object {
+                Write-Host "$prefix $param.$($_)" -ForegroundColor DarkCyan
+            }
+    } else {
+        Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor DarkCyan -NoNewline
+        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
+    }
 }
 function success($msg) { Write-Host $msg -ForegroundColor DarkGreen }
 
@@ -196,11 +196,11 @@ function filesize($length) {
 
     $size = "$($length) B"
     if ($length -gt $gb) {
-        $size = "{0:n1} GB" -f ($length / $gb)
+        $size = '{0:n1} GB' -f ($length / $gb)
     } elseif ($length -gt $mb) {
-        $size = "{0:n1} MB" -f ($length / $mb)
+        $size = '{0:n1} MB' -f ($length / $mb)
     } elseif ($length -gt $kb) {
-        $size = "{0:n1} KB" -f ($length / $kb)
+        $size = '{0:n1} KB' -f ($length / $kb)
     }
 
     return $size
@@ -226,7 +226,7 @@ function installed($app, $global = $null) {
     # Dependencies of the format "bucket/dependency" install in a directory of form
     # "dependency". So we need to extract the bucket from the name and only give the app
     # name to is_directory
-    $app = $app.split("/")[-1]
+    $app = $app.split('/')[-1]
 
     return is_directory (appdir $app $global)
 }
@@ -484,7 +484,7 @@ function Invoke-ExternalCommand {
     if ($Process.ExitCode -ne 0) {
         if ($ContinueExitCodes -and ($ContinueExitCodes.ContainsKey($Process.ExitCode))) {
             if ($Activity) {
-                Write-Host "done." -ForegroundColor DarkYellow
+                Write-Host 'done.' -ForegroundColor DarkYellow
             }
             Write-UserMessage -Message $ContinueExitCodes[$Process.ExitCode] -Warning
             return $true
@@ -494,7 +494,7 @@ function Invoke-ExternalCommand {
             return $false
         }
     }
-    if ($Activity) { Write-Host "done." -ForegroundColor Green }
+    if ($Activity) { Write-Host 'done.' -ForegroundColor Green }
 
     return $true
 }
@@ -707,7 +707,7 @@ function Confirm-InstallationStatus {
                 $Installed += , @($App, $true, $buc)
             } elseif (installed $App $false) {
                 Write-UserMessage -Message "'$App' isn't installed globally, but it is installed for your account." -Err
-                Write-UserMessage -Message "Try again without the --global (or -g) flag instead." -Warning
+                Write-UserMessage -Message 'Try again without the --global (or -g) flag instead.' -Warning
             } else {
                 Write-UserMessage -Message "'$App' isn't installed." -Err
             }
@@ -716,7 +716,7 @@ function Confirm-InstallationStatus {
                 $Installed += , @($App, $false, $buc)
             } elseif (installed $App $true) {
                 Write-UserMessage -Message "'$App' isn't installed for your account, but it is installed globally." -Err
-                Write-UserMessage -Message "Try again with the --global (or -g) flag instead." -Warning
+                Write-UserMessage -Message 'Try again with the --global (or -g) flag instead.' -Warning
             } else {
                 Write-UserMessage -Message "'$App' isn't installed." -Err
             }
@@ -762,7 +762,7 @@ function ensure_scoop_in_path($global) {
 }
 
 function ensure_robocopy_in_path {
-    if (!(Test-CommandAvailable robocopy)) { shim "C:\Windows\System32\Robocopy.exe" $false }
+    if (!(Test-CommandAvailable 'robocopy')) { shim 'C:\Windows\System32\Robocopy.exe' $false }
 }
 
 function wraptext($text, $width) {
@@ -850,8 +850,8 @@ function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
             $entity = $entity.Replace($_.Name, $value)
         }
 
-    return $entity
-}
+        return $entity
+    }
 }
 
 function format_hash([String] $hash) {
@@ -896,7 +896,7 @@ function get_hash([String] $multihash) {
 
 function handle_special_urls($url) {
     # FossHub.com
-    if ($url -match "^(?:.*fosshub.com\/)(?<name>.*)(?:\/|\?dwl=)(?<filename>.*)$") {
+    if ($url -match '^(?:.*fosshub.com\/)(?<name>.*)(?:\/|\?dwl=)(?<filename>.*)$') {
         $Body = @{
             'projectUri'      = $Matches.name
             'fileName'        = $Matches.filename
@@ -907,14 +907,14 @@ function handle_special_urls($url) {
             $Body.Add('projectId', $Matches.pid)
             $Body.Add('releaseId', $Matches.rid)
         }
-        $url = Invoke-RestMethod -Method Post -Uri "https://api.fosshub.com/download/" -ContentType "application/json" -Body (ConvertTo-Json $Body -Compress)
+        $url = Invoke-RestMethod -Method Post -Uri 'https://api.fosshub.com/download/' -ContentType 'application/json' -Body (ConvertTo-Json $Body -Compress)
         if ($null -eq $url.error) {
             $url = $url.data.url
         }
     }
 
     # Sourceforge.net
-    if ($url -match "(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*?)(?:$|\/download|\?)") {
+    if ($url -match '(?:downloads\.)?sourceforge.net\/projects?\/(?<project>[^\/]+)\/(?:files\/)?(?<file>.*?)(?:$|\/download|\?)') {
         # Reshapes the URL to avoid redirections
         $url = "https://downloads.sourceforge.net/project/$($matches['project'])/$($matches['file'])"
     }

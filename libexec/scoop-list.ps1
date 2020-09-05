@@ -73,7 +73,7 @@ if ($apps) {
     }
     Write-Host ''
 } else {
-    Write-userMessage -Message "No application installed."
+    Write-userMessage -Message 'No application installed.'
 }
 
 exit 0

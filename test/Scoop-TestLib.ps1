@@ -23,9 +23,9 @@ function assert($x, $eq = '__undefined', $ne = '__undefined') {
         fail "unexpected arguments: $args"
     }
 
-    if ($eq -ne "__undefined") {
+    if ($eq -ne '__undefined') {
         if ($x -ne $eq) { fail "$(fmt $x) != $(fmt $eq)" }
-    } elseif ($ne -ne "__undefined") {
+    } elseif ($ne -ne '__undefined') {
         if ($x -eq $ne) { fail "$(fmt $x) == $(fmt $ne)" }
     } else {
         if (!$x) { fail "$x" }
@@ -40,7 +40,7 @@ function test_results {
         $res = "$script:failed failed"
     }
 
-    Write-Host "ran $script:run tests, " -nonewline
+    Write-Host "ran $script:run tests, " -NoNewline
     Write-Host $res -f $col
 }
 
@@ -48,7 +48,7 @@ function script:fail($msg) {
     $script:failed++
     $invoked = (Get-Variable -Scope 1 myinvocation).value
 
-    $script = Split-Path $invoked.scriptname -leaf
+    $script = Split-Path $invoked.scriptname -Leaf
     $line = $invoked.scriptlinenumber
 
     if ($script:test) { $msg = "$script:test`r`n      -> $msg" }

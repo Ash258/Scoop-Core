@@ -106,7 +106,7 @@ if ($name -eq 'rm') {
     Write-UserMessage -Message "'$name' has been set to '$value'"
 } else {
     $value = get_config $name
-    $mes =  if ($null -eq $value) { "'$name' is not set" } else { $value }
+    $mes = if ($null -eq $value) { "'$name' is not set" } else { $value }
 
     Write-UserMessage -Message $mes -Output
 }
