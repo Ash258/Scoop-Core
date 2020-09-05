@@ -62,7 +62,7 @@ function Expand-7zipArchive {
                 Set-TerminatingError -Title "Ignore|-Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
             }
         } else {
-            $7zPath = Get-HelperPath -Helper 7zip
+            $7zPath = Get-HelperPath -Helper '7zip'
         }
     }
 
@@ -127,7 +127,7 @@ function Expand-MsiArchive {
     begin {
         $DestinationPath = $DestinationPath.TrimEnd('\')
         if ((get_config 'MSIEXTRACT_USE_LESSMSI' $false)) {
-            $msiPath = Get-HelperPath -Helper Lessmsi
+            $msiPath = Get-HelperPath -Helper 'Lessmsi'
             $argList = @('x', "`"$Path`"", "`"$DestinationPath\\`"")
         } else {
             $msiPath = 'msiexec.exe'
@@ -199,7 +199,7 @@ function Expand-InnoArchive {
         try {
             # TODO: Find out extract_dir issue.
             # When there is no specified directory in archive innounp will just exit with 0 and version of file
-            $status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $argList -LogPath $logPath
+            $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Innounp') $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
             Set-TerminatingError -Title 'Ignore|-''innounp'' is not installed or cannot be used'
         }
@@ -224,45 +224,48 @@ function Expand-ZipArchive {
         [Switch] $Removal
     )
 
-    if ($ExtractDir) {
-        $OriDestinationPath = $DestinationPath
-        $DestinationPath = Join-Path $DestinationPath '_tmp'
-    }
-
-    # All methods to unzip the file require .NET4.5+
-    if ($PSVersionTable.PSVersion.Major -lt 5) {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        try {
-            [System.IO.Compression.ZipFile]::ExtractToDirectory($Path, $DestinationPath)
-        } catch [System.IO.PathTooLongException] {
-            # Try to fall back to 7zip if path is too long
-            if (Test-HelperInstalled -Helper 7zip) {
-                Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
-                return
-            } else {
-                Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle long paths in this zip file.`nRun 'scoop install 7zip' and try again."
-            }
-        } catch [System.IO.IOException] {
-            if (Test-HelperInstalled -Helper 7zip) {
-                Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
-                return
-            } else {
-                Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle the file names in this zip file.`nRun 'scoop install 7zip' and try again."
-            }
-        } catch {
-            Set-TerminatingError -Title "Decompress error|-Unzip failed: $_"
+    process {
+        if ($ExtractDir) {
+            $originalDestination = $DestinationPath
+            $DestinationPath = Join-Path $DestinationPath '_tmp'
         }
-    } else {
-        # Use Expand-Archive to unzip in PowerShell 5+
-        # Compatible with Pscx (https://github.com/Pscx/Pscx)
-        Microsoft.PowerShell.Archive\Expand-Archive -Path $Path -DestinationPath $DestinationPath -Force
+
+        # All methods to unzip the file require .NET4.5+
+        if ($PSVersionTable.PSVersion.Major -lt 5) {
+            Add-Type -AssemblyName System.IO.Compression.FileSystem
+            try {
+                [System.IO.Compression.ZipFile]::ExtractToDirectory($Path, $DestinationPath)
+            } catch [System.IO.PathTooLongException] {
+                # Try to fall back to 7zip if path is too long
+                if (Test-HelperInstalled -Helper '7zip') {
+                    Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
+                    return
+                } else {
+                    Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle long paths in this zip file.`nRun 'scoop install 7zip' and try again."
+                }
+            } catch [System.IO.IOException] {
+                if (Test-HelperInstalled -Helper '7zip') {
+                    Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
+                    return
+                } else {
+                    Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle the file names in this zip file.`nRun 'scoop install 7zip' and try again."
+                }
+            } catch {
+                Set-TerminatingError -Title "Decompress error|-Unzip failed: $_"
+            }
+        } else {
+            # Use Expand-Archive to unzip in PowerShell 5+
+            # Compatible with Pscx (https://github.com/Pscx/Pscx)
+            Microsoft.PowerShell.Archive\Expand-Archive -Path $Path -DestinationPath $DestinationPath -Force
+        }
+
+        if ($ExtractDir) {
+            movedir (Join-Path $DestinationPath $ExtractDir) $originalDestination | Out-Null
+            Remove-Item $DestinationPath -Recurse -Force
+        }
+        # Remove original archive file
+        if ($Removal) { Remove-Item $Path -Force }
     }
-    if ($ExtractDir) {
-        movedir (Join-Path $DestinationPath $ExtractDir) $OriDestinationPath | Out-Null
-        Remove-Item $DestinationPath -Recurse -Force
-    }
-    # Remove original archive file
-    if ($Removal) { Remove-Item $Path -Force }
 }
 
 function Expand-DarkArchive {
@@ -282,7 +285,7 @@ function Expand-DarkArchive {
     if ($Switches) { $ArgList += (-split $Switches) }
 
     try {
-        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Dark) $ArgList -LogPath $LogPath
+        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Dark') $ArgList -LogPath $LogPath
     } catch [System.Management.Automation.ParameterBindingException] {
         Set-TerminatingError -Title 'Ignore|-''dark'' is not installed or cannot be used'
     }
