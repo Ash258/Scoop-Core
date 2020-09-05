@@ -124,21 +124,19 @@ function Expand-MsiArchive {
         [Switch] $Removal
     )
 
-    begin {
+    process {
         $DestinationPath = $DestinationPath.TrimEnd('\')
+        if ($ExtractDir) {
+            $originalDestination = $DestinationPath
+            $DestinationPath = Join-Path $DestinationPath '_tmp'
+        }
+
         if ((get_config 'MSIEXTRACT_USE_LESSMSI' $false)) {
             $msiPath = Get-HelperPath -Helper 'Lessmsi'
             $argList = @('x', "`"$Path`"", "`"$DestinationPath\\`"")
         } else {
             $msiPath = 'msiexec.exe'
             $argList = @('/a', "`"$Path`"", '/qn', "TARGETDIR=`"$DestinationPath\\SourceDir`"")
-        }
-    }
-
-    process {
-        if ($ExtractDir) {
-            $originalDestination = $DestinationPath
-            $DestinationPath = Join-Path $DestinationPath '_tmp'
         }
 
         $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'msi.log'
