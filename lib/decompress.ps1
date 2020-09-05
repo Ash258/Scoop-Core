@@ -124,44 +124,52 @@ function Expand-MsiArchive {
         [Switch] $Removal
     )
 
-    $DestinationPath = $DestinationPath.TrimEnd('\')
-    if ($ExtractDir) {
-        $OriDestinationPath = $DestinationPath
-        $DestinationPath = Join-Path $DestinationPath '_tmp'
-    }
-    if ((get_config 'MSIEXTRACT_USE_LESSMSI' $false)) {
-        $MsiPath = Get-HelperPath -Helper Lessmsi
-        $ArgList = @('x', "`"$Path`"", "`"$DestinationPath\\`"")
-    } else {
-        $MsiPath = 'msiexec.exe'
-        $ArgList = @('/a', "`"$Path`"", '/qn', "TARGETDIR=`"$DestinationPath\\SourceDir`"")
+    begin {
+        $DestinationPath = $DestinationPath.TrimEnd('\')
+        if ((get_config 'MSIEXTRACT_USE_LESSMSI' $false)) {
+            $msiPath = Get-HelperPath -Helper Lessmsi
+            $argList = @('x', "`"$Path`"", "`"$DestinationPath\\`"")
+        } else {
+            $msiPath = 'msiexec.exe'
+            $argList = @('/a', "`"$Path`"", '/qn', "TARGETDIR=`"$DestinationPath\\SourceDir`"")
+        }
     }
 
-    $LogPath = Split-Path $Path -Parent | Join-Path -ChildPath 'msi.log'
-    if ($Switches) { $ArgList += (-split $Switches) }
+    process {
+        if ($ExtractDir) {
+            $originalDestination = $DestinationPath
+            $DestinationPath = Join-Path $DestinationPath '_tmp'
+        }
 
-    $Status = Invoke-ExternalCommand $MsiPath $ArgList -LogPath $LogPath
-    if (!$Status) {
-        Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
+        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'msi.log'
+        if ($Switches) { $argList += (-split $Switches) }
+
+        $status = Invoke-ExternalCommand $msiPath $argList -LogPath $logPath
+
+        if (!$status) {
+            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+        }
+
+        $sourceDir = Join-Path $DestinationPath 'SourceDir'
+        if ($ExtractDir -and (Test-Path $sourceDir)) {
+            movedir (Join-Path $sourceDir $ExtractDir) $originalDestination | Out-Null
+            Remove-Item $DestinationPath -Recurse -Force
+        } elseif ($ExtractDir) {
+            movedir (Join-Path $DestinationPath $ExtractDir) $originalDestination | Out-Null
+            Remove-Item $DestinationPath -Recurse -Force
+        } elseif (Test-Path $sourceDir) {
+            movedir $sourceDir $DestinationPath | Out-Null
+        }
+
+        # ??
+        $fnamePath = Join-Path $DestinationPath (fname $Path)
+        if (($DestinationPath -ne (Split-Path $Path)) -and (Test-Path $fnamePath)) { Remove-Item $fnamePath -Force }
+
+        if (Test-Path $logPath) { Remove-Item $logPath -Force }
+
+        # Remove original archive file
+        if ($Removal) { Remove-Item $Path -Force }
     }
-
-    $sourceDir = Join-Path $DestinationPath 'SourceDir'
-    if ($ExtractDir -and (Test-Path $sourceDir)) {
-        movedir (Join-Path $sourceDir $ExtractDir) $OriDestinationPath | Out-Null
-        Remove-Item $DestinationPath -Recurse -Force
-    } elseif ($ExtractDir) {
-        movedir (Join-Path $DestinationPath $ExtractDir) $OriDestinationPath | Out-Null
-        Remove-Item $DestinationPath -Recurse -Force
-    } elseif (Test-Path $sourceDir) {
-        movedir $sourceDir $DestinationPath | Out-Null
-    }
-
-    $fnamePath = Join-Path $DestinationPath (fname $Path)
-    if (($DestinationPath -ne (Split-Path $Path)) -and (Test-Path $fnamePath)) { Remove-Item $fnamePath -Force }
-    if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
-
-    # Remove original archive file
-    if ($Removal) { Remove-Item $Path -Force }
 }
 
 function Expand-InnoArchive {
