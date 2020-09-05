@@ -9,7 +9,7 @@ if ([String]::IsNullOrEmpty($MyInvocation.PSScriptRoot)) {
 
 $repo_dir = (Get-Item $MyInvocation.PSScriptRoot).FullName
 
-$repo_files = @(Get-ChildItem $repo_dir -file -recurse)
+$repo_files = @(Get-ChildItem $repo_dir -File -Recurse)
 
 $project_file_exclusions = @(
     $([regex]::Escape($repo_dir) + '(\\|/).git(\\|/).*$'),

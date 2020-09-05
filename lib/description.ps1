@@ -113,7 +113,7 @@ function strip_html($html) {
             try {
                 $encoding = [text.encoding]::getencoding($charset)
             } catch {
-                Write-Warning "Unknown charset"
+                Write-Warning 'Unknown charset'
             }
             if ($encoding) {
                 $html = ([regex]'&#(\d+);?').replace($html, {

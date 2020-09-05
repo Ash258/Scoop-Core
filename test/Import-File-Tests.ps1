@@ -14,13 +14,13 @@ Describe 'Style constraints for non-binary project files' {
 
     $files_exist = ($files.Count -gt 0)
 
-    It $('non-binary project files exist ({0} found)' -f $files.Count) -skip:$(-not $files_exist) {
+    It $('non-binary project files exist ({0} found)' -f $files.Count) -Skip:$(-not $files_exist) {
         if (-not ($files.Count -gt 0)) {
-            throw "No non-binary project were found"
+            throw 'No non-binary project were found'
         }
     }
 
-    It 'files do not contain leading UTF-8 BOM' -skip:$(-not $files_exist) {
+    It 'files do not contain leading UTF-8 BOM' -Skip:$(-not $files_exist) {
         # UTF-8 BOM == 0xEF 0xBB 0xBF
         # see http://www.powershellmagazine.com/2012/12/17/pscxtip-how-to-determine-the-byte-order-mark-of-a-text-file @@ https://archive.is/RgT42
         # ref: http://poshcode.org/2153 @@ https://archive.is/sGnnu
@@ -43,11 +43,11 @@ Describe 'Style constraints for non-binary project files' {
         }
     }
 
-    It 'files end with a newline' -skip:$(-not $files_exist) {
+    It 'files end with a newline' -Skip:$(-not $files_exist) {
         $badFiles = @(
             foreach ($file in $files) {
                 # Ignore previous TestResults.xml
-                if ($file -match "TestResults.xml") {
+                if ($file -match 'TestResults.xml') {
                     continue
                 }
                 $string = [System.IO.File]::ReadAllText($file.FullName)
@@ -62,10 +62,10 @@ Describe 'Style constraints for non-binary project files' {
         }
     }
 
-    It 'file newlines are CRLF' -skip:$(-not $files_exist) {
+    It 'file newlines are CRLF' -Skip:$(-not $files_exist) {
         $badFiles = @(
             foreach ($file in $files) {
-                $content = Get-Content -raw $file.FullName
+                $content = Get-Content -Raw $file.FullName
                 if (!$content) {
                     throw "File contents are null: $($file.FullName)"
                 }
@@ -86,11 +86,11 @@ Describe 'Style constraints for non-binary project files' {
         }
     }
 
-    It 'files have no lines containing trailing whitespace' -skip:$(-not $files_exist) {
+    It 'files have no lines containing trailing whitespace' -Skip:$(-not $files_exist) {
         $badLines = @(
             foreach ($file in $files) {
                 # Ignore previous TestResults.xml
-                if ($file -match "TestResults.xml") {
+                if ($file -match 'TestResults.xml') {
                     continue
                 }
                 $lines = [System.IO.File]::ReadAllLines($file.FullName)
@@ -109,7 +109,7 @@ Describe 'Style constraints for non-binary project files' {
         }
     }
 
-    It 'any leading whitespace consists only of spaces (excepting makefiles)' -skip:$(-not $files_exist) {
+    It 'any leading whitespace consists only of spaces (excepting makefiles)' -Skip:$(-not $files_exist) {
         $badLines = @(
             foreach ($file in $files) {
                 if ($file.fullname -inotmatch '(^|.)makefile$') {
