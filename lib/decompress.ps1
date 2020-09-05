@@ -185,29 +185,32 @@ function Expand-InnoArchive {
         [Switch] $Removal
     )
 
-    $LogPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
-    $ArgList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
-    switch -Regex ($ExtractDir) {
-        '^[^{].*' { $ArgList += "-c{app}\$ExtractDir" }
-        '^{.*' { $ArgList += "-c$ExtractDir" }
-        default { $ArgList += '-c{app}' }
-    }
-    if ($Switches) { $ArgList += (-split $Switches) }
+    process {
+        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
+        $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
 
-    try {
-        # TODO: Find out extract_dir issue.
-        # When there is no specified directory in archive innounp will just exit with 0 and version of file
-        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $ArgList -LogPath $LogPath
-    } catch [System.Management.Automation.ParameterBindingException] {
-        Set-TerminatingError -Title 'Ignore|-''innounp'' is not installed or cannot be used'
-    }
-    if (!$Status) {
-        Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
-    }
-    if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
+        switch -Regex ($ExtractDir) {
+            '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
+            '^{.*' { $argList += "-c$ExtractDir" }
+            default { $argList += '-c{app}' }
+        }
+        if ($Switches) { $argList += (-split $Switches) }
 
-    # Remove original archive file
-    if ($Removal) { Remove-Item $Path -Force }
+        try {
+            # TODO: Find out extract_dir issue.
+            # When there is no specified directory in archive innounp will just exit with 0 and version of file
+            $status = Invoke-ExternalCommand (Get-HelperPath -Helper Innounp) $argList -LogPath $logPath
+        } catch [System.Management.Automation.ParameterBindingException] {
+            Set-TerminatingError -Title 'Ignore|-''innounp'' is not installed or cannot be used'
+        }
+        if (!$status) {
+            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+        }
+        if (Test-Path $logPath) { Remove-Item $logPath -Force }
+
+        # Remove original archive file
+        if ($Removal) { Remove-Item $Path -Force }
+    }
 }
 
 function Expand-ZipArchive {
