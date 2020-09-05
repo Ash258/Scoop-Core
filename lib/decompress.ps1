@@ -280,22 +280,25 @@ function Expand-DarkArchive {
         [Switch] $Removal
     )
 
-    $LogPath = Split-Path $Path -Parent | Join-Path -ChildPath 'dark.log'
-    $ArgList = @('-nologo', "-x `"$DestinationPath`"", "`"$Path`"")
-    if ($Switches) { $ArgList += (-split $Switches) }
+    process {
+        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'dark.log'
+        $argList = @('-nologo', "-x `"$DestinationPath`"", "`"$Path`"")
+        if ($Switches) { $argList += (-split $Switches) }
 
-    try {
-        $Status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Dark') $ArgList -LogPath $LogPath
-    } catch [System.Management.Automation.ParameterBindingException] {
-        Set-TerminatingError -Title 'Ignore|-''dark'' is not installed or cannot be used'
-    }
-    if (!$Status) {
-        Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
-    }
-    if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
+        try {
+            $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Dark') $argList -LogPath $logPath
+        } catch [System.Management.Automation.ParameterBindingException] {
+            Set-TerminatingError -Title 'Ignore|-''dark'' is not installed or cannot be used'
+        }
 
-    # Remove original archive file
-    if ($Removal) { Remove-Item $Path -Force }
+        if (!$status) {
+            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+        }
+        if (Test-Path $logPath) { Remove-Item $logPath -Force }
+
+        # Remove original archive file
+        if ($Removal) { Remove-Item $Path -Force }
+    }
 }
 
 #region Deprecated
