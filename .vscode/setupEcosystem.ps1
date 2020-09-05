@@ -35,6 +35,7 @@ foreach ($repo in $REPOSITORIES) {
     $target = Join-Path $Folder $targetname
 
     if (!(Test-Path $target)) { git clone $origin $target }
-    if ($Ash -and (!(git -C $target remote get-url --all Ash 2>$null))) { git -C $target remote add 'Ash' "$GH$Ash" }
-    git fetch --all
+    $alreadyAdded = git -C $target remote get-url --all Ash 2>$null
+    if ($Ash -and ($null -eq $alreadyAdded)) { git -C $target remote add 'Ash' "$GH$Ash" }
+    git -C $target fetch --all
 }
