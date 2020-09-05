@@ -3,7 +3,7 @@
 }
 
 function nightly_version($date, $quiet = $false) {
-    $date_str = $date.tostring("yyyyMMdd")
+    $date_str = $date.ToString('yyyyMMdd')
     if (!$quiet) {
         Write-UserMessage -Message "This is a nightly version. Downloaded files won't be verified." -Warning
     }
@@ -27,7 +27,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
 
     $is_nightly = $version -eq 'nightly'
     if ($is_nightly) {
-        $version = nightly_version $(get-date)
+        $version = nightly_version $(Get-Date)
         $check_hash = $false
     }
 
@@ -131,10 +131,10 @@ function Find-Manifest($app, $bucket) {
 function dl_with_cache($app, $version, $url, $to, $cookies = $null, $use_cache = $true) {
     $cached = cache_path $app $version $url
 
-    if (!(test-path $cached) -or !$use_cache) {
+    if (!(Test-Path $cached) -or !$use_cache) {
         ensure $cachedir | Out-Null
         do_dl $url "$cached.download" $cookies
-        Move-Item "$cached.download" $cached -force
+        Move-Item "$cached.download" $cached -Force
     } else { Write-UserMessage -Message "Loading $(url_remote_filename $url) from cache" }
 
     if (!($null -eq $to)) { Copy-Item $cached $to }
@@ -232,21 +232,21 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
     $options = @(
         "--input-file='$urlstxt'"
         "--user-agent='$(Get-UserAgent)'"
-        "--allow-overwrite=true"
-        "--auto-file-renaming=false"
+        '--allow-overwrite=true'
+        '--auto-file-renaming=false'
         "--retry-wait=$(get_config 'aria2-retry-wait' 2)"
         "--split=$(get_config 'aria2-split' 5)"
         "--max-connection-per-server=$(get_config 'aria2-max-connection-per-server' 5)"
         "--min-split-size=$(get_config 'aria2-min-split-size' '5M')"
-        "--console-log-level=warn"
-        "--enable-color=false"
-        "--no-conf=true"
-        "--follow-metalink=true"
-        "--metalink-preferred-protocol=https"
-        "--min-tls-version=TLSv1.2"
+        '--console-log-level=warn'
+        '--enable-color=false'
+        '--no-conf=true'
+        '--follow-metalink=true'
+        '--metalink-preferred-protocol=https'
+        '--min-tls-version=TLSv1.2'
         "--stop-with-process=$PID"
-        "--continue"
-        "--summary-interval 0"
+        '--continue'
+        '--summary-interval 0'
     )
 
     if ($cookies) {
@@ -290,9 +290,9 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
             $urlstxt_content += "    dir=$cachedir`n"
             $urlstxt_content += "    out=$($data.$url.cachename)`n"
         } else {
-            Write-Host "Loading " -NoNewline
-            Write-Host $(url_remote_filename $url) -f Cyan -NoNewline
-            Write-Host " from cache."
+            Write-Host 'Loading ' -NoNewline
+            Write-Host $(url_remote_filename $url) -ForegroundColor Cyan -NoNewline
+            Write-Host ' from cache.'
         }
     }
 
@@ -305,7 +305,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
 
         debug $aria2
         # Handle aria2 console output
-        Write-Host "Starting download with aria2 ..."
+        Write-Host 'Starting download with aria2 ...'
         Invoke-Expression $aria2 | ForEach-Object {
             # Skip blank lines
             if ([String]::IsNullOrWhiteSpace($_)) { return }
@@ -482,7 +482,7 @@ function dl_progress_output($url, $read, $total, $console) {
     # Pre-generate LHS and RHS of progress string
     # So we know how much space we have
     $left = "$filename ($(filesize $total))"
-    $right = [string]::Format("{0,3}%", $p)
+    $right = [String]::Format('{0,3}%', $p)
 
     # Calculate remaining width for progress bar
     $midwidth = $console.BufferSize.Width - ($left.Length + $right.Length + 8)
@@ -600,7 +600,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         } elseif ($fname -match '\.msi$') {
             # Check manifest doesn't use deprecated install method
             if (msi $manifest $architecture) {
-                Write-UserMessage -Message "MSI install is deprecated. If you maintain this manifest, please refer to the manifest reference docs." -Warning
+                Write-UserMessage -Message 'MSI install is deprecated. If you maintain this manifest, please refer to the manifest reference docs.' -Warning
             } else {
                 $extract_fn = 'Expand-MsiArchive'
             }
@@ -612,7 +612,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         if ($extract_fn) {
             Write-Host 'Extracting ' -NoNewline
             Write-Host $fname -ForegroundColor Cyan -NoNewline
-            Write-Host " ... " -NoNewline
+            Write-Host ' ... ' -NoNewline
             & $extract_fn -Path (Join-Path $dir $fname) -DestinationPath (Join-Path $dir $extract_to) -ExtractDir $extract_dir -Removal
             Write-Host 'done.' -ForegroundColor Green
             $extracted++
@@ -665,7 +665,7 @@ function check_hash($file, $hash, $app_name) {
 
     Write-Host 'Checking hash of ' -NoNewline
     Write-Host $(url_remote_filename $url) -ForegroundColor Cyan -NoNewline
-    Write-Host ' ... ' -NoNewLine
+    Write-Host ' ... ' -NoNewline
     $algorithm, $expected = get_hash $hash
     if ($null -eq $algorithm) {
         return $false, "Hash type '$algorithm' isn't supported."
@@ -713,9 +713,10 @@ function compute_hash($file, $algname) {
 
 # for dealing with installers
 function args($config, $dir, $global) {
-    if ($config) { return $config | ForEach-Object { (format $_ @{'dir' = $dir; 'global' = $global }) }
+    if ($config) {
+        return $config | ForEach-Object { (format $_ @{ 'dir' = $dir; 'global' = $global }) }
     }
-    @()
+    return @()
 }
 
 function run_installer($fname, $manifest, $architecture, $dir, $global) {
@@ -829,7 +830,7 @@ function run_uninstaller($manifest, $architecture, $dir) {
             if (!(is_in_dir $dir $exe)) {
                 Write-UserMessage -Message "Error in manifest: Installer $exe is outside the app directory, skipping." -Warning
                 $exe = $null
-            } elseif (!(test-path $exe)) {
+            } elseif (!(Test-Path $exe)) {
                 Write-UserMessage -Message "Uninstaller $exe is missing, skipping." -Warning
                 $exe = $null
             }

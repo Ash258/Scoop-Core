@@ -38,8 +38,8 @@ foreach ($app in $apps) {
     $dir = versiondir $app 'current' $global
     $json = install_info $app 'current' $global
     if ($json.hold -and ($json.hold -eq $true)) {
-       Write-UserMessage -Message "'$app' is already held" -Warning
-       continue
+        Write-UserMessage -Message "'$app' is already held" -Warning
+        continue
     }
     $install = @{ }
     # TODO: Add-member instead of duplicating of whole object

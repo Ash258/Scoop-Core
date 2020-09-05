@@ -37,10 +37,10 @@ function cleanup($app, $global, $verbose, $cache) {
         return
     }
 
-    Write-Host "Removing ${app}:" -ForegroundColor Yellow -NoNewLine
+    Write-Host "Removing ${app}:" -ForegroundColor Yellow -NoNewline
     $versions | ForEach-Object {
         $version = $_
-        Write-Host " $version" -NoNewLine
+        Write-Host " $version" -NoNewline
         $dir = versiondir $app $version $global
         # unlink all potential old link before doing recursive Remove-Item
         unlink_persist_data $dir

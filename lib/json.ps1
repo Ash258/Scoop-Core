@@ -108,7 +108,7 @@ function json_path([String] $json, [String] $jsonpath, [Hashtable] $substitution
         }
         return $result.ToString()
     } catch [System.Management.Automation.MethodInvocationException] {
-        Write-UserMessage -Message $_  -Color DarkRed
+        Write-UserMessage -Message $_ -Color DarkRed
         return $null
     }
 

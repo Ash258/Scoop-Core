@@ -14,7 +14,7 @@
 
 param($cmd, $app)
 
-. (Join-Path $PSScriptRoot "..\lib\help.ps1")
+. (Join-Path $PSScriptRoot '..\lib\help.ps1')
 
 Reset-Alias
 
@@ -26,7 +26,7 @@ function cacheinfo($file) {
 
 function show($app) {
     $files = @(Get-ChildItem $SCOOP_CACHE_DIRECTORY | Where-Object -Property Name -Match "^$app")
-    $total_length = ($files | Measure-Object length -sum).sum -as [double]
+    $total_length = ($files | Measure-Object length -Sum).sum -as [double]
 
     $f_app = @{ 'Expression' = { "$($_.app) ($($_.version))" } }
     $f_url = @{ 'Expression' = { $_.url }; 'Alignment' = 'Right' }
@@ -42,8 +42,8 @@ $exitCode = 0
 switch ($cmd) {
     'rm' {
         if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
-        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*"| Remove-Item -Force -Recurse
-        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt"| Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt" | Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
     }
     'show' {
         show $app

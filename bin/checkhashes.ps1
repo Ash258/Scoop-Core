@@ -45,7 +45,7 @@ param(
 $Dir = Resolve-Path $Dir
 if ($ForceUpdate) { $Update = $true }
 # Cleanup
-if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*'|  Remove-Item -Force }
+if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -Force }
 
 function err ([String] $name, [String[]] $message) {
     Write-Host "$name`: " -ForegroundColor Red -NoNewline

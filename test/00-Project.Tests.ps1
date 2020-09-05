@@ -1,6 +1,6 @@
 $repo_dir = (Get-Item $MyInvocation.MyCommand.Path).Directory.Parent.FullName
 
-$repo_files = @( Get-ChildItem $repo_dir -file -recurse -force )
+$repo_files = @( Get-ChildItem $repo_dir -File -Recurse -Force )
 
 $project_file_exclusions = @(
     ([Regex]::Escape($repo_dir) + '(\\|/).git(\\|/).*$')
@@ -21,9 +21,9 @@ Describe 'Project code' {
 
     $files_exist = ($files.Count -gt 0)
 
-    It $('PowerShell code files exist ({0} found)' -f $files.Count) -skip:$(-not $files_exist) {
+    It $('PowerShell code files exist ({0} found)' -f $files.Count) -Skip:$(-not $files_exist) {
         if (-not ($files.Count -gt 0)) {
-            throw "No PowerShell code files were found"
+            throw 'No PowerShell code files were found'
         }
     }
 
@@ -56,7 +56,7 @@ Describe 'Project code' {
         }
     }
 
-    It 'PowerShell code files do not contain syntax errors' -skip:$(-not $files_exist) {
+    It 'PowerShell code files do not contain syntax errors' -Skip:$(-not $files_exist) {
         $badFiles = @(
             foreach ($file in $files) {
                 if ( (Test-PowerShellSyntax $file.FullName).SyntaxErrorsFound ) {

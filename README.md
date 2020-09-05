@@ -12,7 +12,7 @@ Scriptable, user-friendly command line installation of applications with a minim
 - Do not pollute `PATH`
 - Skip unexpected side-effects from installing and uninstalling programs
     - Applications installed by scoop usually do not execute application specific installers
-        - If you are looking for command line tool for executing application specific installers, refer to [chocolatey][choco] or [winget][winget]
+        - If you are looking for command line tool for executing application specific installers, refer to [winget][winget] or [chocolatey][choco]
 - Dependencies resolving for other scoop installed applications
 
 ```powershell

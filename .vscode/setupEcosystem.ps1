@@ -24,8 +24,7 @@ if ($Https) { $GH = 'https://github.com/' }
 $ind = 0
 foreach ($repo in $REPOSITORIES) {
     ++$ind
-    Write-Progress -Activity 'Clonning' -Status $repo[0] -PercentComplete ($ind * (100/$REPOSITORIES.Count))
-    Write-Host -f green ($ind * (100/$REPOSITORIES.Count))
+    Write-Progress -Activity 'Clonning' -Status $repo[0] -PercentComplete ($ind * (100 / $REPOSITORIES.Count))
     $origin = $targetname = $Ash = $target = $null
 
     $origin = $GH + $repo[0]
@@ -35,6 +34,7 @@ foreach ($repo in $REPOSITORIES) {
     $target = Join-Path $Folder $targetname
 
     if (!(Test-Path $target)) { git clone $origin $target }
-    if ($Ash -and (!(git -C $target remote get-url --all Ash 2>$null))) { git -C $target remote add 'Ash' "$GH$Ash" }
-    git fetch --all
+    $alreadyAdded = git -C $target remote get-url --all Ash 2>$null
+    if ($Ash -and ($null -eq $alreadyAdded)) { git -C $target remote add 'Ash' "$GH$Ash" }
+    git -C $target fetch --all
 }

@@ -81,15 +81,15 @@ Write-Output "Manifest:`n  $manifest_file"
 
 if ($status.installed) {
     # Show installed versions
-    Write-Output "Installed:"
+    Write-Output 'Installed:'
     $versions = Get-InstalledVersion -AppName $app -Global:$global
     $versions | ForEach-Object {
         $dir = versiondir $app $_ $global
-        if ($global) { $dir += " *global*" }
+        if ($global) { $dir += ' *global*' }
         Write-Output "  $dir"
     }
 } else {
-    Write-Output "Installed: No"
+    Write-Output 'Installed: No'
 }
 
 $binaries = @(arch_specific 'bin' $manifest $architecture)
@@ -110,9 +110,9 @@ $env_add_path = @(arch_specific 'env_add_path' $manifest $architecture)
 
 if ($env_set -or $env_add_path) {
     if ($status.installed) {
-        Write-Output "Environment:"
+        Write-Output 'Environment:'
     } else {
-        Write-Output "Environment: (simulated)"
+        Write-Output 'Environment: (simulated)'
     }
 }
 

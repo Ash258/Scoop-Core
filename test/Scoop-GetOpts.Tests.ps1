@@ -1,7 +1,7 @@
 . "$PSScriptRoot\Scoop-TestLib.ps1"
 . "$PSScriptRoot\..\lib\getopt.ps1"
 
-Describe "getopt" -Tag 'Scoop' {
+Describe 'getopt' -Tag 'Scoop' {
     It 'handle short option with required argument missing' {
         $null, $null, $err = getopt '-x' 'x:' ''
         $err | Should -be 'Option -x requires an argument.'
@@ -38,7 +38,7 @@ Describe "getopt" -Tag 'Scoop' {
     }
 
     It 'get a long flag and a short option with argument' {
-        $a = "--global -a 32bit test" -split ' '
+        $a = '--global -a 32bit test' -split ' '
         $opt, $rem, $err = getopt $a 'ga:' 'global', 'arch='
 
         $err | Should -benullorempty
@@ -47,7 +47,7 @@ Describe "getopt" -Tag 'Scoop' {
     }
 
     It 'handles regex characters' {
-        $a = "-?"
+        $a = '-?'
         { $opt, $rem, $err = getopt $a 'ga:' 'global' 'arch=' } | Should -not -throw
         { $null, $null, $null = getopt $a '?:' 'help' | Should -not -throw }
     }
@@ -60,12 +60,12 @@ Describe "getopt" -Tag 'Scoop' {
     It 'handles long option without required argument' {
         $opt, $null, $err = getopt '--long-arg' '' 'long-arg'
         $err | Should -benullorempty
-        $opt."long-arg" | Should -betrue
+        $opt.'long-arg' | Should -betrue
     }
 
     It 'handles long option with required argument' {
         $opt, $null, $err = getopt '--long-arg', 'test' '' 'long-arg='
         $err | Should -benullorempty
-        $opt."long-arg" | Should -be "test"
+        $opt.'long-arg' | Should -be 'test'
     }
 }

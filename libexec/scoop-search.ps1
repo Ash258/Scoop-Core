@@ -53,7 +53,7 @@ function download_json($url) {
 }
 
 function github_ratelimit_reached {
-    return (download_json "https://api.github.com/rate_limit").Rate.Remaining -eq 0
+    return (download_json 'https://api.github.com/rate_limit').Rate.Remaining -eq 0
 }
 
 function search_remote($bucket, $query) {
@@ -91,7 +91,7 @@ function search_remotes($query) {
     $results | ForEach-Object {
         "'$($_.bucket)' bucket:"
         $_.results | ForEach-Object { "    $_" }
-        ""
+        ''
     }
 }
 
@@ -113,7 +113,7 @@ Get-LocalBucket | ForEach-Object {
             if ($_.bin) { $item += " --> includes '$($_.bin)'" }
             $item
         }
-        ""
+        ''
     }
 }
 
