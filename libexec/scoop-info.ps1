@@ -1,5 +1,5 @@
 # Usage: scoop info <app>
-# Summary: Display information about an app
+# Summary: Display various information about an app
 
 param($app)
 
@@ -134,6 +134,11 @@ if ($env_add_path) {
         }
     }
 }
+
+# Available versions:
+$vers = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$app" | Get-ChildItem -ErrorAction SilentlyContinue -File
+
+if ($vers.Count -gt 0) { Write-Output "Available Versions: $($vers.BaseName -join ', ')" }
 
 # Show notes
 show_notes $manifest $dir $original_dir $persist_dir

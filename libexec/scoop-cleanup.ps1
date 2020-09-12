@@ -6,7 +6,7 @@
 # You can use '*' in place of <app> to cleanup all apps.
 #
 # Options:
-#   -g, --global       Include globally installed apps
+#   -g, --global       Cleanup a globally installed app
 #   -k, --cache        Remove outdated download cache
 
 'core', 'manifest', 'buckets', 'Versions', 'getopt', 'help', 'install' | ForEach-Object {
