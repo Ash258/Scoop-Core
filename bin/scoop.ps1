@@ -1,5 +1,5 @@
 #Requires -Version 5
-param($cmd)
+param([string] $cmd)
 
 Set-StrictMode -Off
 
@@ -10,35 +10,51 @@ Set-StrictMode -Off
 Reset-Alias
 
 $exitCode = 0
-# Powershell automatically bind bash like short parameters as $args, and do not put it in $cmd parameter
+# Powershell automatically bind bash like short parameters as $args, and does not put it in $cmd parameter
 
-# Only -v and --version passed
+# ONLY if:
+# - No command passed
+# - -v and --version passed
 $version = ($cmd -eq '--version') -or (!$cmd -and ('-v' -in $args))
-Write-Host "Vesion: ", $version
+Write-Host "Vesion:       ", $version
 
 # Scoop itself help should be shown only if explicitly asked:
 # - No version asked
 # - No command passed
-# - --help, /?, /help, -h passed
-$scoopHelp = !$version -and (($cmd -in @($null, '--help', '/?', '/help')) -or (!$cmd -and ('-h' -in $args)))
-Write-Host "Scoop: ", $scoopHelp
+# - /?, /help,, /h, --help, -h passed
+$scoopHelp = !$version -and (!$cmd -or (($cmd -in @($null, '--help', '/?', '/help', '/h')) -or (!$cmd -and ('-h' -in $args))))
+Write-Host "Scoop:        ", $scoopHelp
 
 # Valid command execution
-$validCommand = (commands) -contains $cmd
-Write-Host "Command: ", $validCommand
+$validCommand = $cmd -and ($cmd -in (commands))
+Write-Host "Command:      ", $validCommand
 
 # Command help should be shown only if:
 # - No help for scoop asked
 # - $cmd is passed
 # - --help, -h is in $args
-$commandHelp = !$scoopHelp -and $validCommand -and ($cmd -and (('--help' -in $args) -or ('-h' -in $args)))
+$commandHelp = !$scoopHelp -and $validCommand -and (('--help' -in $args) -or ('-h' -in $args))
 Write-Host "Command Help: ", $commandHelp
+
+if ($version) {
+    Write-Host 'SHOWING VERSION' -f magenta
+} elseif ($scoopHelp) {
+    Write-Host 'SHOWING SCOOP' -f magenta
+} elseif ($commandHelp) {
+    Write-Host 'SHOWING COMMAND HELP' -f magenta
+} elseif ($validCommand) {
+    Write-Host 'SHOWING COMMAND' -f magenta
+} else {
+    Write-Host 'RECOVERING' -f magenta
+}
 exit 0
+
 if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
-    Write-UserMessage -Message 'Current Scoop (soon to be Shovel) version:' -Output
+    Write-UserMessage -Message 'Current Scoop (Shovel) version:' -Output
     Invoke-GitCmd -Command 'VersionLog' -Repository (versiondir 'scoop' 'current')
     Write-UserMessage -Message '' -Output
 
+    # TODO: Export to lib/buckets
     Get-LocalBucket | ForEach-Object {
         $b = Find-BucketDirectory $_ -Root
 
