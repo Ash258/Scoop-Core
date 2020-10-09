@@ -14,7 +14,7 @@ $exitCode = 0
 # Powershell automatically bind bash like short parameters as $args, and does not put it in $cmd parameter
 # ONLY if:
 # - No command passed
-# - -v and --version passed
+# - -v or --version passed
 $version = ($cmd -eq '--version') -or (!$cmd -and ('-v' -in $args))
 
 # Scoop itself help should be shown only if explicitly asked:
@@ -48,7 +48,7 @@ if ($version) {
         }
     }
 } elseif ($scoopHelp) {
-    Invoke-ScoopCommand 'help' $null
+    Invoke-ScoopCommand 'help'
     $exitCode = $LASTEXITCODE
 } elseif ($commandHelp) {
     Invoke-ScoopCommand 'help' @{ 'cmd' = $cmd }
