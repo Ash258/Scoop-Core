@@ -61,6 +61,22 @@ $script:SCOOP_LONG_PARAMETERS = @{
     'update'     = 'force global independent no-cache skip quiet'
     'virustotal' = 'arch scan no-depends'
 }
+# Add --help and -h to all
+# TODO: Investigate cleaner approach
+foreach ($cmd in $SCOOP_COMMANDS) {
+    if ($SCOOP_LONG_PARAMETERS.Keys -contains $cmd) {
+        $SCOOP_LONG_PARAMETERS[$cmd] = $SCOOP_LONG_PARAMETERS[$cmd] + ' help'
+    } else {
+        $SCOOP_LONG_PARAMETERS.Add($cmd, 'help')
+    }
+
+    if ($SCOOP_SHORT_PARAMETERS.Keys -contains $cmd) {
+        $SCOOP_SHORT_PARAMETERS[$cmd] = $SCOOP_SHORT_PARAMETERS[$cmd] + ' h'
+    } else {
+        $SCOOP_SHORT_PARAMETERS.Add($cmd, 'h')
+    }
+}
+
 $script:SCOOP_PARAMETER_VALUES = @{
     'install'    = @{
         'a'    = '32bit 64bit'

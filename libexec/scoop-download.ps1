@@ -4,6 +4,7 @@
 # Help: All manifest files will be downloaded into cache folder.
 #
 # Options:
+#   -h, --help                      Show help for this command.
 #   -s, --skip                      Skip hash check validation.
 #   -u, --utility <native|aria2>    Force using specific download utility.
 #   -a, --arch <32bit|64bit>        Use the specified architecture.

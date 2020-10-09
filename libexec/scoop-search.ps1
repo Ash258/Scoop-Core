@@ -6,18 +6,17 @@
 # Without [query], shows all the available apps.
 #
 # Options:
-#   -, --force               Force update even when there isn't a newer version
-#   -g, --global              Update a globally installed app
+#   -h, --help      Show help for this command.
+#   -r, --remote    TODO:
+
 'getopt', 'help', 'manifest', 'install', 'versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$opt, $query, $err = getopt $args 'rh' 'remote', 'help'
+$opt, $query, $err = getopt $args 'r' 'remote'
 if ($err) { Stop-ScoopExecution -Message "scoop search: $err" -ExitCode 2 }
-# TOOD: Fixme
-if ($opt.h -or $opt.help) { Stop-ScoopExecution -Usage (my_usage) -SkipSeverity }
 
 $exitCode = 0
 

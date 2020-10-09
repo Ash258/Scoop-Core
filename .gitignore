@@ -6,3 +6,5 @@ test/tmp/*
 TestResults.xml
 checkver*.html
 *.iso
+/.cache/*
+/.vagrant/*

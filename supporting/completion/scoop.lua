@@ -137,56 +137,79 @@ local scoopParser = parser({
     'alias' .. parser({
         'add',
         'list' .. parser({'-v', '--verbose'}),
-        'rm'
+        'rm',
+        '-h', '--help'
     }),
     'bucket' .. parser({
         'add' .. parser({getKnownBucket}),
         'known',
         'list',
-        'rm' .. parser({getLocallyAddedBucket})
+        'rm' .. parser({getLocallyAddedBucket}),
+        '-h', '--help'
     }),
-    'cat' .. parser({getLocallyAvailableApplicationsByScoop}),
-    'cache' .. parser({'show', 'rm'} .. parser({getScoopCachedFile})),
-    'checkup',
+    'cat' .. parser({getLocallyAvailableApplicationsByScoop},
+        '-h', '--help'
+    ),
+    'cache' .. parser({'show', 'rm'} .. parser({getScoopCachedFile}),
+        '-h', '--help'
+    ),
+    'checkup' ..parser({'-h', '--help'}),
     'cleanup' .. parser({getLocallyInstalledApplicationsByScoop},
         '-g', '--global',
-        '-k', '--cache'
+        '-k', '--cache',
+        '-h', '--help'
     ):loop(1),
     'config' .. parser({
         'show',
-        'rm' .. parser({configOptions:flatten_argument(1)})
+        'rm' .. parser({configOptions:flatten_argument(1)}),
+        '-h', '--help'
     }),
-    'depends' .. parser({getLocallyAvailableApplicationsByScoop}),
+    'depends' .. parser({getLocallyAvailableApplicationsByScoop},
+        '-h', '--help'
+    ),
     'download' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
         '-b', '--all-architectures',
         '-s', '--skip',
-        '-u' .. utilityParser, '--utility' .. utilityParser
+        '-u' .. utilityParser, '--utility' .. utilityParser,
+        '-h', '--help'
     ):loop(1),
-    'export',
+    'export' .. parser({'-h', '--help'}),
     'hold' .. parser({getLocallyInstalledApplicationsByScoop},
-        '-g', '--global'
+        '-g', '--global',
+        '-h', '--help'
     ):loop(1),
-    'home' .. parser({getLocallyAvailableApplicationsByScoop}),
-    'info' .. parser({getLocallyAvailableApplicationsByScoop}),
+    'home' .. parser({getLocallyAvailableApplicationsByScoop},
+        '-h', '--help'
+    ),
+    'info' .. parser({getLocallyAvailableApplicationsByScoop},
+        '-h', '--help'
+    ),
     'install' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
         '-g', '--global',
         '-i', '--independent',
         '-k', '--no-cache',
-        '-s', '--skip'
+        '-s', '--skip',
+        '-h', '--help'
     ):loop(1),
-    'list',
-    'prefix' .. parser({getLocallyInstalledApplicationsByScoop}),
-    'reset' .. parser({getLocallyInstalledApplicationsByScoop}):loop(1),
-    'search',
-    'status',
+    'list' .. parser({'-h', '--help'}),
+    'prefix' .. parser({getLocallyInstalledApplicationsByScoop},
+        '-h', '--help'
+    ),
+    'reset' .. parser({getLocallyInstalledApplicationsByScoop},
+        '-h', '--help'
+    ):loop(1),
+    'search' .. parser({'-h', '--help'}),
+    'status' .. parser({'-h', '--help'}),
     'unhold' .. parser({getLocallyInstalledApplicationsByScoop},
-        '-g', '--global'
+        '-g', '--global',
+        '-h', '--help'
     ):loop(1),
     'uninstall' .. parser({getLocallyInstalledApplicationsByScoop},
         '-g', '--global',
-        '-p', '--purge'
+        '-p', '--purge',
+        '-h', '--help'
     ):loop(1),
     'update' .. parser({getLocallyInstalledApplicationsByScoop},
         '-f', '--force',
@@ -194,14 +217,16 @@ local scoopParser = parser({
         '-i', '--independent',
         '-k', '--no-cache',
         '-s', '--skip',
-        '-q', '--quiet'
+        '-q', '--quiet',
+        '-h', '--help'
     ):loop(1),
     'virustotal' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
         '-s', '--scan',
-        '-n', '--no-depends'
+        '-n', '--no-depends',
+        '-h', '--help'
     ):loop(1),
-    'which'
+    'which' .. parser({'-h', '--help'})
 })
 local scoopHelpParser = parser({
     '/?',

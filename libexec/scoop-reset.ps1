@@ -1,8 +1,11 @@
-# Usage: scoop reset <app>
+# Usage: scoop reset <app> [options]
 # Summary: Reset an app to resolve conflicts
 # Help: Used to resolve conflicts in favor of a particular app. For example,
 # if you've installed 'python' and 'python27', you can use 'scoop reset' to switch between
 # using one or the other.
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 'core', 'manifest', 'help', 'getopt', 'install', 'Versions', 'shortcuts' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
