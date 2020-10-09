@@ -27,12 +27,13 @@
 #       2 & 4 combined
 #
 # Options:
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the app supports it
-#   -s, --scan For packages where VirusTotal has no information, send download URL
-#              for analysis (and future retrieval).  This requires you to configure
-#              your virustotal_api_key.
-#   -n, --no-depends By default, all dependencies are checked, too.  This flag allows
-#                    to avoid it.
+#   -h, --help                Show help for this command.
+#   -a, --arch <32bit|64bit>  Use the specified architecture, if the app supports it.
+#   -s, --scan                For packages where VirusTotal has no information, send download URL
+#                             for analysis (and future retrieval). This requires you to configure
+#                             your virustotal_api_key (see help entry for config command).
+#   -n, --no-depends          By default, all dependencies are checked, too.  This flag allows
+#                             to avoid it.
 
 'core', 'depends', 'getopt', 'help', 'VirusTotal' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

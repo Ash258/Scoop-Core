@@ -11,7 +11,7 @@ function summary($text) {
 }
 
 function scoop_help($text) {
-    $help_lines = $text | Select-String '(?ms)^# Help:(.(?!^[^#]))*' | ForEach-Object { $_.matches[0].Value; }
+    $help_lines = $text | Select-String '(?ms)^# (?:Help|Options):(.(?!^[^#]))*' | ForEach-Object { $_.matches[0].Value; }
     $help_lines -replace '(?ms)^#\s?(Help: )?'
 }
 

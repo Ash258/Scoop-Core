@@ -1,5 +1,8 @@
-# Usage: scoop depends <app>
+# Usage: scoop depends <app> [options]
 # Summary: List dependencies for an app
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 'depends', 'install', 'manifest', 'buckets', 'getopt', 'decompress', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

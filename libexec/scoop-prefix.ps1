@@ -1,5 +1,8 @@
-# Usage: scoop prefix <app>
+# Usage: scoop prefix <app> [options]
 # Summary: Returns the path to the specified app
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($app)
 

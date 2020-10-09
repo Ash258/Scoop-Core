@@ -1,4 +1,4 @@
-# Usage: scoop bucket [add|list|known|rm] [<args>]
+# Usage: scoop bucket [add|list|known|rm] [<args>] [options]
 # Summary: Manage Scoop buckets
 # Help: Add, list or remove buckets.
 #
@@ -16,6 +16,9 @@
 #   scoop bucket rm versions
 # To list all known buckets, use:
 #   scoop bucket known
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($Cmd, $Name, $Repo)
 

@@ -1,7 +1,9 @@
 # Usage: scoop unhold <apps> [options]
 # Summary: Unhold an app to enable updates
+#
 # Options:
-#   -g, --global              Unhold globally installed app
+#   -h, --help           Show help for this command.
+#   -g, --global         Unhold globally installed app.
 
 'getopt', 'help', 'Helpers', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

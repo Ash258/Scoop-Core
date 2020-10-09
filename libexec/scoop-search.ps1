@@ -1,9 +1,12 @@
-# Usage: scoop search <query>
+# Usage: scoop search <query> [options]
 # Summary: Search available apps
 # Help: Searches for apps that are available to install.
 #
 # If used with [query], shows app names that match the query.
 # Without [query], shows all the available apps.
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($query)
 

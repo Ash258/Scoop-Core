@@ -1,4 +1,4 @@
-# Usage: scoop config [rm|show] [name [value]]
+# Usage: scoop config [rm|show] [name [value]] [options]
 # Summary: Get or set configuration values
 # Help: The scoop configuration file is saved at ~/.config/scoop/config.json.
 #
@@ -13,6 +13,9 @@
 #
 # To show full configuration file:
 #   scoop config show
+#
+# Options:
+#   -h, --help      Show help for this command.
 #
 # Settings
 # --------
