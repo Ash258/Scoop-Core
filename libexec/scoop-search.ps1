@@ -8,6 +8,8 @@
 # Options:
 #   -h, --help      Show help for this command.
 #   -r, --remote    Force remote search in known buckets using Github API.
+#                       Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
+#                       It only uses manifest name to search.
 
 'getopt', 'help', 'manifest', 'install', 'versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -93,7 +95,7 @@ $ratelimit_reached = github_ratelimit_reached
 function search_remote($bucket, $query) {
     $repo = known_bucket_repo $bucket
     if ($ratelimit_reached) {
-        Write-Host "GitHub ratelimit reached: Can't query $repo"
+        Write-UserMessage -Message "GitHub ratelimit reached: Cannot query $repo" -Err
         return $null
     }
 
@@ -106,7 +108,9 @@ function search_remote($bucket, $query) {
             if ((Get-Command Invoke-RestMethod).parameters.ContainsKey('ResponseHeadersVariable')) {
                 $response = Invoke-RestMethod -Uri $request_uri -ResponseHeadersVariable headers
                 if ($headers['X-RateLimit-Remaining']) {
-                    $ratelimit_reached = (1 -eq $headers['X-RateLimit-Remaining'][0])
+                    $rateLimitRemaining = $headers['X-RateLimit-Remaining'][0]
+                    debug $rateLimitRemaining
+                    $ratelimit_reached = 1 -eq $rateLimitRemaining
                 }
             } else {
                 $response = Invoke-RestMethod -Uri $request_uri
@@ -166,7 +170,7 @@ foreach ($bucket in (Get-LocalBucket)) {
     }
 }
 
-if (!$local_results) {
+if (!$local_results -or $Remote) {
     Write-UserMessage -Message 'No matches in local buckets found'
 
     if ($Remote -and !$ratelimit_reached) {
