@@ -7,7 +7,7 @@
 #
 # Options:
 #   -h, --help      Show help for this command.
-#   -r, --remote    TODO:
+#   -r, --remote    Force remote search in known buckets using Github API.
 
 'getopt', 'help', 'manifest', 'install', 'versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -17,6 +17,14 @@ Reset-Alias
 
 $opt, $query, $err = getopt $args 'r' 'remote'
 if ($err) { Stop-ScoopExecution -Message "scoop search: $err" -ExitCode 2 }
+$Remote = $opt.r -or $opt.remote
+if ($query) {
+    try {
+        $query = New-Object System.Text.RegularExpressions.Regex $query, 'IgnoreCase'
+    } catch {
+        Stop-ScoopExecution -Message "Invalid regular expression: $($_.Exception.InnerException.Message)"
+    }
+}
 
 $exitCode = 0
 
@@ -36,15 +44,7 @@ function search_bucket($bucket, $query) {
         }
     }
 
-    if (!$query) {
-        return $apps
-    }
-
-    try {
-        $query = New-Object Regex $query, 'IgnoreCase'
-    } catch {
-        abort "Invalid regular expression: $($_.exception.innerexception.message)"
-    }
+    if (!$query) { return $apps }
 
     $result = @()
 
@@ -131,48 +131,45 @@ function search_remotes($query) {
 
     return $results
 }
-#region TODO: Export
+#endregion TODO: Export
 
 Write-Host 'Searching in local buckets ...'
 $local_results = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
     $result = search_bucket $bucket $query
-    if (!$result) { return }
+    if (!$result) { continue }
 
     $local_results += $result
-    foreach ($_ in $result) {
+    foreach ($res in $result) {
         Write-Host "$bucket" -NoNewline -ForegroundColor Yellow
         Write-Host '/' -NoNewline
-        Write-Host $_.name -ForegroundColor Green
-        Write-Host "  Version: " -NoNewline
-        Write-Host $_.version -ForegroundColor DarkCyan
-        if ($_.description) {
-            Write-Host "  Description: $($_.description)"
+        Write-Host $res.name -ForegroundColor Green
+        Write-Host '  Version: ' -NoNewline
+        Write-Host $res.version -ForegroundColor DarkCyan
+        if ($res.description) {
+            Write-Host "  Description: $($res.description)"
         }
-        if ($_.matchingBinaries) {
-            Write-Host "  Binaries:"
-            $_.matchingBinaries | ForEach-Object {
-                if ($_.exe.Contains($_.name)) {
-                    Write-Host "    - $($_.exe)"
-                } else {
-                    Write-Host "    - $($_.exe) > $($_.name)"
-                }
+        if ($res.matchingBinaries) {
+            Write-Host '  Binaries:'
+            $res.matchingBinaries | ForEach-Object {
+                $str = if ($_.exe -contains $_.name ) { $_.exe } else { "$($_.exe) > $($_.name)" }
+                Write-Host "    - $str"
             }
         }
-        if ($_.matchingShortcuts) {
-            Write-Host "  Shortcuts:"
-            $_.matchingShortcuts | ForEach-Object {
+        if ($res.matchingShortcuts) {
+            Write-Host '  Shortcuts:'
+            $res.matchingShortcuts | ForEach-Object {
                 Write-Host "    - $_"
             }
         }
     }
 }
 
-if (!$local_results) { Write-UserMessage -Message 'No matches in local buckets found' -Err }
+if (!$local_results) {
+    Write-UserMessage -Message 'No matches in local buckets found'
 
-if (!$local_results -or $Remote) {
-    if (!$ratelimit_reached) {
+    if ($Remote -and !$ratelimit_reached) {
         Write-Host 'Searching in remote buckets ...'
         $remote_results = search_remotes $query
         if ($remote_results) {
