@@ -200,7 +200,10 @@ local scoopParser = parser({
     'reset' .. parser({getLocallyInstalledApplicationsByScoop},
         '-h', '--help'
     ):loop(1),
-    'search' .. parser({'-h', '--help'}),
+    'search' .. parser({
+        '-h', '--help',
+        '-r', '--remote'
+    }),
     'status' .. parser({'-h', '--help'}),
     'unhold' .. parser({getLocallyInstalledApplicationsByScoop},
         '-g', '--global',
