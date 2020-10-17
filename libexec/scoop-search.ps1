@@ -57,7 +57,7 @@ function search_bucket($bucket, $Query) {
 
         $app.bin | ForEach-Object {
             $exe, $name, $arg = shim_def $_
-            if ($name -match $Query) {
+            if (($name -match $Query) -or ($exe -match $Query)) {
                 $bin = @{ 'exe' = $exe; 'name' = $name }
                 if ($result.Contains($app)) {
                     $result[$result.IndexOf($app)].matchingBinaries += $bin
@@ -105,13 +105,13 @@ function search_remote($bucket, $query) {
     }
 
     $uri = [System.uri]($repo)
-    if ($uri.absolutepath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(.git|/)?') {
+    if ($uri.AbsolutePath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(.git|/)?') {
         $user = $matches[1]
         $repoName = $matches[2]
         $apiRequestUri = "https://api.github.com/repos/$user/$repoName/git/trees/HEAD?recursive=1"
         try {
             if ((Get-Command Invoke-RestMethod).Parameters.ContainsKey('ResponseHeadersVariable')) {
-                $response = Invoke-RestMethod -Uri $apiRequestUri -ResponseHeadersVariable headers
+                $response = Invoke-RestMethod -Uri $apiRequestUri -ResponseHeadersVariable 'headers'
                 if ($headers['X-RateLimit-Remaining']) {
                     $rateLimitRemaining = $headers['X-RateLimit-Remaining'][0]
                     debug $rateLimitRemaining
