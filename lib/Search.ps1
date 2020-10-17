@@ -1,74 +1,103 @@
 'core', 'buckets', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
-<#
-function bin_match($manifest, $query) {
-    if (!$manifest.bin) { return $false }
-    foreach ($bin in $manifest.bin) {
-        $exe, $alias, $args = $bin
-        $fname = Split-Path $exe -Leaf -ErrorAction Stop
 
-        if ((strip_ext $fname) -match $query) { return $fname }
-        if ($alias -match $query) { return $alias }
+function Search-LocalBucket {
+    <#
+    .SYNOPSIS
+        Search all manifests in locally added bucket.
+    .DESCRIPTION
+        Descriptions, binaries and shortcuts will be used for searching.
+    .PARAMETER Bucket
+        Specifies the bucket name to be searched in.
+    .PARAMETER Query
+        Specifies the regular expression to be used for searching.
+    .OUTPUTS [System.Object[]]
+        Array of all result hashtables with bucket and results properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [String] $Bucket,
+        [AllowNull()]
+        [String] $Query
+    )
+
+    begin {
+        $architecture = default_architecture
+        $apps = @()
+        $result = @()
     }
-    $false
-}
 
-function search_bucket($bucket, $query) {
-    $apps = apps_in_bucket (Find-BucketDirectory $bucket) | ForEach-Object {
-        @{ name = $_ }
-    }
+    process {
+        foreach ($app in apps_in_bucket (Find-BucketDirectory -Name $Bucket)) {
+            $manifest = manifest $app $Bucket
+            $apps += @{
+                'name'              = $app
+                'version'           = $manifest.version
+                'description'       = $manifest.description
+                'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
+                'matchingShortcuts' = @()
+                'bin'               = @(arch_specific 'bin' $manifest $arch)
+                'matchingBinaries'  = @()
+            }
+        }
 
-    if ($query) {
-        $apps = $apps | Where-Object {
-            if ($_.name -match $query) { return $true }
-            $bin = bin_match (manifest $_.name $bucket) $query
-            if ($bin) {
-                $_.bin = $bin; return $true;
+        if (!$Query) { return $apps }
+
+        foreach ($a in $apps) {
+            # Manifest name matching
+            if (($a.name -match $Query) -and (!$result -contains $a)) { $result += $a }
+
+            # Binary matching
+            $a.bin | ForEach-Object {
+                $executable, $shimName, $argument = shim_def $_
+                if ($shimName -match $Query) {
+                    $bin = @{ 'exe' = $executable; 'name' = $shimName }
+                    if ($result -contains $a) {
+                        $result[$result.IndexOf($a)].matchingBinaries += $bin
+                    } else {
+                        $a.matchingBinaries += $bin
+                        $result += $a
+                    }
+                }
+            }
+
+            # Shortcut matching
+            foreach ($shortcut in $a.shortcuts) {
+                # Is this necessary?
+                if (($shortcut -is [Array]) -and ($shortcut.Length -ge 2)) {
+                    $executable = $shortcut[0]
+                    $name = $shortcut[1]
+
+                    if (($name -match $Query) -or ($executable -match $Query)) {
+                        $short = @{ 'exe' = $executable; 'name' = $name }
+                        if ($result -contains $a) {
+                            $result[$result.IndexOf($a)].matchingShortcuts += $short
+                        } else {
+                            $a.matchingShortcuts += $short
+                            $result += $a
+                        }
+                    }
+                }
             }
         }
     }
-    $apps | ForEach-Object { $_.version = (Get-LatestVersion -App $_.Name -Bucket $bucket); $_ }
+
+    end { return $result }
 }
-
-function download_json($url) {
-    $ProgressPreference = 'SilentlyContinue'
-    $result = Invoke-WebRequest $url -UseBasicParsing | Select-Object -ExpandProperty Content | ConvertFrom-Json
-    $ProgressPreference = 'Continue'
-    return $result
-}
-
-function github_ratelimit_reached {
-    return (download_json 'https://api.github.com/rate_limit').Rate.Remaining -eq 0
-}
-
-function search_remote($bucket, $query) {
-    $repo = known_bucket_repo $bucket
-
-    $uri = [System.Uri]($repo)
-    if ($uri.AbsolutePath -match '/([a-zA-Z0-9]*)/([a-zA-Z0-9-]*)(.git|/)?') {
-        $user = $matches[1]
-        $repo_name = $matches[2]
-        $api_link = "https://api.github.com/repos/$user/$repo_name/git/trees/HEAD?recursive=1"
-        $result = download_json $api_link | Select-Object -ExpandProperty tree | Where-Object {
-            $_.path -match "(^(.*$query.*).json$)"
-        } | ForEach-Object { $matches[2] }
-    }
-
-    return $result
-}
-#>
 
 function Search-AllRemote {
     <#
     .SYNOPSIS
         Search all remote buckets using GitHub API.
     .DESCRIPTION
-        Remote search utilize only manifest names and buckets which are not added locally.
+        Remote search happens only in buckets, which are not added locally and only manifest name is taken into account.
     .PARAMETER Query
         Specifies the regular expression to be searched in remote.
     .OUTPUTS [System.Object[]]
-        Array of all result hashtable with bucket and results properties.
+        Array of all result hashtables with bucket and results properties.
     #>
     [CmdletBinding()]
     [OutputType([System.Object[]])]

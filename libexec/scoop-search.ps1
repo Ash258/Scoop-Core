@@ -31,63 +31,6 @@ if ($Query) {
 $exitCode = 0
 
 #region TODO: Export
-function search_bucket($bucket, $Query) {
-    $arch = default_architecture
-    $apps = apps_in_bucket (Find-BucketDirectory $bucket) | ForEach-Object {
-        $manifest = manifest $_ $bucket
-        @{
-            'name'              = $_
-            'version'           = $manifest.version
-            'description'       = $manifest.description
-            'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
-            'matchingShortcuts' = @()
-            'bin'               = @(arch_specific 'bin' $manifest $arch)
-            'matchingBinaries'  = @()
-        }
-    }
-
-    if (!$Query) { return $apps }
-
-    $result = @()
-
-    foreach ($app in $apps) {
-        if ($app.name -match $Query -and !$result.Contains($app)) {
-            $result += $app
-        }
-
-        $app.bin | ForEach-Object {
-            $exe, $name, $arg = shim_def $_
-            if (($name -match $Query) -or ($exe -match $Query)) {
-                $bin = @{ 'exe' = $exe; 'name' = $name }
-                if ($result.Contains($app)) {
-                    $result[$result.IndexOf($app)].matchingBinaries += $bin
-                } else {
-                    $app.matchingBinaries += $bin
-                    $result += $app
-                }
-            }
-        }
-
-        foreach ($shortcut in $app.shortcuts) {
-            if ($shortcut -is [Array] -and $shortcut.length -ge 2) {
-                $executable = $shortcut[0]
-                $name = $shortcut[1]
-                $short = @{ 'exe' = $executable; 'name' = $name }
-                if (($name -match $Query) -or ($executable -match $Query)) {
-                    if ($result.Contains($app)) {
-                        $result[$result.IndexOf($app)].matchingShortcuts += $short
-                    } else {
-                        $app.matchingShortcuts += $short
-                        $result += $app
-                    }
-                }
-            }
-        }
-    }
-
-    return $result
-}
-
 function github_ratelimit_reached {
     $githubRateLimitRemaining = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').rate.remaining
     debug $githubRateLimitRemaining
@@ -137,7 +80,7 @@ Write-Host 'Searching in local buckets ...'
 $localResults = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
-    $result = search_bucket $bucket $Query
+    $result = Search-LocalBucket -Bucket $bucket -Query $Query
     if (!$result) { continue }
 
     $localResults += $result
