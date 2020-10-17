@@ -1,7 +1,7 @@
 'core', 'buckets', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
-
+<#
 function bin_match($manifest, $query) {
     if (!$manifest.bin) { return $false }
     foreach ($bin in $manifest.bin) {
@@ -57,26 +57,14 @@ function search_remote($bucket, $query) {
 
     return $result
 }
-
+#>
 function search_remotes($query) {
-    $buckets = known_bucket_repos
-    $names = $buckets | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name
-
-    $results = $names | Where-Object { !(Test-Path $(Find-BucketDirectory $_)) } | ForEach-Object {
-        @{'bucket' = $_; 'results' = (search_remote $_ $query) }
+    $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
+        @{
+            'bucket'  = $_
+            'results' = (search_remote $_ $query)
+        }
     } | Where-Object { $_.results }
 
-    if ($results.count -gt 0) {
-        Write-UserMessage -Message @(
-            'Results from other known buckets...'
-            '(add them using ''scoop bucket add <name>'')'
-            ''
-        )
-    }
-
-    $results | ForEach-Object {
-        "'$($_.bucket)' bucket:"
-        $_.results | ForEach-Object { "    $_" }
-        ''
-    }
+    return $results
 }

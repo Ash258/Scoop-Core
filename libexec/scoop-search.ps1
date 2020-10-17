@@ -11,7 +11,7 @@
 #                       Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
 #                       It only uses manifest name to search.
 
-'getopt', 'help', 'manifest', 'install', 'versions' | ForEach-Object {
+'getopt', 'help', 'manifest', 'install', 'versions', 'Search' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -70,12 +70,14 @@ function search_bucket($bucket, $Query) {
 
         foreach ($shortcut in $app.shortcuts) {
             if ($shortcut -is [Array] -and $shortcut.length -ge 2) {
+                $executable = $shortcut[0]
                 $name = $shortcut[1]
-                if ($name -match $Query) {
+                $short = @{'exe' = $executable; 'name' = $name }
+                if (($name -match $Query) -or ($executable -match $Query)) {
                     if ($result.Contains($app)) {
-                        $result[$result.IndexOf($app)].matchingShortcuts += $name
+                        $result[$result.IndexOf($app)].matchingShortcuts += $short
                     } else {
-                        $app.matchingShortcuts += $name
+                        $app.matchingShortcuts += $short
                         $result += $app
                     }
                 }
@@ -129,16 +131,6 @@ function search_remote($bucket, $query) {
     return $result
 }
 
-function search_remotes($query) {
-    $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
-        @{
-            'bucket'  = $_
-            'results' = (search_remote $_ $query)
-        }
-    } | Where-Object { $_.results }
-
-    return $results
-}
 #endregion TODO: Export
 
 Write-Host 'Searching in local buckets ...'
@@ -167,7 +159,10 @@ foreach ($bucket in (Get-LocalBucket)) {
         }
         if ($res.matchingShortcuts) {
             $toPrint += '  Shortcuts:'
-            $res.matchingShortcuts | ForEach-Object { $toPrint += "    - $_" }
+            $res.matchingShortcuts | ForEach-Object {
+                $str = if ($_.exe -contains $_.name ) { $_.exe } else { "$($_.exe) > $($_.name)" }
+                $toPrint += "    - $str"
+            }
         }
 
         Write-UserMessage -Message $toPrint -Output:$false
