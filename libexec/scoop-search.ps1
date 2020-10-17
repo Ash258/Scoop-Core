@@ -104,8 +104,9 @@ function search_remote($bucket, $query) {
         return $null
     }
 
+    $result = $null
     $uri = [System.uri]($repo)
-    if ($uri.AbsolutePath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(.git|/)?') {
+    if ($uri.AbsolutePath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(\.git|/)?') {
         $user = $matches[1]
         $repoName = $matches[2]
         $apiRequestUri = "https://api.github.com/repos/$user/$repoName/git/trees/HEAD?recursive=1"
@@ -122,8 +123,8 @@ function search_remote($bucket, $query) {
                 $ratelimit_reached = github_ratelimit_reached
             }
 
-            $result = $response.tree | Where-Object -Property 'path' -Match "(^(.*$query.*)\.json$)" | ForEach-Object { $matches[2] }
-        } catch [System.Web.Http.HttpResponseException] {
+            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$query.*)\.json$)" | ForEach-Object { $Matches[2] }
+        } catch [System.Net.Http.HttpRequestException] {
             $ratelimit_reached = $true
         }
     }
@@ -172,13 +173,13 @@ if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets fo
 if (!$localResults -or $Remote) {
     if (!$ratelimit_reached) {
         Write-Host 'Searching in remote buckets ...'
-        $remoteResults = search_remotes $Query
+        $remoteResults = Search-AllRemote $Query
 
         if ($remoteResults) {
             Write-Host "`nResults from other known buckets:`n"
-            $remoteResults | ForEach-Object {
-                Write-Host "'$($_.bucket)' bucket (Run 'scoop bucket add $($_.bucket)'):"
-                $_.results | ForEach-Object { "    $_" }
+            foreach ($r in $remoteResults) {
+                Write-Host "'$($r.bucket)' bucket (Run 'scoop bucket add $($r.bucket)'):"
+                $r.results | ForEach-Object { "    $_" }
             }
         } else {
             Stop-ScoopExecution 'No matches in remote buckets found'

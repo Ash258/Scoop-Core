@@ -58,13 +58,31 @@ function search_remote($bucket, $query) {
     return $result
 }
 #>
-function search_remotes($query) {
-    $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
-        @{
-            'bucket'  = $_
-            'results' = (search_remote $_ $query)
-        }
-    } | Where-Object { $_.results }
 
-    return $results
+function Search-AllRemote {
+    <#
+    .SYNOPSIS
+        Search all remote buckets using GitHub API.
+    .DESCRIPTION
+        Remote search utilize only manifest names and buckets which are not added locally.
+    .PARAMETER Query
+        Specifies the regular expression to be searched in remote.
+    .OUTPUTS [System.Object[]]
+        Array of all result hashtable with bucket and results properties.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Object[]])]
+    param([String] $Query)
+
+    process {
+        $Query | Out-Null # PowerShell/PSScriptAnalyzer#1472
+        $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
+            @{
+                'bucket'  = $_
+                'results' = (search_remote $_ $Query)
+            }
+        } | Where-Object { $_.results }
+
+        return @($results)
+    }
 }
