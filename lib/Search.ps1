@@ -161,6 +161,9 @@ function Search-LocalBucket {
             # Manifest name matching
             if (($a.name -match $Query) -and (!$result -contains $a)) { $result += $a }
 
+            # Description matching
+            if ($a.description -match $Query) { $result += $a }
+
             # Binary matching
             $a.bin | ForEach-Object {
                 $executable, $shimName, $argument = shim_def $_
