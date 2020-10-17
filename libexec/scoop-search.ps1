@@ -58,7 +58,7 @@ function search_bucket($bucket, $Query) {
         $app.bin | ForEach-Object {
             $exe, $name, $arg = shim_def $_
             if ($name -match $Query) {
-                $bin = @{'exe' = $exe; 'name' = $name }
+                $bin = @{ 'exe' = $exe; 'name' = $name }
                 if ($result.Contains($app)) {
                     $result[$result.IndexOf($app)].matchingBinaries += $bin
                 } else {
@@ -72,7 +72,7 @@ function search_bucket($bucket, $Query) {
             if ($shortcut -is [Array] -and $shortcut.length -ge 2) {
                 $executable = $shortcut[0]
                 $name = $shortcut[1]
-                $short = @{'exe' = $executable; 'name' = $name }
+                $short = @{ 'exe' = $executable; 'name' = $name }
                 if (($name -match $Query) -or ($executable -match $Query)) {
                     if ($result.Contains($app)) {
                         $result[$result.IndexOf($app)].matchingShortcuts += $short
@@ -133,13 +133,13 @@ function search_remote($bucket, $query) {
 #endregion TODO: Export
 
 Write-Host 'Searching in local buckets ...'
-$local_results = @()
+$localResults = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
     $result = search_bucket $bucket $Query
     if (!$result) { continue }
 
-    $local_results += $result
+    $localResults += $result
     foreach ($res in $result) {
         Write-Host "$bucket" -NoNewline -ForegroundColor Yellow
         Write-Host '/' -NoNewline
@@ -168,15 +168,15 @@ foreach ($bucket in (Get-LocalBucket)) {
     }
 }
 
-if (!$local_results) { Write-UserMessage -Message 'No matches in local buckets found' }
-if (!$local_results -or $Remote) {
+if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
+if (!$localResults -or $Remote) {
     if (!$ratelimit_reached) {
         Write-Host 'Searching in remote buckets ...'
-        $remote_results = search_remotes $Query
+        $remoteResults = search_remotes $Query
 
-        if ($remote_results) {
+        if ($remoteResults) {
             Write-Host "`nResults from other known buckets:`n"
-            $remote_results | ForEach-Object {
+            $remoteResults | ForEach-Object {
                 Write-Host "'$($_.bucket)' bucket (Run 'scoop bucket add $($_.bucket)'):"
                 $_.results | ForEach-Object { "    $_" }
             }
