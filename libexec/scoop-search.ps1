@@ -116,7 +116,7 @@ if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets fo
 if (!$localResults -or $Remote) {
     if (!$ratelimit_reached) {
         Write-Host 'Searching in remote buckets ...'
-        $remoteResults = Search-AllRemote $Query
+        $remoteResults = Search-AllRemote -Query $Query
 
         if ($remoteResults) {
             Write-Host "`nResults from other known buckets:`n"
