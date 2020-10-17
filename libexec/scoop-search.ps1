@@ -107,18 +107,18 @@ function search_remote($bucket, $query) {
     $uri = [System.uri]($repo)
     if ($uri.absolutepath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(.git|/)?') {
         $user = $matches[1]
-        $repo_name = $matches[2]
-        $request_uri = "https://api.github.com/repos/$user/$repo_name/git/trees/HEAD?recursive=1"
+        $repoName = $matches[2]
+        $apiRequestUri = "https://api.github.com/repos/$user/$repoName/git/trees/HEAD?recursive=1"
         try {
-            if ((Get-Command Invoke-RestMethod).parameters.ContainsKey('ResponseHeadersVariable')) {
-                $response = Invoke-RestMethod -Uri $request_uri -ResponseHeadersVariable headers
+            if ((Get-Command Invoke-RestMethod).Parameters.ContainsKey('ResponseHeadersVariable')) {
+                $response = Invoke-RestMethod -Uri $apiRequestUri -ResponseHeadersVariable headers
                 if ($headers['X-RateLimit-Remaining']) {
                     $rateLimitRemaining = $headers['X-RateLimit-Remaining'][0]
                     debug $rateLimitRemaining
                     $ratelimit_reached = 1 -eq $rateLimitRemaining
                 }
             } else {
-                $response = Invoke-RestMethod -Uri $request_uri
+                $response = Invoke-RestMethod -Uri $apiRequestUri
                 $ratelimit_reached = github_ratelimit_reached
             }
 
@@ -130,7 +130,6 @@ function search_remote($bucket, $query) {
 
     return $result
 }
-
 #endregion TODO: Export
 
 Write-Host 'Searching in local buckets ...'
