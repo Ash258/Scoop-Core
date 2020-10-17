@@ -30,52 +30,6 @@ if ($Query) {
 
 $exitCode = 0
 
-#region TODO: Export
-function github_ratelimit_reached {
-    $githubRateLimitRemaining = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').rate.remaining
-    debug $githubRateLimitRemaining
-
-    return $githubRateLimitRemaining -eq 0
-}
-
-$ratelimit_reached = github_ratelimit_reached
-
-function search_remote($bucket, $query) {
-    $repo = known_bucket_repo $bucket
-    if ($ratelimit_reached) {
-        Write-UserMessage -Message "GitHub ratelimit reached: Cannot query $repo" -Err
-        return $null
-    }
-
-    $result = $null
-    $uri = [System.uri]($repo)
-    if ($uri.AbsolutePath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(\.git|/)?') {
-        $user = $matches[1]
-        $repoName = $matches[2]
-        $apiRequestUri = "https://api.github.com/repos/$user/$repoName/git/trees/HEAD?recursive=1"
-        try {
-            if ((Get-Command Invoke-RestMethod).Parameters.ContainsKey('ResponseHeadersVariable')) {
-                $response = Invoke-RestMethod -Uri $apiRequestUri -ResponseHeadersVariable 'headers'
-                if ($headers['X-RateLimit-Remaining']) {
-                    $rateLimitRemaining = $headers['X-RateLimit-Remaining'][0]
-                    debug $rateLimitRemaining
-                    $ratelimit_reached = 1 -eq $rateLimitRemaining
-                }
-            } else {
-                $response = Invoke-RestMethod -Uri $apiRequestUri
-                $ratelimit_reached = github_ratelimit_reached
-            }
-
-            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$query.*)\.json$)" | ForEach-Object { $Matches[2] }
-        } catch [System.Net.Http.HttpRequestException] {
-            $ratelimit_reached = $true
-        }
-    }
-
-    return $result
-}
-#endregion TODO: Export
-
 Write-Host 'Searching in local buckets ...'
 $localResults = @()
 
@@ -114,7 +68,7 @@ foreach ($bucket in (Get-LocalBucket)) {
 
 if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
 if (!$localResults -or $Remote) {
-    if (!$ratelimit_reached) {
+    if (!(Test-GithubApiRateLimit)) {
         Write-Host 'Searching in remote buckets ...'
         $remoteResults = Search-AllRemote -Query $Query
 
