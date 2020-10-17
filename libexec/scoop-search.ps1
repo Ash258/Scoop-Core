@@ -17,12 +17,12 @@
 
 Reset-Alias
 
-$opt, $query, $err = getopt $args 'r' 'remote'
+$opt, $Query, $err = getopt $args 'r' 'remote'
 if ($err) { Stop-ScoopExecution -Message "scoop search: $err" -ExitCode 2 }
 $Remote = $opt.r -or $opt.remote
-if ($query) {
+if ($Query) {
     try {
-        $query = New-Object System.Text.RegularExpressions.Regex $query, 'IgnoreCase'
+        $Query = New-Object System.Text.RegularExpressions.Regex $Query, 'IgnoreCase'
     } catch {
         Stop-ScoopExecution -Message "Invalid regular expression: $($_.Exception.InnerException.Message)"
     }
@@ -31,33 +31,33 @@ if ($query) {
 $exitCode = 0
 
 #region TODO: Export
-function search_bucket($bucket, $query) {
+function search_bucket($bucket, $Query) {
     $arch = default_architecture
     $apps = apps_in_bucket (Find-BucketDirectory $bucket) | ForEach-Object {
         $manifest = manifest $_ $bucket
         @{
-            name              = $_
-            version           = $manifest.version
-            description       = $manifest.description
-            shortcuts         = @(arch_specific 'shortcuts' $manifest $arch)
-            matchingShortcuts = @()
-            bin               = @(arch_specific 'bin' $manifest $arch)
-            matchingBinaries  = @()
+            'name'              = $_
+            'version'           = $manifest.version
+            'description'       = $manifest.description
+            'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
+            'matchingShortcuts' = @()
+            'bin'               = @(arch_specific 'bin' $manifest $arch)
+            'matchingBinaries'  = @()
         }
     }
 
-    if (!$query) { return $apps }
+    if (!$Query) { return $apps }
 
     $result = @()
 
     foreach ($app in $apps) {
-        if ($app.name -match $query -and !$result.Contains($app)) {
+        if ($app.name -match $Query -and !$result.Contains($app)) {
             $result += $app
         }
 
         $app.bin | ForEach-Object {
             $exe, $name, $arg = shim_def $_
-            if ($name -match $query) {
+            if ($name -match $Query) {
                 $bin = @{'exe' = $exe; 'name' = $name }
                 if ($result.Contains($app)) {
                     $result[$result.IndexOf($app)].matchingBinaries += $bin
@@ -71,7 +71,7 @@ function search_bucket($bucket, $query) {
         foreach ($shortcut in $app.shortcuts) {
             if ($shortcut -is [Array] -and $shortcut.length -ge 2) {
                 $name = $shortcut[1]
-                if ($name -match $query) {
+                if ($name -match $Query) {
                     if ($result.Contains($app)) {
                         $result[$result.IndexOf($app)].matchingShortcuts += $name
                     } else {
@@ -87,7 +87,10 @@ function search_bucket($bucket, $query) {
 }
 
 function github_ratelimit_reached {
-    return (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').rate.remaining -eq 0
+    $githubRateLimitRemaining = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').rate.remaining
+    debug $githubRateLimitRemaining
+
+    return $githubRateLimitRemaining -eq 0
 }
 
 $ratelimit_reached = github_ratelimit_reached
@@ -99,8 +102,8 @@ function search_remote($bucket, $query) {
         return $null
     }
 
-    $uri = [system.uri]($repo)
-    if ($uri.absolutepath -match '/([a-zA-Z0-9]*)/([a-zA-Z0-9-]*)(.git|/)?') {
+    $uri = [System.uri]($repo)
+    if ($uri.absolutepath -match '/([a-zA-Z\d]*)/([a-zA-Z\d-]*)(.git|/)?') {
         $user = $matches[1]
         $repo_name = $matches[2]
         $request_uri = "https://api.github.com/repos/$user/$repo_name/git/trees/HEAD?recursive=1"
@@ -117,9 +120,7 @@ function search_remote($bucket, $query) {
                 $ratelimit_reached = github_ratelimit_reached
             }
 
-            $result = $response.tree | Where-Object {
-                $_.path -match "(^(.*$query.*).json$)"
-            } | ForEach-Object { $matches[2] }
+            $result = $response.tree | Where-Object -Property 'path' -Match "(^(.*$query.*)\.json$)" | ForEach-Object { $matches[2] }
         } catch [System.Web.Http.HttpResponseException] {
             $ratelimit_reached = $true
         }
@@ -130,7 +131,10 @@ function search_remote($bucket, $query) {
 
 function search_remotes($query) {
     $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
-        @{ bucket = $_; results = (search_remote $_ $query) }
+        @{
+            'bucket'  = $_
+            'results' = (search_remote $_ $query)
+        }
     } | Where-Object { $_.results }
 
     return $results
@@ -141,7 +145,7 @@ Write-Host 'Searching in local buckets ...'
 $local_results = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
-    $result = search_bucket $bucket $query
+    $result = search_bucket $bucket $Query
     if (!$result) { continue }
 
     $local_results += $result
@@ -151,31 +155,31 @@ foreach ($bucket in (Get-LocalBucket)) {
         Write-Host $res.name -ForegroundColor Green
         Write-Host '  Version: ' -NoNewline
         Write-Host $res.version -ForegroundColor DarkCyan
-        if ($res.description) {
-            Write-Host "  Description: $($res.description)"
-        }
+
+        $toPrint = @()
+        if ($res.description) { $toPrint += "  Description: $($res.description)" }
         if ($res.matchingBinaries) {
-            Write-Host '  Binaries:'
+            $toPrint += '  Binaries:'
             $res.matchingBinaries | ForEach-Object {
                 $str = if ($_.exe -contains $_.name ) { $_.exe } else { "$($_.exe) > $($_.name)" }
-                Write-Host "    - $str"
+                $toPrint += "    - $str"
             }
         }
         if ($res.matchingShortcuts) {
-            Write-Host '  Shortcuts:'
-            $res.matchingShortcuts | ForEach-Object {
-                Write-Host "    - $_"
-            }
+            $toPrint += '  Shortcuts:'
+            $res.matchingShortcuts | ForEach-Object { $toPrint += "    - $_" }
         }
+
+        Write-UserMessage -Message $toPrint -Output:$false
     }
 }
 
+if (!$local_results) { Write-UserMessage -Message 'No matches in local buckets found' }
 if (!$local_results -or $Remote) {
-    Write-UserMessage -Message 'No matches in local buckets found'
-
-    if ($Remote -and !$ratelimit_reached) {
+    if (!$ratelimit_reached) {
         Write-Host 'Searching in remote buckets ...'
-        $remote_results = search_remotes $query
+        $remote_results = search_remotes $Query
+
         if ($remote_results) {
             Write-Host "`nResults from other known buckets:`n"
             $remote_results | ForEach-Object {
@@ -186,7 +190,7 @@ if (!$local_results -or $Remote) {
             Stop-ScoopExecution 'No matches in remote buckets found'
         }
     } else {
-        Stop-ScoopExecution "GitHub ratelimit reached: Can't query known repositories, please try again later"
+        Stop-ScoopExecution "GitHub ratelimit reached: Cannot query known repositories, please try again later"
     }
 }
 
