@@ -12,7 +12,7 @@ function Test-GithubApiRateLimitBreached {
         Status of github rate limit breach.
     #>
     [CmdletBinding()]
-    [OutputType([bool])]
+    [OutputType([System.Boolean])]
     param([Switch] $Breach)
 
     if ($Breach) { $script:_breachedRateLimit = $true }
@@ -42,6 +42,7 @@ function Search-RemoteBucket {
         Array of hashtable results of search
     #>
     [CmdletBinding()]
+    [OutputType([System.String[]])]
     param([String] $Bucket, [String] $Query)
 
     process {
@@ -181,7 +182,7 @@ function Search-LocalBucket {
             # Shortcut matching
             foreach ($shortcut in $a.shortcuts) {
                 # Is this necessary?
-                if (($shortcut -is [Array]) -and ($shortcut.Length -ge 2)) {
+                if (($shortcut -is [System.Array]) -and ($shortcut.Length -ge 2)) {
                     $executable = $shortcut[0]
                     $name = $shortcut[1]
 
