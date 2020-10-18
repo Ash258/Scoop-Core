@@ -168,7 +168,7 @@ function Search-LocalBucket {
             # Binary matching
             $a.bin | ForEach-Object {
                 $executable, $shimName, $argument = shim_def $_
-                if ($shimName -match $Query) {
+                if (($shimName -match $Query) -or ($executable -match $Query)) {
                     $bin = @{ 'exe' = $executable; 'name' = $shimName }
                     if ($result -contains $a) {
                         $result[$result.IndexOf($a)].matchingBinaries += $bin
