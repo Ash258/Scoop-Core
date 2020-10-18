@@ -149,10 +149,10 @@ function Search-LocalBucket {
                 'name'              = $app
                 'version'           = $manifest.version
                 'description'       = $manifest.description
-                'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
-                'matchingShortcuts' = @()
                 'bin'               = @(arch_specific 'bin' $manifest $arch)
                 'matchingBinaries'  = @()
+                'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
+                'matchingShortcuts' = @()
             }
         }
 
@@ -160,10 +160,10 @@ function Search-LocalBucket {
 
         foreach ($a in $apps) {
             # Manifest name matching
-            if (($a.name -match $Query) -and (!$result -contains $a)) { $result += $a }
+            if (($a.name -match $Query) -and ($result -notcontains $a)) { $result += $a }
 
             # Description matching
-            if ($a.description -match $Query) { $result += $a }
+            if (($a.description -match $Query) -and ($result -notcontains $a)) { $result += $a }
 
             # Binary matching
             $a.bin | ForEach-Object {
