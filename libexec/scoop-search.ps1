@@ -11,7 +11,7 @@
 #                       Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
 #                       It only uses manifest name to search.
 
-'getopt', 'help', 'manifest', 'install', 'versions', 'Search' | ForEach-Object {
+'getopt', 'buckets', 'Helpers', 'Search' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

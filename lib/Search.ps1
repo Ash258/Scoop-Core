@@ -1,4 +1,4 @@
-'core', 'buckets', 'Helpers', 'manifest' | ForEach-Object {
+'core', 'buckets', 'Helpers', 'install', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
