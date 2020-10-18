@@ -103,7 +103,7 @@ function Search-AllRemote {
 
     process {
         $Query | Out-Null # PowerShell/PSScriptAnalyzer#1472
-        $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory $_ | Test-Path) } | ForEach-Object {
+        $results = Get-KnownBucket | Where-Object { !(Find-BucketDirectory -Bucket $_ | Test-Path) } | ForEach-Object {
             @{
                 'bucket'  = $_
                 'results' = (Search-RemoteBucket -Bucket $_ -Query $Query)
