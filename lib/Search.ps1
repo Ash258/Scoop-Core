@@ -79,7 +79,7 @@ function Search-RemoteBucket {
                 debug $rateLimitRemaining
                 if ($rateLimitRemaining -eq 0) { Test-GithubApiRateLimitBreached -Breach | Out-Null }
             }
-            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$query.*)\.json$)" | ForEach-Object { $Matches[2] }
+            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$Query.*)\.json$)" | ForEach-Object { $Matches[2] }
         }
 
         return $result
