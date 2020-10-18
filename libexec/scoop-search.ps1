@@ -68,7 +68,7 @@ foreach ($bucket in (Get-LocalBucket)) {
 
 if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
 if (!$localResults -or $Remote) {
-    if (!(Test-GithubApiRateLimit)) {
+    if (!(Test-GithubApiRateLimitBreached)) {
         Write-Host 'Searching in remote buckets ...'
         $remoteResults = Search-AllRemote -Query $Query
 

@@ -4,7 +4,7 @@
 
 $_breachedRateLimit = $false
 
-function Test-GithubApiRateLimit {
+function Test-GithubApiRateLimitBreached {
     <#
     .SYNOPSIS
         Test if GitHub's rate limit was breached.
@@ -15,19 +15,19 @@ function Test-GithubApiRateLimit {
     [OutputType([bool])]
     param([Switch] $Breach)
 
-    if ($Breach) { $_breachedRateLimit = $true }
+    if ($Breach) { $script:_breachedRateLimit = $true }
 
-    if (!$_breachedRateLimit) {
+    if (!$script:_breachedRateLimit) {
         $githubRateLimit = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').resources.core
         debug $githubRateLimit.remaining
         if ($githubRateLimit.remaining -eq 0) {
-            $_breachedRateLimit = $true
+            $script:_breachedRateLimit = $true
             $limitResetOn = [System.Timezone]::CurrentTimeZone.ToLocalTime(([System.Datetime]'1/1/1970').AddSeconds($githubRateLimit.reset)).ToString()
             debug $limitResetOn
         }
     }
 
-    return $_breachedRateLimit
+    return $script:_breachedRateLimit
 }
 
 function Search-RemoteBucket {
@@ -47,7 +47,7 @@ function Search-RemoteBucket {
     process {
         $repo = known_bucket_repo $bucket
         if (!$repo) { return $null }
-        if (Test-GithubApiRateLimit) {
+        if (Test-GithubApiRateLimitBreached) {
             Write-UserMessage -Message "GitHub ratelimit reached: Cannot query $repo" -Err
             return $null
         }
@@ -69,14 +69,14 @@ function Search-RemoteBucket {
             try {
                 $response = Invoke-RestMethod @params
             } catch {
-                Test-GithubApiRateLimit -Breach | Out-Null
+                Test-GithubApiRateLimitBreached -Breach | Out-Null
                 return $null
             }
 
             if ($headers -and $headers['X-RateLimit-Remaining']) {
                 $rateLimitRemaining = $headers['X-RateLimit-Remaining'][0]
                 debug $rateLimitRemaining
-                if ($rateLimitRemaining -eq 0) { Test-GithubApiRateLimit -Breach | Out-Null }
+                if ($rateLimitRemaining -eq 0) { Test-GithubApiRateLimitBreached -Breach | Out-Null }
             }
             $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$query.*)\.json$)" | ForEach-Object { $Matches[2] }
         }
