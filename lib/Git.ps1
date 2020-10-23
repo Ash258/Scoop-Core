@@ -42,7 +42,8 @@ function Invoke-GitCmd {
                 $para = @(
                     '--no-decorate'
                     '--format="tformat: * %C(yellow)%h%Creset %<|(72,trunc)%s %C(cyan)%cr%Creset"'
-                    '--grep="\[\(scoop\|shovel\) skip\]"'
+                    '--grep="\[\(scoop\|shovel\) skip\]"' # Ignore [scoop skip] [shovel skip]
+                    '--grep="^Merge [cb]"' # Ignore merge commits
                     '--invert-grep'
                 )
                 $Argument = $para + $Argument
@@ -67,7 +68,7 @@ function Invoke-GitCmd {
         debug $commandToRun
 
         # TODO: Drop comspec
-        & "$env:ComSpec" /c $commandToRun
+        & "$env:ComSpec" /d /c $commandToRun
     }
 }
 

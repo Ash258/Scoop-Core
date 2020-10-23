@@ -888,7 +888,7 @@ function handle_special_urls($url) {
         $Body = @{
             'projectUri'      = $Matches.name
             'fileName'        = $Matches.filename
-            'source'          = 'CF'
+            'source'          = 'CF' # Needed since July 2020
             'isLatestVersion' = $true
         }
         if ((Invoke-RestMethod -Uri $url) -match '"p":"(?<pid>[a-f0-9]{24}).*?"r":"(?<rid>[a-f0-9]{24})') {

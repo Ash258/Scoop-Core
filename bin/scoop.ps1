@@ -9,6 +9,14 @@ Set-StrictMode -Off
 
 Reset-Alias
 
+if (($PSVersionTable.PSVersion.Major) -lt 5) {
+    Write-UserMessage -Message @(
+        'PowerShell 5 or later is required',
+        'Upgrade PowerShell: ''https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows'''
+    )
+    exit 1
+}
+
 $exitCode = 0
 
 # Powershell automatically bind bash like short parameters as $args, and does not put it in $cmd parameter

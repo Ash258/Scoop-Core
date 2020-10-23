@@ -305,14 +305,16 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
         debug $aria2
         # Handle aria2 console output
         Write-Host 'Starting download with aria2 ...'
+
+        [System.Console]::CursorVisible = $false
         Invoke-Expression $aria2 | ForEach-Object {
             # Skip blank lines
             if ([String]::IsNullOrWhiteSpace($_)) { return }
 
-            $color = 'Gray'
             # Prevent potential overlaping of text when one line is shorter
             $len = $Host.UI.RawUI.WindowSize.Width - $_.Length - 20
             $blank = if ($len -gt 0) { ' ' * $len } else { '' }
+            $color = 'Gray'
 
             if ($_.StartsWith('(OK):')) {
                 $noNewLine = $true
@@ -324,9 +326,11 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                 $noNewLine = $false
             }
 
+            # Update latest line
             Write-Host "`rDownload: $_$blank" -ForegroundColor $color -NoNewline:$noNewLine
         }
         Write-Host ''
+        [System.Console]::CursorVisible = $true
 
         if ($LASTEXITCODE -gt 0) {
             $mes = "Download failed! (Error $LASTEXITCODE) $(aria_exit_code $LASTEXITCODE)"
@@ -383,6 +387,7 @@ function dl($url, $to, $cookies, $progress) {
     $wreq = [System.Net.WebRequest]::Create($reqUrl)
     if ($wreq -is [System.Net.HttpWebRequest]) {
         $wreq.UserAgent = Get-UserAgent
+        # Do not send referer to sourceforge, portbleapps
         if (($url -notlike '*sourceforge.net*') -and ($url -notlike '*portableapps.com*')) {
             $wreq.Referer = strip_filename $url
         }
@@ -525,6 +530,7 @@ function dl_progress($read, $total, $url) {
             Write-Host
             $left = 0
             $top = $top + 1
+            # Prevent oveflow
             if ($top -gt $console.CursorPosition.Y) { $top = $console.CursorPosition.Y }
         }
     }
@@ -997,10 +1003,12 @@ function env_add_path($manifest, $dir, $global, $arch) {
     $env_add_path = arch_specific 'env_add_path' $manifest $arch
 
     if ($env_add_path) {
+        # Reverse the path
         [Array]::Reverse($env_add_path)
         $env_add_path | Where-Object { $_ } | ForEach-Object {
             $path_dir = Join-Path $dir $_
             if (!(is_in_dir $dir $path_dir)) {
+                # TODO: Consider, just throw
                 Set-TerminatingError -Title "Invalid manifest|-env_add_path '$_' is outside the app directory."
             }
             add_first_in_path $path_dir $global
