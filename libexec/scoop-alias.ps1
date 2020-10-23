@@ -1,4 +1,4 @@
-# Usage: scoop alias [add|list|rm] [<args>]
+# Usage: scoop alias [add|list|rm] [<args>] [options]
 # Summary: Manage scoop aliases
 # Help: Add, remove or list Scoop aliases
 #
@@ -13,7 +13,8 @@
 #     scoop alias add upgrade 'scoop update *' 'Updates all apps, just like brew or apt'
 #
 # Options:
-#   -v, --verbose   Show alias description and table headers (works only for 'list')
+#   -h, --help      Show help for this command.
+#   -v, --verbose   Show alias description and table headers (works only for 'list').
 
 param(
     [String] $Option,

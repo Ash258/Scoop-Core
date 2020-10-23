@@ -1,6 +1,9 @@
-# Usage: scoop which <command>
+# Usage: scoop which <command> [options]
 # Summary: Locate a shim/executable (similar to 'which' on Linux)
 # Help: Locate the path to a shim/executable that was installed with Scoop (similar to 'which' on Linux)
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param([String] $Command)
 

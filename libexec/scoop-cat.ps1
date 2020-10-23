@@ -1,5 +1,8 @@
-# Usage: scoop cat <apps>
+# Usage: scoop cat <apps> [options]
 # Summary: Show content of specified manifest.
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param([Parameter(ValueFromRemainingArguments)] [String[]] $Application)
 

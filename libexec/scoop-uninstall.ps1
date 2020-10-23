@@ -3,8 +3,9 @@
 # Help: e.g. scoop uninstall git
 #
 # Options:
-#   -g, --global   Uninstall a globally installed app
-#   -p, --purge    Remove all persistent data
+#   -h, --help     Show help for this command.
+#   -g, --global   Uninstall a globally installed app.
+#   -p, --purge    Remove all persistent data.
 
 'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

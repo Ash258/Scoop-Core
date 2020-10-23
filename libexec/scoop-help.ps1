@@ -1,5 +1,8 @@
-# Usage: scoop help <command>
+# Usage: scoop help <command> [options]
 # Summary: Show help for a command
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($cmd)
 
@@ -35,7 +38,7 @@ if (!($cmd)) {
     print_help $cmd
 } else {
     $exitCode = 3
-    Write-UserMessage -Message "scoop help: no such command '$cmd'"
+    Write-UserMessage -Message "scoop help: no such command '$cmd'" -Output
 }
 
 exit $exitCode

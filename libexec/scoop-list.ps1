@@ -4,8 +4,9 @@
 # Help: Lists all installed apps, or the apps matching the supplied query.
 #
 # Options:
-#   -i, --installed     List apps sorted by installed date
-#   -u, --updated       List apps sorted by update time
+#   -h, --help          Show help for this command.
+#   -i, --installed     List apps sorted by installed date.
+#   -u, --updated       List apps sorted by update time.
 #   -r, --reverse       Apps will be listed descending order.
 #                           In case of Installed or Updated, apps will be listed from newest to oldest.
 

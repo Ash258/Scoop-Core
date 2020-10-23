@@ -200,7 +200,7 @@ function Test-Config {
 
     $result = $true
     if (!(get_config 'MSIEXTRACT_USE_LESSMSI' $false)) {
-        Write-UserMessage -Message '''lsessmsi'' should be used for extraction of msi installers!' -Warning
+        Write-UserMessage -Message '''lessmsi'' should be used for extraction of msi installers!' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
             '    scoop install lessmsi; scoop config MSIEXTRACT_USE_LESSMSI $true'
