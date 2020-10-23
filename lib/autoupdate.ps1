@@ -173,9 +173,9 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
 
     $substitutions = $substitutions.Clone()
     $substitutions.Add('$url', (strip_fragment $url))
+    $substitutions.Add('$urlNoExt', (strip_ext (strip_fragment $url)))
     $substitutions.Add('$baseurl', (strip_filename (strip_fragment $url)).TrimEnd('/'))
     $substitutions.Add('$basename', $basename)
-    $substitutions.Add('$urlNoExt', (strip_ext (strip_fragment $url)))
     $substitutions.Add('$basenameNoExt', (strip_ext $basename))
 
     debug $substitutions
@@ -261,7 +261,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
         Write-Host 'Found: ' -ForegroundColor DarkYellow -NoNewline
         Write-Host $hash -ForegroundColor Green -NoNewline
         Write-Host ' using ' -ForegroundColor DarkYellow -NoNewline
-        Write-Host  "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor Green
+        Write-Host "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor Green
 
         return $hash
     } elseif ($hashfile_url) {
@@ -341,13 +341,16 @@ function get_version_substitutions([String] $version, [Hashtable] $customMatches
         '$preReleaseVersion' = $lastPart
     }
     if ($version -match '(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)') {
-        $versionVariables.Set_Item('$matchHead', $Matches['head'])
-        $versionVariables.Set_Item('$matchTail', $Matches['tail'])
+        $versionVariables.Add('$matchHead', $Matches['head'])
+        $versionVariables.Add('$headVersion', $Matches['head'])
+        $versionVariables.Add('$matchTail', $Matches['tail'])
+        $versionVariables.Add('$tailVersion', $Matches['tail'])
     }
     if ($customMatches) {
         $customMatches.GetEnumerator() | ForEach-Object {
             if ($_.Name -ne '0') {
-                $versionVariables.Set_Item('$match' + (Get-Culture).TextInfo.ToTitleCase($_.Name), $_.Value)
+                # .Add() cannot be used due to unskilled maintainers, who could use internal $matchHead or $matchTail variable and recive exception
+                $versionVariables.set_Item('$match' + (Get-Culture).TextInfo.ToTitleCase($_.Name), $_.Value)
             }
         }
     }

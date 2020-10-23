@@ -1,5 +1,8 @@
-# Usage: scoop status
+# Usage: scoop status [options]
 # Summary: Show status and check for new app versions
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 'core', 'Helpers', 'manifest', 'buckets', 'Versions', 'depends', 'Git' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

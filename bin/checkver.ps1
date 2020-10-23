@@ -258,7 +258,7 @@ foreach ($q in $Queue) {
         $regex = $json.checkver.re
     }
     if ($json.checkver.jp) {
-        Write-UserMessage -Message "${name}: 'jp' is deprecated. Use 'jsonpah' instead" -Err
+        Write-UserMessage -Message "${name}: 'jp' is deprecated. Use 'jsonpath' instead" -Err
         $jsonpath = $json.checkver.jp
     }
 

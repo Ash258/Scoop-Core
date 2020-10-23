@@ -6,8 +6,9 @@
 # You can use '*' in place of <app> to cleanup all apps.
 #
 # Options:
-#   -g, --global       Cleanup a globally installed app
-#   -k, --cache        Remove outdated download cache
+#   -h, --help         Show help for this command.
+#   -g, --global       Perform cleanup on globally installed app. (Include them if '*' is used)
+#   -k, --cache        Remove outdated download cache.
 
 'core', 'manifest', 'buckets', 'Versions', 'getopt', 'help', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

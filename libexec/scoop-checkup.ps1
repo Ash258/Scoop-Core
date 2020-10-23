@@ -1,6 +1,9 @@
-# Usage: scoop checkup
+# Usage: scoop checkup [options]
 # Summary: Check for potential problems
 # Help: Performs a series of diagnostic tests to try to identify things that may cause problems with Scoop.
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 'core', 'Diagnostic', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

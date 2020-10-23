@@ -1,4 +1,4 @@
-# Usage: scoop cache [rm|show] [app]
+# Usage: scoop cache [rm|show] [app] [options]
 # Summary: Show or clear the download cache
 # Help: Scoop caches downloads so you don't need to download the same files
 # when you uninstall and re-install the same version of an app.
@@ -11,6 +11,9 @@
 #
 # To clear everything in your cache, use:
 #   scoop cache rm *
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($cmd, $app)
 

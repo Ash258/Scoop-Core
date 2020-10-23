@@ -1,5 +1,8 @@
-# Usage: scoop info <app>
-# Summary: Display various information about an app
+# Usage: scoop info <app> [options]
+# Summary: Display information about an app
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($app)
 
