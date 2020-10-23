@@ -1,5 +1,5 @@
 #Requires -Version 5
-param($cmd)
+param([string] $cmd)
 
 Set-StrictMode -Off
 
@@ -8,13 +8,44 @@ Set-StrictMode -Off
 }
 
 Reset-Alias
+
+if (($PSVersionTable.PSVersion.Major) -lt 5) {
+    Write-UserMessage -Message @(
+        'PowerShell 5 or later is required',
+        'Upgrade PowerShell: ''https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell-core-on-windows'''
+    )
+    exit 1
+}
+
 $exitCode = 0
 
-if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
-    Write-UserMessage -Message 'Current Scoop (soon to be Shovel) version:' -Output
+# Powershell automatically bind bash like short parameters as $args, and does not put it in $cmd parameter
+# ONLY if:
+# - No command passed
+# - -v or --version passed
+$version = ($cmd -eq '--version') -or (!$cmd -and ($args.Contains('-v')))
+
+# Scoop itself help should be shown only if explicitly asked:
+# - No version asked
+# - No command passed
+# - /?, /help,, /h, --help, -h passed
+$scoopHelp = !$version -and (!$cmd -or (($cmd -in @($null, '--help', '/?', '/help', '/h')) -or (!$cmd -and ($args.Contains('-h')))))
+
+# Valid command execution
+$validCommand = $cmd -and ($cmd -in (commands))
+
+# Command help should be shown only if:
+# - No help for scoop asked
+# - $cmd is passed
+# - --help, -h is in $args
+$commandHelp = !$scoopHelp -and $validCommand -and (($args.Contains('--help')) -or ($args.Contains('-h')))
+
+if ($version) {
+    Write-UserMessage -Message 'Current Scoop (Shovel) version:' -Output
     Invoke-GitCmd -Command 'VersionLog' -Repository (versiondir 'scoop' 'current')
     Write-UserMessage -Message '' -Output
 
+    # TODO: Export to lib/buckets
     Get-LocalBucket | ForEach-Object {
         $b = Find-BucketDirectory $_ -Root
 
@@ -24,11 +55,18 @@ if (('--version' -eq $cmd) -or (!$cmd -and ('-v' -in $args))) {
             Write-UserMessage -Message '' -Output
         }
     }
-} elseif ((@($null, '--help', '/?') -contains $cmd) -or ($args[0] -contains '-h')) {
-    Invoke-ScoopCommand 'help' $args
+} elseif ($scoopHelp) {
+    Invoke-ScoopCommand 'help'
     $exitCode = $LASTEXITCODE
-} elseif ((commands) -contains $cmd) {
-    Invoke-ScoopCommand $cmd $args
+} elseif ($commandHelp) {
+    Invoke-ScoopCommand 'help' @{ 'cmd' = $cmd }
+    $exitCode = $LASTEXITCODE
+} elseif ($validCommand) {
+    # Filter out --help and -h to prevent handling them in each command
+    # This should never be needed, but just in case to prevent failures of installation, etc
+    $newArgs = ($args -notlike '--help') -notlike '-h'
+
+    Invoke-ScoopCommand $cmd $newArgs
     $exitCode = $LASTEXITCODE
 } else {
     Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'." -Output

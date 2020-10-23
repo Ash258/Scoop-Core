@@ -6,12 +6,13 @@
 # You can use '*' in place of <app> to update all apps.
 #
 # Options:
-#   -f, --force               Force update even when there isn't a newer version
-#   -g, --global              Update a globally installed app
-#   -i, --independent         Don't install dependencies automatically
-#   -k, --no-cache            Don't use the download cache
-#   -s, --skip                Skip hash validation (use with caution!)
-#   -q, --quiet               Hide extraneous messages
+#   -h, --help                Show help for this command.
+#   -f, --force               Force update even when there isn't a newer version.
+#   -g, --global              Update a globally installed app.
+#   -i, --independent         Don't install dependencies automatically.
+#   -k, --no-cache            Don't use the download cache.
+#   -s, --skip                Skip hash validation (use with caution!).
+#   -q, --quiet               Hide extraneous messages.
 
 'depends', 'Helpers', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

@@ -1,5 +1,8 @@
-# Usage: scoop home <app>
+# Usage: scoop home <app> [options]
 # Summary: Opens the app homepage in default browser
+#
+# Options:
+#   -h, --help      Show help for this command.
 
 param($app)
 
