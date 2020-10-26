@@ -28,12 +28,12 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     $hashfile = $null
 
     $templates = @{
-        '$md5'      = '([a-fA-F0-9]{32})'
-        '$sha1'     = '([a-fA-F0-9]{40})'
-        '$sha256'   = '([a-fA-F0-9]{64})'
-        '$sha512'   = '([a-fA-F0-9]{128})'
-        '$checksum' = '([a-fA-F0-9]{32,128})'
-        '$base64'   = '([a-zA-Z0-9+\/=]{24,88})'
+        '$md5'      = '([a-fA-F\d]{32})'
+        '$sha1'     = '([a-fA-F\d]{40})'
+        '$sha256'   = '([a-fA-F\d]{64})'
+        '$sha512'   = '([a-fA-F\d]{128})'
+        '$checksum' = '([a-fA-F\d]{32,128})'
+        '$base64'   = '([a-zA-Z\d+\/=]{24,88})'
     }
 
     try {
@@ -47,7 +47,7 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     }
     if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-txt.html' | Out-UTF8Content -Content $hashfile }
 
-    if ($regex.Length -eq 0) { $regex = '^([a-fA-F0-9]+)$' }
+    if ($regex.Length -eq 0) { $regex = '^([a-fA-F\d]+)$' }
 
     $regex = substitute $regex $templates $false
     $regex = substitute $regex $substitutions $true
@@ -57,9 +57,9 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     if ($hashfile -match $regex) { $hash = $Matches[1] -replace '\s' }
 
     # Convert base64 encoded hash values
-    if ($hash -match '^(?:[A-Za-z0-9+\/]{4})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=|[A-Za-z0-9+\/]{4})$') {
+    if ($hash -match '^(?:[A-Za-z\d+\/]{4})*(?:[A-Za-z\d+\/]{2}==|[A-Za-z\d+\/]{3}=|[A-Za-z\d+\/]{4})$') {
         $base64 = $Matches[0]
-        if (!($hash -match '^[a-fA-F0-9]+$') -and $hash.Length -notin @(32, 40, 64, 128)) {
+        if (!($hash -match '^[a-fA-F\d]+$') -and $hash.Length -notin @(32, 40, 64, 128)) {
             try {
                 $hash = ([System.Convert]::FromBase64String($base64) | ForEach-Object { $_.ToString('x2') }) -join ''
             } catch {
@@ -70,12 +70,12 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
 
     # Find hash with filename in $hashfile
     if ($hash.Length -eq 0) {
-        $filenameRegex = "([a-fA-F0-9]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
+        $filenameRegex = "([a-fA-F\d]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
         $filenameRegex = substitute $filenameRegex $substitutions $true
         if ($hashfile -match $filenameRegex) {
             $hash = $Matches[1]
         }
-        $metalinkRegex = '<hash[^>]+>([a-fA-F0-9]{64})'
+        $metalinkRegex = '<hash[^>]+>([a-fA-F\d]{64})'
         if ($hashfile -match $metalinkRegex) {
             $hash = $Matches[1]
         }
@@ -248,12 +248,12 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
             }
         }
         'fosshub' {
-            $hash = find_hash_in_textfile $url $substitutions ($Matches.filename + '.*?"sha256":"([a-fA-F0-9]{64})"')
+            $hash = find_hash_in_textfile $url $substitutions ($Matches.filename + '.*?"sha256":"([a-fA-F\d]{64})"')
         }
         'sourceforge' {
             # Change the URL because downloads.sourceforge.net doesn't have checksums
             $hashfile_url = (strip_filename (strip_fragment "https://sourceforge.net/projects/$($Matches['project'])/files/$($Matches['file'])")).TrimEnd('/')
-            $hash = find_hash_in_textfile $hashfile_url $substitutions '"$basename":.*?"sha1":\s"([a-fA-F0-9]{40})"'
+            $hash = find_hash_in_textfile $hashfile_url $substitutions '"$basename":.*?"sha1":\s"([a-fA-F\d]{40})"'
         }
     }
 

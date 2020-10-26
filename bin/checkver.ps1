@@ -118,7 +118,7 @@ function Invoke-Check {
 
         next $appName "$($err.Message)`r`nURL $url is not valid"
     }
-    if (!$regex -and $replace) { next $appName "'replace' requires 're' or 'regex'" }
+    if (!$regex -and $replace) { next $appName "'replace' requires 'regex'" }
 
     if ($jsonpath) {
         # TODO: Refactor Json-Path
@@ -139,7 +139,7 @@ function Invoke-Check {
         $nsList | ForEach-Object { $nsmgr.AddNamespace($_.LocalName, $_.Value) }
         # Getting version from XML, using XPath
         $ver = $xml.SelectSingleNode($xpath, $nsmgr).'#text'
-        if (!$ver) { next $appName "couldn't find '$xpath' in $url" }
+        if (!$ver) { next $appName "could not find '$xpath' in $url" }
     }
 
     if ($jsonpath -and $regexp) {
@@ -168,11 +168,11 @@ function Invoke-Check {
             if ($replace) { $ver = $regex.Replace($match.Value, $replace) }
             if (!$ver) { $ver = $matchesHashtable['version'] }
         } else {
-            next $appName "couldn't match '$regexp' in $url"
+            next $appName "could not match '$regexp' in $url"
         }
     }
 
-    if (!$ver) { next $appName "couldn't find new version in $url" }
+    if (!$ver) { next $appName "could not find new version in $url" }
 
     # Skip actual only if versions are same and there is no -f
     if (($ver -eq $expectedVersion) -and !$ForceUpdate -and $SkipUpdated) { return }
