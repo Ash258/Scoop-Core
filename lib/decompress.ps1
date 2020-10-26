@@ -1,5 +1,5 @@
 # TODO: Core import is messing up with download progress
-'Helpers' | ForEach-Object {
+'Helpers' | ForEach-Object { #, 'core' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -47,6 +47,23 @@ function Test-LessmsiRequirement {
         return $false
     }
 }
+
+function Test-ZstdRequirement {
+    [CmdletBinding(DefaultParameterSetName = 'URL')]
+    [OutputType([Boolean])]
+    param (
+        [Parameter(Mandatory, ParameterSetName = 'URL')]
+        [String[]] $URL,
+        [Parameter(Mandatory, ParameterSetName = 'File')]
+        [String] $File
+    )
+
+    if ($URL) {
+        return ($URL | Where-Object { Test-ZstdRequirement -File $_ }).Count -gt 0
+    } else {
+        return $File -match '\.zst$'
+    }
+}
 #endregion helpers
 
 function Expand-7zipArchive {
@@ -55,6 +72,7 @@ function Expand-7zipArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -127,6 +145,7 @@ function Expand-MsiArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -186,6 +205,7 @@ function Expand-InnoArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -227,6 +247,7 @@ function Expand-ZipArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Switch] $Removal
@@ -282,6 +303,7 @@ function Expand-DarkArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [Parameter(ValueFromRemainingArguments = $true)]
         [String] $Switches,
@@ -306,6 +328,55 @@ function Expand-DarkArchive {
 
         # Remove original archive file
         if ($Removal) { Remove-Item $Path -Force }
+    }
+}
+
+function Expand-ZstdArchive {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [String[]] $Path,
+        [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
+        [String[]] $DestinationPath,
+        [String[]] $ExtractDir,
+        [Parameter(ValueFromRemainingArguments)]
+        [String] $Switches,
+        [Switch] $Overwrite,
+        [Switch] $Removal
+    )
+
+    begin {
+        $argList = @('-d')
+        $zstdPath = Get-HelperPath -Helper 'Zstd'
+        if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' }
+        if ($Switches) { $argList += (-split $Switches) }
+        if ($Overwrite) { $argList += '-f' }
+    }
+
+    process {
+        for ($index = 0; $index -lt $Path.Count, ++$index) {
+            $currentPath = $Path[$index]
+            $currentLogPath = Split-Path -Path $currentPath | Join-Path -ChildPath 'zstd.log'
+            $currentArgList = $argList
+            $currentDestinationPath = if ($null -eq $DestinationPath[$index]) { $DestinationPath[-1] } else { $DestinationPath[$index] }
+            $currentExtractDir = $null
+            if ($ExtractDir) {
+                $currentExtractDir = if ($null -eq $ExtractDir[$index]) { $ExtractDir[-1] } else { $ExtractDir[$index] }
+            }
+            $currentArgList += $currentPath, "-o ""$currentDestinationPath"""
+
+            $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $currentArgList -LogPath $currentLogPath
+            if (!$status) {
+                throw "Decompress error|-Failed to extract files from $currentPath.`nLog file:`n  $(friendly_path $currentLogPath)"
+            }
+
+            Remove-Item -Path $currentLogPath -ErrorAction SilentlyContinue -Force
+        }
+    }
+
+    end {
+        if ($Removal) { Remove-Item -Path $Path -ErrorAction SilentlyContinue -Force }
     }
 }
 

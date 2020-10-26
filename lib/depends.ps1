@@ -78,6 +78,7 @@ function script_deps($script) {
     if ($script -like '*Expand-MsiArchive *' -or $script -like '*extract_msi *') { $deps += 'lessmsi' }
     if ($script -like '*Expand-InnoArchive *' -or $script -like '*unpack_inno *') { $deps += 'innounp' }
     if ($script -like '*Expand-DarkArchive *') { $deps += 'dark' }
+    if ($script -like '*Expand-ZstdArchive *') { $deps += 'zstd' }
 
     return $deps
 }
@@ -85,9 +86,10 @@ function script_deps($script) {
 function install_deps($manifest, $arch) {
     $deps = @()
 
-    if (!(Test-HelperInstalled -Helper 7zip) -and (Test-7zipRequirement -URL (url $manifest $arch))) { $deps += '7zip' }
-    if (!(Test-HelperInstalled -Helper Lessmsi) -and (Test-LessmsiRequirement -URL (url $manifest $arch))) { $deps += 'lessmsi' }
-    if (!(Test-HelperInstalled -Helper Innounp) -and $manifest.innosetup) { $deps += 'innounp' }
+    if ($manifest.innosetup -and !(Test-HelperInstalled -Helper Innounp)) { $deps += 'innounp' }
+    if ((Test-ZstdRequirement -URL (url $manifest $arch)) -and !(Test-HelperInstalled -Helper 'Zstd')) { $deps += 'zstd' }
+    if ((Test-7zipRequirement -URL (url $manifest $arch)) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+    if ((Test-LessmsiRequirement -URL (url $manifest $arch)) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
 
     $pre_install = arch_specific 'pre_install' $manifest $arch
     $installer = arch_specific 'installer' $manifest $arch

@@ -269,8 +269,8 @@ function Get-HelperPath {
     [CmdletBinding()]
     [OutputType([String])]
     param(
-        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2')]
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
         [String] $Helper
     )
 
@@ -280,6 +280,7 @@ function Get-HelperPath {
             'Aria2' { $helperPath = Get-AppFilePath 'aria2' 'aria2c.exe' }
             'Innounp' { $helperPath = Get-AppFilePath 'innounp' 'innounp.exe' }
             'Lessmsi' { $helperPath = Get-AppFilePath 'lessmsi' 'lessmsi.exe' }
+            'Zstd' { $HelperPath = Get-AppFilePath 'zstd' 'zstd.exe' }
             '7zip' {
                 $helperPath = Get-AppFilePath '7zip' '7z.exe'
                 if ([String]::IsNullOrEmpty($helperPath)) {
@@ -302,8 +303,8 @@ function Test-HelperInstalled {
     [CmdletBinding()]
     [OutputType([bool])]
     param(
-        [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2')]
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
         [String] $Helper
     )
 
