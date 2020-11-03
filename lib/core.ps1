@@ -620,7 +620,7 @@ function shim($path, $global, $name, $arg) {
     if ($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
         # TODO: Use relative path from this file
-        versiondir 'scoop' 'current' | Join-Path -ChildPath 'supporting\shimexe\bin\shim.exe' | Copy-Item -Destination "$shim.exe" -Force
+        Copy-Item (get_shim_path) "$shim.exe" -Force
         $result = @("path = $resolved_path")
         if ($arg) { $result += "args = $arg" }
 
@@ -647,6 +647,18 @@ powershell -noprofile -ex unrestricted `"& '$resolved_path' $arg %args%;exit `$L
         "@java -jar `"$resolved_path`" $arg %*" | Out-File "$shim.cmd" -Encoding Ascii
         "#!/bin/sh`njava -jar `"$resolved_path`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
     }
+}
+
+function get_shim_path() {
+    $shim_path = "$(versiondir 'scoop' 'current')\supporting\shimexe\bin\shim.exe"
+    $shim_version = get_config 'shim' 'default'
+    switch ($shim_version) {
+        '71' { $shim_path = "$(versiondir 'scoop' 'current')\supporting\shims\71\shim.exe"; Break }
+        'kiennq' { $shim_path = "$(versiondir 'scoop' 'current')\supporting\shims\kiennq\shim.exe"; Break }
+        'default' { Break }
+        default { warn "Unknown shim version: '$shim_version'" }
+    }
+    return $shim_path
 }
 
 function search_in_path($target) {

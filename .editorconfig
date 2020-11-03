@@ -11,3 +11,8 @@ trim_trailing_whitespace = true
 
 [*.{yml,yaml}]
 indent_size = 2
+
+# Makefiles require tab indentation
+[{{M,m,GNU}akefile{,.*},*.mak,*.mk}]
+indent_style = tab
+end_of_line = lf
