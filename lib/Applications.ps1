@@ -51,7 +51,8 @@ function Set-InstalledApplicationInformationProperty {
         [Switch] $Global,
         [String[]] $Property,
         [Object[]] $Value,
-        [Switch] $Update
+        [Switch] $Update,
+        [Switch] $PassThru
     )
 
     begin {
@@ -83,7 +84,11 @@ function Set-InstalledApplicationInformationProperty {
 
     end {
         $appDirectory = versiondir $AppName $Version $Global
-        $info | ConvertToPrettyJson | Out-UTF8File -Path (Join-Path $appDirectory 'scoop-install.json')
+        if ($PassThru) {
+            return $info
+        } else {
+            $info | ConvertToPrettyJson | Out-UTF8File -Path (Join-Path $appDirectory 'scoop-install.json')
+        }
     }
 }
 
