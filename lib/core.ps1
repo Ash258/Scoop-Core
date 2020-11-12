@@ -393,7 +393,7 @@ function ensure {
     param([Parameter(Mandatory, ValueFromPipeline)] [Alias('Dir', 'Path', 'LiteralPath')] $Directory)
 
     process {
-        if (!(Test-Path $Directory)) { New-Item $Directory -ItemType Directory -Force | Out-Null }
+        if (!(Test-Path $Directory)) { New-Item $Directory -ItemType Directory | Out-Null }
 
         return Resolve-Path $Directory
     }
