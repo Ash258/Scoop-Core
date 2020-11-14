@@ -36,13 +36,18 @@ foreach ($app in $apps) {
         continue
     }
 
-    $current = Get-InstalledApplicationInformationProperty -AppName $app -Global:$global -Property 'hold'
-    if (!$current -or ($current -eq $false)) {
+    $splat = @{ 'AppName' = $app; 'Global' = $global }
+    $info = Get-InstalledApplicationInformation @splat
+    $splat.Add('Property', 'hold')
+    $splat.Add('InputObject', $info)
+    $current = Get-InstalledApplicationInformationPropertyValue @splat
+
+    if (($null -eq $current) -or ($current -eq $false)) {
         Write-UserMessage -Message "'$app' is not held" -Warning
         continue
     }
 
-    Set-InstalledApplicationInformationProperty -AppName $app -Global:$global -Property 'hold' -Value @($false) -Update
+    Set-InstalledApplicationInformationPropertyValue @splat -Value $false -Force
     Write-UserMessage -Message "$app is no longer held and can be updated again." -Success
 }
 
