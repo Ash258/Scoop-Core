@@ -258,7 +258,7 @@ function TabExpansion($Line, $LastWord) {
     .SYNOPSIS
         Handle tab completion of all scoop|shovel commands
     #>
-    $lastBlock = [Regex]::Split($Line, '[|;]')[-1].TrimStart()
+    $lastBlock = [Regex]::Split($Line, '([|;]|[&|]{2})')[-1].TrimStart()
 
     switch -Regex ($lastBlock) {
         # https://regex101.com/r/COrwSO
