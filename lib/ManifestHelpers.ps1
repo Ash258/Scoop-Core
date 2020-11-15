@@ -14,16 +14,19 @@ function Test-Persistence {
         Specifies the file to be checked.
         Do not prefix with $dir. All files are already checked against $dir and $persist_dir.
     .PARAMETER Content
-        Specifies the content/value of the created file. Value should be array of strings or string.
+        Specifies the content/value of the created file.
+        Value should be array of strings or string.
     .PARAMETER Execution
         Specifies custom scriptblock to run when file is not persisted.
         https://github.com/lukesampson/scoop-extras/blob/a84b257fd9636d02295b48c3fd32826487ca9bd3/bucket/ditto.json#L25-L33
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, Position, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Path', 'LiteralPath', 'Name')]
         [String[]] $File,
         [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('Value')]
         [Object[]] $Content,
         [Parameter(ValueFromPipelineByPropertyName)]
         [ScriptBlock] $Execution
@@ -68,12 +71,14 @@ function Copy-ToPersist {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory, ValueFromPipeline)]
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [SupportsWildcards()]
         [ValidateNotNullOrEmpty()]
+        [Alias('Path', 'Name', 'File')]
         [System.IO.FileInfo[]] $Item
     )
-    begin { ensure $persist_dir | Out-Null }
+
+    begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
 
     process {
         Get-ChildItem -Path "$dir\*" -Include $Item -Force | Copy-Item -Destination $persist_dir -Force
@@ -91,7 +96,7 @@ function Copy-FromPersist {
     [SupportsWildcards()]
     param([Parameter(Mandatory, ValueFromPipeline)] [System.IO.FileInfo[]] $Item)
 
-    begin { ensure $persist_dir | Out-Null }
+    begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
 
     process {
         Get-ChildItem -Path "$persist_dir\*" -Include $Item -Force | Copy-Item -Destination $dir -ErrorAction SilentlyContinue -Force
@@ -188,7 +193,11 @@ function New-JavaShortcutWrapper {
         Specifies the jar executable filename without .jar extension.
     #>
     [CmdletBinding()]
-    param([Parameter(Mandatory, ValueFromPipeline)] [System.IO.FileInfo[]] $FileName)
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Name')]
+        [System.IO.FileInfo[]] $FileName
+    )
 
     process {
         foreach ($f in $FileName) {
