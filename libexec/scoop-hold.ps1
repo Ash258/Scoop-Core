@@ -4,7 +4,7 @@
 #   -h, --help                Show help for this command.
 #   -g, --global              Hold globally installed app.
 
-'getopt', 'Helpers', 'Applications', 'manifest' | ForEach-Object {
+'core', 'getopt', 'Helpers', 'Applications' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
