@@ -150,6 +150,7 @@ function Set-InstalledApplicationInformationPropertyValue {
     end {
         $appDirectory = versiondir $AppName $Version $Global
         # TODO: Trim nulls
+        # TODO: Out-InstalledApplicationInfoFile
         $info | ConvertToPrettyJson | Out-UTF8File -Path (Join-Path $appDirectory 'scoop-install.json')
 
         if ($PassThru) { return $info }
