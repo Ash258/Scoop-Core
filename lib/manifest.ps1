@@ -75,6 +75,7 @@ function save_install_info($info, $dir) {
     $info | ConvertToPrettyJson | Out-UTF8File -Path (Join-Path $dir 'scoop-install.json')
 }
 
+# TODO: Deprecate
 function install_info($app, $version, $global) {
     $d = versiondir $app $version $global
     $path = Join-Path $d 'scoop-install.json'
