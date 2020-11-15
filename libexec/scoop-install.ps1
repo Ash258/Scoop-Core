@@ -110,7 +110,7 @@ $explicit_apps = $apps
 
 if (!$independent) {
     try {
-        $apps = install_order $apps $architecture # adds dependencies
+        $apps = install_order $apps $architecture # Add dependencies
     } catch {
         $title, $body = $_.Exception.Message -split '\|-'
         Write-UserMessage -Message $body -Err

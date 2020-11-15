@@ -274,7 +274,7 @@ function Update-App {
                     if ($url -like '*sourceforge.net*') {
                         Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
                     }
-                    Set-TerminatingError -Title "Hash check failed|-$err"
+                    throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
                 }
             }
         }
