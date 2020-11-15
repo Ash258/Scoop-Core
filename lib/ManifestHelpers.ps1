@@ -66,6 +66,8 @@ function Copy-ToPersist {
     <#
     .SYNOPSIS
         Manually "persist" file.
+    .DESCRIPTION
+        In case of file is in nested directory, the structure will not be preserved in $persist_dir
     .PARAMETER Item
         Specifies the items to be copied from $dir into $persist_dir
     #>
@@ -81,7 +83,9 @@ function Copy-ToPersist {
     begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
 
     process {
-        Get-ChildItem -Path "$dir\*" -Include $Item -Force | Copy-Item -Destination $persist_dir -Force
+        foreach ($it in $Item) {
+            Join-Path $dir $it | Copy-Item -Destination $persist_dir -ErrorAction 'SilentlyContinue' -Force
+        }
     }
 }
 
@@ -89,17 +93,26 @@ function Copy-FromPersist {
     <#
     .SYNOPSIS
         Manually "persist" file.
+    .DESCRIPTION
+        In case of file is in nested directory, the structure will not be preserved in $dir
     .PARAMETER Item
         Specifies the items to be copied from $persist_dir into $dir
     #>
     [CmdletBinding()]
-    [SupportsWildcards()]
-    param([Parameter(Mandatory, ValueFromPipeline)] [System.IO.FileInfo[]] $Item)
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [SupportsWildcards()]
+        [ValidateNotNullOrEmpty()]
+        [Alias('Path', 'Name', 'File')]
+        [System.IO.FileInfo[]] $Item
+    )
 
     begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
 
     process {
-        Get-ChildItem -Path "$persist_dir\*" -Include $Item -Force | Copy-Item -Destination $dir -ErrorAction SilentlyContinue -Force
+        foreach ($it in $Item) {
+            Join-Path $persist_dir $it | Copy-Item -Destination $dir -ErrorAction 'SilentlyContinue' -Force
+        }
     }
 }
 #endregion Persistence
