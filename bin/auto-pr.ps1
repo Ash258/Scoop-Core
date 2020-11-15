@@ -47,7 +47,7 @@ param(
     [Switch] $Push,
     [Switch] $Request,
     [Switch] $Help,
-    [string[]] $SpecialSnowflakes,
+    [String[]] $SpecialSnowflakes,
     [Switch] $SkipUpdated,
     [Switch] $SkipCheckver
 )
@@ -60,7 +60,7 @@ $Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
 
 $Dir = Resolve-Path $Dir
 
-if ((!$Push -and !$Request) -or $Help) {
+if ($Help -or (!$Push -and !$Request)) {
     Write-Host @'
 Usage: auto-pr.ps1 [OPTION]
 
