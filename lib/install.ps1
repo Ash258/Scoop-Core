@@ -16,13 +16,13 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
 
     if (!$manifest) {
-        Set-TerminatingError -Title "Ignore|-Could not find manifest for '$app'$(if($url){ " at the URL $url" })."
+        throw [ScoopException] "Could not find manifest for '$app'$(if($url){ " at the URL $url" })." # TerminatingError thrown
     }
 
     $version = $manifest.version
-    if (!$version) { Set-TerminatingError -Title "Version property missing|-Manifest '$app' does not specify a version." }
+    if (!$version) { throw [ScoopException] "Invalid manifest|-Manifest '$app' does not specify a version." } # TerminatingError thrown
     if ($version -match '[^\w\.\-\+_]') {
-        Set-TerminatingError -Title "Unsupported version|-Manifest version has unsupported character '$($matches[0])'."
+        throw [ScoopException] "Invalid manifest|-Manifest version has unsupported character '$($matches[0])'." # TerminatingError thrown
     }
 
     $is_nightly = $version -eq 'nightly'
@@ -32,7 +32,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     }
 
     if (!(supports_architecture $manifest $architecture)) {
-        throw "'$app' does not support $architecture architecture"
+        throw [ScoopException] "'$app' does not support $architecture architecture" # TerminatingError thrown
     }
 
     $buc = if ($bucket) { " [$bucket]" } else { '' }
@@ -148,7 +148,7 @@ function do_dl($url, $to, $cookies) {
     } catch {
         $e = $_.Exception
         if ($e.InnerException) { Write-UserMessage -Message $e.InnerException -Err }
-        Set-TerminatingError -Title "Download failed|-$($e.Message)" -ForceThrow
+        throw [ScoopException] "Download failed|-$($e.Message)" # TerminatingError thrown
     }
 }
 
@@ -340,7 +340,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                 $aria2
             )
 
-            Set-TerminatingError -Title "Download via aria2 failed|-$mes"
+            throw [ScoopException] "Download via aria2 failed|-$mes" # TerminatingError thrown
         }
 
         # Remove aria2 input file when done
@@ -364,12 +364,12 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                     Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Color Yellow
                 }
 
-                Set-TerminatingError -Title "Hash check failed|-$err"
+                throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
             }
         }
 
         # Copy or move file to target location
-        if (!(Test-Path $data.$url.source) ) { Set-TerminatingError -Title 'Ignore|-Cached file not found' }
+        if (!(Test-Path $data.$url.source) ) { throw [ScoopException] 'Cached file not found' } # TerminatingError thrown
 
         if ($dir -ne $SCOOP_CACHE_DIRECTORY) {
             if ($use_cache) {
@@ -579,7 +579,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
                     if ($url.Contains('sourceforge.net')) {
                         Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
                     }
-                    Set-TerminatingError "Hash check failed|-$err"
+                    throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
                 }
             }
         }
@@ -656,9 +656,9 @@ function hash_for_url($manifest, $url, $arch) {
     $urls = @(url $manifest $arch)
 
     $index = [array]::IndexOf($urls, $url)
-    if ($index -eq -1) { Set-TerminatingError -Title "Invalid manifest|-Could not find hash in manifest for '$url'." }
+    if ($index -eq -1) { throw [ScoopException] "Invalid manifest|-Could not find hash in manifest for '$url'." } # TerminatingError thrown
 
-    @($hashes)[$index]
+    return @($hashes)[$index]
 }
 
 # returns (ok, err)
@@ -745,9 +745,9 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
 function install_msi($fname, $dir, $msi) {
     $msifile = Join-Path $dir (coalesce $msi.File "$fname")
 
-    if (!(is_in_dir $dir $msifile)) { Set-TerminatingError -Title "Invalid manifest|-MSI file '$msifile' is outside the app directory." }
-    if (!($msi.code)) { Set-TerminatingError -Title 'Invalid manifest|-Could not find MSI code.' }
-    if (msi_installed $msi.code) { Set-TerminatingError -Title 'Ignore|-The MSI package is already installed on this system.' }
+    if (!(is_in_dir $dir $msifile)) { throw [ScoopException] "Invalid manifest|-MSI file '$msifile' is outside the app directory." } # TerminatingError thrown
+    if (!($msi.code)) { throw [ScoopException] 'Invalid manifest|-Could not find MSI code.' } # TerminatingError thrown
+    if (msi_installed $msi.code) { throw [ScoopException] 'The MSI package is already installed on this system.' } # TerminatingError thrown
 
     $logfile = Join-Path $dir 'install.log'
 
@@ -760,7 +760,7 @@ function install_msi($fname, $dir, $msi) {
 
     $installed = Invoke-ExternalCommand 'msiexec' $arg -Activity 'Running installer...' -ContinueExitCodes $continue_exit_codes
     if (!$installed) {
-        Set-TerminatingError -Title "Ignore|-Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
+        throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
     }
     Remove-Item $logfile
     Remove-Item $msifile
@@ -783,7 +783,7 @@ function msi_installed($code) {
 function install_prog($fname, $dir, $installer, $global) {
     $prog = Join-Path $dir (coalesce $installer.file "$fname")
     if (!(is_in_dir $dir $prog)) {
-        Set-TerminatingError -Title "Invalid manifest|-Error in manifest: Installer '$prog' is outside the app directory."
+        throw [ScoopException] "Invalid manifest|-Installer '$prog' is outside the app directory." # TerminatingError thrown
     }
     $arg = @(args $installer.args $dir $global)
 
@@ -793,7 +793,7 @@ function install_prog($fname, $dir, $installer, $global) {
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
-            Set-TerminatingError -Title "Ignore|-Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
+            throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
 
         # Don't remove installer if "keep" flag is set to true
@@ -846,7 +846,7 @@ function run_uninstaller($manifest, $architecture, $dir) {
                 & $exe @arg
             } else {
                 $uninstalled = Invoke-ExternalCommand $exe $arg -Activity 'Running uninstaller...' -ContinueExitCodes $continue_exit_codes
-                if (!$uninstalled) { Set-TerminatingError -Title 'Ignore|-Uninstallation aborted.' }
+                if (!$uninstalled) { throw [ScoopException] 'Uninstallation aborted.' } # TerminatingError thrown
             }
         }
     }
@@ -873,7 +873,7 @@ function create_shims($manifest, $dir, $global, $arch) {
             $bin = search_in_path $target
         }
 
-        if (!$bin) { Set-TerminatingError -Title "Shim creation fail|-Cannot shim '$target': File does not exist" }
+        if (!$bin) { throw [ScoopException] "Shim creation fail|-Cannot shim '$target': File does not exist" } # TerminatingError thrown
 
         shim $bin $global $name (substitute $arg @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
     }
@@ -929,7 +929,7 @@ function link_current($versiondir) {
     Write-UserMessage -Message "Linking $(friendly_path $currentdir) => $(friendly_path $versiondir)" -Output:$false
 
     if ($currentdir -eq $versiondir) {
-        Set-TerminatingError -Title "Ignore|-Version 'current' is not allowed!"
+        throw [ScoopException] "Version 'current' is not allowed!" # TerminatingError thrown
     }
 
     if (Test-Path $currentdir) {
@@ -1008,8 +1008,7 @@ function env_add_path($manifest, $dir, $global, $arch) {
         $env_add_path | Where-Object { $_ } | ForEach-Object {
             $path_dir = Join-Path $dir $_
             if (!(is_in_dir $dir $path_dir)) {
-                # TODO: Consider, just throw
-                Set-TerminatingError -Title "Invalid manifest|-env_add_path '$_' is outside the app directory."
+                throw [ScoopException] "Invalid manifest|-env_add_path '$_' is outside the app directory." # TerminatingError thrown
             }
             add_first_in_path $path_dir $global
         }
@@ -1170,8 +1169,7 @@ function persist_data($manifest, $original_dir, $persist_dir) {
 
             $source = $source.TrimEnd('/').TrimEnd('\\')
 
-            # TODO: $dir???!!!!
-            $source = Join-Path $dir $source
+            $source = Join-Path $original_dir $source
             $target = Join-Path $persist_dir $target
 
             # if we have had persist data in the store, just create link and go
@@ -1188,11 +1186,15 @@ function persist_data($manifest, $original_dir, $persist_dir) {
                 # we don't have neither source nor target data! we need to crate an empty target,
                 # but we can't make a judgement that the data should be a file or directory...
                 # so we create a directory by default. to avoid this, use pre_install
-                # to create the source file before persisting (DON'T use post_install)
+                # to create the source file before persisting (DO NOT use post_install)
             } else {
                 $target = New-Object System.IO.DirectoryInfo($target)
                 ensure $target | Out-Null
             }
+
+            # Mklink throw 'The system cannot find the path specified.' if the full path of the link does not exist.
+            $splitted = Split-Path $source -Parent
+            if ($splitted -ne $original_dir) { ensure $splitted | Out-Null }
 
             # create link
             if (is_directory $target) {

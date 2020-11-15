@@ -25,6 +25,7 @@ function Write-UserMessage {
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromRemainingArguments, Position = 0)]
         [AllowEmptyString()]
+        [AllowEmptyCollection()]
         [String[]] $Message,
         [ValidateSet('Message', 'Info', 'Warning', 'Error', 'Success')]
         [String] $Severity = 'Message',

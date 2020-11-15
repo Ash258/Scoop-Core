@@ -1,9 +1,9 @@
-'install', 'decompress' | ForEach-Object {
+'Helpers', 'install', 'decompress' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 
-# resolve dependencies for the supplied apps, and sort into the correct order
+# Resolve dependencies for the supplied apps, and sort into the correct order
 function install_order($apps, $arch) {
     $res = @()
     foreach ($app in $apps) {
@@ -47,7 +47,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
             Write-UserMessage -Message "Bucket '$bucket' not installed. Add it with 'scoop bucket add $bucket' or 'scoop bucket add $bucket <repo>'." -Warning
         }
 
-        Set-TerminatingError -Title "Could not find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })"
+        throw [ScoopException] "Could not find manifest for '$app'$(if(!$bucket) { '.' } else { " from '$bucket' bucket." })" # TerminatingError thrown
     }
 
     $deps = @(install_deps $manifest $arch) + @(runtime_deps $manifest) | Select-Object -Unique
@@ -55,7 +55,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
     foreach ($dep in $deps) {
         if ($resolved -notcontains $dep) {
             if ($unresolved -contains $dep) {
-                Set-TerminatingError -Title "Invalid manifest|-Circular dependency detected: '$app' -> '$dep'."
+                throw [ScoopException] "Circular dependency detected: '$app' -> '$dep'." # TerminatingError thrown
             }
             dep_resolve $dep $arch $resolved $unresolved
         }
@@ -74,20 +74,21 @@ function script_deps($script) {
 
     if ([String]::IsNullOrEmpty($script)) { return $deps }
 
-    if ($script -like '*Expand-7zipArchive *' -or $script -like '*extract_7zip *') { $deps += '7zip' }
-    if ($script -like '*Expand-MsiArchive *' -or $script -like '*extract_msi *') { $deps += 'lessmsi' }
-    if ($script -like '*Expand-InnoArchive *' -or $script -like '*unpack_inno *') { $deps += 'innounp' }
-    if ($script -like '*Expand-DarkArchive *') { $deps += 'dark' }
+    if (($script -like '*Expand-DarkArchive *') -and !(Test-HelperInstalled -Helper 'Dark')) { $deps += 'dark' }
+    if ((($script -like '*Expand-7zipArchive *') -or ($script -like '*extract_7zip *')) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+    if ((($script -like '*Expand-MsiArchive *') -or ($script -like '*extract_msi *')) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
+    if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *')) -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
 
     return $deps
 }
 
 function install_deps($manifest, $arch) {
     $deps = @()
+    $urls = url $manifest $arch
 
-    if (!(Test-HelperInstalled -Helper 7zip) -and (Test-7zipRequirement -URL (url $manifest $arch))) { $deps += '7zip' }
-    if (!(Test-HelperInstalled -Helper Lessmsi) -and (Test-LessmsiRequirement -URL (url $manifest $arch))) { $deps += 'lessmsi' }
-    if (!(Test-HelperInstalled -Helper Innounp) -and $manifest.innosetup) { $deps += 'innounp' }
+    if ($manifest.innosetup -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+    if ((Test-7zipRequirement -URL $urls) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+    if ((Test-LessmsiRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
 
     $pre_install = arch_specific 'pre_install' $manifest $arch
     $installer = arch_specific 'installer' $manifest $arch

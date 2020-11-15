@@ -4,7 +4,7 @@
 #   -h, --help                Show help for this command.
 #   -g, --global              Hold globally installed app.
 
-'getopt', 'help', 'Helpers', 'manifest' | ForEach-Object {
+'core', 'getopt', 'Helpers', 'Applications' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -35,18 +35,18 @@ foreach ($app in $apps) {
         continue
     }
 
-    # TODO: Respect NO_JUNCTION
-    $dir = versiondir $app 'current' $global
-    $json = install_info $app 'current' $global
-    if ($json.hold -and ($json.hold -eq $true)) {
+    $splat = @{ 'AppName' = $app; 'Global' = $global }
+    $info = Get-InstalledApplicationInformation @splat
+    $splat.Add('Property', 'hold')
+    $splat.Add('InputObject', $info)
+    $current = Get-InstalledApplicationInformationPropertyValue @splat
+
+    if (($null -ne $current) -and ($current -eq $true)) {
         Write-UserMessage -Message "'$app' is already held" -Warning
         continue
     }
-    $install = @{ }
-    # TODO: Add-member instead of duplicating of whole object
-    $json | Get-Member -MemberType Properties | ForEach-Object { $install.Add($_.Name, $json.($_.Name)) }
-    $install.hold = $true
-    save_install_info $install $dir
+
+    Set-InstalledApplicationInformationPropertyValue @splat -Value $true -Force
     Write-UserMessage -Message "$app is now held and cannot be updated anymore." -Success
 }
 
