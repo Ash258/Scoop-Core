@@ -8,6 +8,29 @@ function Get-AliasesFromConfig {
     return get_config $ALIAS_CMD_ALIAS @{ }
 }
 
+function Get-ScoopAliasPath {
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Name', 'Alias')]
+        [AllowEmptyString()]
+        [AllowNull()]
+        [String] $AliasName
+    )
+
+    begin {
+        if (($null -eq $AliasName) -or ($AliasName -eq '')) { throw [ScoopException] 'Alias name required' }
+    }
+
+    process {
+        $shimDir = shimdir $false
+        $path = Join-Path $shimDir "scoop-$AliasName.ps1"
+
+        return $path
+    }
+}
+
 function Add-ScoopAlias {
     <#
     .SYNOPSIS

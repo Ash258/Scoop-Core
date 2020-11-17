@@ -138,6 +138,8 @@ local scoopParser = parser({
         'add',
         'list' .. parser({'-v', '--verbose'}),
         'rm',
+        'edit',
+        'path',
         '-h', '--help'
     }),
     'bucket' .. parser({

@@ -34,7 +34,7 @@ $script:SCOOP_COMMANDS = @(
     'which'
 )
 $script:SCOOP_SUB_COMMANDS = @{
-    'alias'  = 'add list rm'
+    'alias'  = 'add list rm edit path'
     'bucket' = 'add known list rm'
     'cache'  = 'rm show'
     'config' = 'rm show'
@@ -116,7 +116,7 @@ function script:Expand-ScoopParametersValue($Cmd, $Param, $Filter) {
 function script:Get-ScoopAlias($Filter) {
     $res = @()
     if ($null -ne $SCOOP_ALL_ALIASES) {
-        $res = @(($SCOOP_ALL_ALIASES.PSObject.Properties.Name) -like "$Filter*")
+        $res = @(@($SCOOP_ALL_ALIASES.PSObject.Properties.Name) -like "$Filter*")
     }
 
     return $res
@@ -218,8 +218,8 @@ function script:ScoopTabExpansion($LastBlock) {
             return Get-AvailableBucket $Matches['bucket']
         }
 
-        # Handles alias rm alias names
-        '^alias rm\s+(?:.+\s+)?(?<alias>[\w][\-\.\w]*)?$' {
+        # Handles alias rm|edit|path alias names
+        '^alias (rm|edit|path)\s+(?:.+\s+)?(?<alias>[\w][\-\.\w]*)?$' {
             return Get-ScoopAlias $Matches['alias']
         }
 
