@@ -9,6 +9,15 @@ function Get-AliasesFromConfig {
 }
 
 function Get-ScoopAliasPath {
+    <#
+    .SYNOPSIS
+        Get fullpath to the executable file of registered alias.
+    .PARAMETER AliasName
+        Specifies the name of the alias.
+    .OUTPUTS
+        [System.String]
+            Path to the alias executable.
+    #>
     [CmdletBinding()]
     [OutputType([System.String])]
     param(
@@ -23,12 +32,7 @@ function Get-ScoopAliasPath {
         if (($null -eq $AliasName) -or ($AliasName -eq '')) { throw [ScoopException] 'Alias name required' }
     }
 
-    process {
-        $shimDir = shimdir $false
-        $path = Join-Path $shimDir "scoop-$AliasName.ps1"
-
-        return $path
-    }
+    process { return shimdir $false | Join-Path -ChildPath "scoop-$AliasName.ps1" }
 }
 
 function Add-ScoopAlias {
