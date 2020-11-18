@@ -33,6 +33,7 @@ $Name = $rem[1]
 $Command = $rem[2]
 $Description = $rem[3]
 $Verbose = $opt.v -or $opt.verbose
+#endregion Parameter validation
 $exitCode = 0
 
 switch ($Option) {
