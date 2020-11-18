@@ -14,21 +14,11 @@
 #     scoop alias path <name>
 #
 # e.g.:
-#     scoop alias add rm 'scoop uninstall $args[0]' 'Uninstalls an app'
-#     scoop alias add upgrade 'scoop update *' 'Updates all apps, just like brew or apt'
-#     scoop config aria '' 'Switch '
+#     scoop alias add test-home 'curl.exe --verbose $args[0] *>&1 | Select-String ''< HTTP/'', ''< Location:''' 'Test URL status code and location'
 #
 # Options:
 #   -h, --help      Show help for this command.
 #   -v, --verbose   Show alias description and table headers (works only for 'list').
-
-# param(
-#     [String] $Option,
-#     [String] $Name,
-#     $Command,
-#     [String] $Description,
-#     [Switch] $Verbose
-# )
 
 'core', 'getopt', 'help', 'Alias' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -44,38 +34,34 @@ $Command = $rem[2]
 $Description = $rem[3]
 $Verbose = $opt.v -or $opt.verbose
 $exitCode = 0
-Write-Host 'Option:', $Option
-Write-Host 'Name:', $Name
-Write-Host 'Command:', $Command
-Write-Host 'Description:', $Description
-Write-Host 'Verbose:', $Verbose
 
 switch ($Option) {
     'add' {
-        break
         try {
             Add-ScoopAlias -Name $Name -Command $Command -Description $Description
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
             $exitCode = 3
+            break
         }
+
+        Write-UserMessage -Message "Alias '$Name' added" -Success
     }
     'rm' {
-        break
         try {
             Remove-ScoopAlias -Name $Name
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
             $exitCode = 3
+            break
         }
+
+        Write-UserMessage -Message "Alias '$Name' removed" -Success
     }
     'list' {
-        break
-        Write-Host $Verbose
         Get-ScoopAlias -Verbose:$Verbose
     }
     'edit' {
-        break
         try {
             $path = Get-ScoopAliasPath -AliasName $Name
         } catch {
@@ -92,7 +78,6 @@ switch ($Option) {
         }
     }
     'path' {
-        break
         try {
             $path = Get-ScoopAliasPath -AliasName $Name
         } catch {

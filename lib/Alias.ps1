@@ -114,5 +114,5 @@ function Get-ScoopAlias {
 
     if ($aliases.Count -eq 0) { Write-UserMessage -Message 'No aliases defined' -Warning }
 
-    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
+    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -Property 'Name', 'Summary', 'Command' -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
 }

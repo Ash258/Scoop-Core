@@ -3,9 +3,7 @@ if (!((Get-Command 'scoop' -ErrorAction SilentlyContinue) -or (Get-Command 'shov
     exit 1
 }
 
-$script:SCOOP_CONFIG = scoop config show | ConvertFrom-Json
-$script:SCOOP_ALL_ALIASES = $SCOOP_CONFIG.'alias'
-$script:SCOOP_DIRECTORY = $env:SCOOP, $SCOOP_CONFIG.'rootPath', "$env:USERPROFILE\scoop" | Where-Object { ![String]::IsNullOrEmpty($_) } | Select-Object -First 1
+$script:SCOOP_DIRECTORY = $env:SCOOP, "$env:USERPROFILE\scoop" | Where-Object { ![String]::IsNullOrEmpty($_) } | Select-Object -First 1
 $script:SCOOP_COMMANDS = @(
     'alias'
     'bucket'
@@ -114,9 +112,11 @@ function script:Expand-ScoopParametersValue($Cmd, $Param, $Filter) {
 }
 
 function script:Get-ScoopAlias($Filter) {
+    $_config = scoop config show | ConvertFrom-Json
+    $allAliases = $_config.'alias'
     $res = @()
-    if ($null -ne $SCOOP_ALL_ALIASES) {
-        $res = @(@($SCOOP_ALL_ALIASES.PSObject.Properties.Name) -like "$Filter*")
+    if ($null -ne $allAliases) {
+        $res = @(@($allAliases.PSObject.Properties.Name) -like "$Filter*")
     }
 
     return $res
