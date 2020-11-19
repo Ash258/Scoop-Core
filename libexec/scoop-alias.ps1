@@ -62,7 +62,7 @@ switch ($Option) {
     'list' {
         Get-ScoopAlias -Verbose:$Verbose
     }
-    'edit' {
+    { $_ -in 'edit', 'path' } {
         try {
             $path = Get-ScoopAliasPath -AliasName $Name
         } catch {
@@ -72,22 +72,15 @@ switch ($Option) {
         }
 
         if (Test-Path $path -PathType Leaf) {
-            Start-Process $path
+            if ($Option -eq 'edit') {
+                Start-Process $path
+            } elseif ($Option -eq 'path') {
+                Write-UserMessage -Message $path -Output
+            }
         } else {
             Write-UserMessage -Message "Shim for alias '$Name' does not exist." -Err
             $exitCode = 3
         }
-    }
-    'path' {
-        try {
-            $path = Get-ScoopAliasPath -AliasName $Name
-        } catch {
-            Write-UserMessage -Message $_.Exception.Message -Err
-            $exitCode = 3
-            break
-        }
-
-        if (Test-Path $path -PathType Leaf) { Write-UserMessage -Message $path -Output }
     }
     default {
         Stop-ScoopExecution -Message 'No parameters provided' -Usage (my_usage)
