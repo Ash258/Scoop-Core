@@ -300,7 +300,7 @@ function update_manifest_with_new_version($json, [String] $version, [String] $ur
 function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions) {
     # first try the global property
     if ($json.$prop -and $json.autoupdate.$prop) {
-        $json.$prop = Invoke-VariableSubstitution -Entity $json.autoupdate.$prop -Parameters $substitutions
+        $json.$prop = Invoke-VariableSubstitution -Entity $json.autoupdate.$prop -Substitutes $substitutions
     }
 
     # check if there are architecture specific variants
@@ -308,7 +308,7 @@ function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions)
         $json.architecture | Get-Member -MemberType NoteProperty | ForEach-Object {
             $architecture = $_.Name
             if ($json.architecture.$architecture.$prop -and $json.autoupdate.architecture.$architecture.$prop) {
-                $json.architecture.$architecture.$prop = Invoke-VariableSubstitution -Entity (arch_specific $prop $json.autoupdate $architecture) -Parameters $substitutions
+                $json.architecture.$architecture.$prop = Invoke-VariableSubstitution -Entity (arch_specific $prop $json.autoupdate $architecture) -Substitutes $substitutions
             }
         }
     }
@@ -353,7 +353,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
 
     if ($json.url) {
         # Create new url
-        $url = Invoke-VariableSubstitution -Entity $json.autoupdate.url -Parameters $substitutions
+        $url = Invoke-VariableSubstitution -Entity $json.autoupdate.url -Substitutes $substitutions
         $valid = $true
 
         if ($valid) {
