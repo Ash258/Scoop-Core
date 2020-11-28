@@ -875,7 +875,7 @@ function create_shims($manifest, $dir, $global, $arch) {
 
         if (!$bin) { throw [ScoopException] "Shim creation fail|-Cannot shim '$target': File does not exist" } # TerminatingError thrown
 
-        shim $bin $global $name (Invoke-VariableSubstitution -Entity $arg -Parameters @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
+        shim $bin $global $name (Invoke-VariableSubstitution -Entity $arg -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
     }
 }
 
@@ -1067,7 +1067,7 @@ function show_notes($manifest, $dir, $original_dir, $persist_dir) {
         Write-UserMessage -Output:$false -Message @(
             'Notes'
             '-----'
-            (wraptext (Invoke-VariableSubstitution -Entity $manifest.notes -Parameters @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
+            (wraptext (Invoke-VariableSubstitution -Entity $manifest.notes -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
         )
     }
 }

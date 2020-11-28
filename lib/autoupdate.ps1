@@ -49,8 +49,8 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
 
     if ($regex.Length -eq 0) { $regex = '^([a-fA-F\d]+)$' }
 
-    $regex = Invoke-VariableSubstitution -Entity $regex -Parameters $templates -EscapeRegularExpression:$false
-    $regex = Invoke-VariableSubstitution -Entity $regex -Parameters $substitutions -EscapeRegularExpression:$true
+    $regex = Invoke-VariableSubstitution -Entity $regex -Substitutes $templates -EscapeRegularExpression:$false
+    $regex = Invoke-VariableSubstitution -Entity $regex -Substitutes $substitutions -EscapeRegularExpression:$true
 
     debug $regex
 
@@ -59,7 +59,7 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     # Find hash with filename in $hashfile
     if ($hash.Length -eq 0) {
         $filenameRegex = "([a-fA-F\d]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
-        $filenameRegex = Invoke-VariableSubstitution -Entity $filenameRegex -Parameters $substitutions -EscapeRegularExpression:$true
+        $filenameRegex = Invoke-VariableSubstitution -Entity $filenameRegex -Substitutes $substitutions -EscapeRegularExpression:$true
         if ($hashfile -match $filenameRegex) {
             $hash = $Matches[1]
         }
@@ -111,7 +111,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     $xml = [xml] $xml
 
     # Replace placeholders
-    if ($substitutions) { $xpath = Invoke-VariableSubstitution -Entity $xpath -Parameters $substitutions }
+    if ($substitutions) { $xpath = Invoke-VariableSubstitution -Entity $xpath -Substitutes $substitutions }
 
     # Find all `significant namespace declarations` from the XML file
     $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
@@ -168,7 +168,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
 
     debug $substitutions
 
-    $hashfile_url = Invoke-VariableSubstitution -Entity $config.url -Parameters $substitutions
+    $hashfile_url = Invoke-VariableSubstitution -Entity $config.url -Substitutes $substitutions
 
     debug $hashfile_url
 

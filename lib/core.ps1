@@ -831,7 +831,7 @@ function Invoke-VariableSubstitution {
         Substitute (find and replace) provided parameters in provided entity.
     .PARAMETER Entity
         Specifies the entity to be substituted (searched in).
-    .PARAMETER Parameters
+    .PARAMETER Substitutes
         Specifies the hashtable providing name and value pairs for "find and replace".
         Hashtable keys should start with $ (dollar sign). Curly bracket variable syntax will be substituted automatically.
     .PARAMETER EscapeRegularExpression
@@ -843,7 +843,8 @@ function Invoke-VariableSubstitution {
         [AllowNull()]
         $Entity,
         [Parameter(Mandatory)]
-        [HashTable] $Parameters,
+        [Alias('Parameters')]
+        [HashTable] $Substitutes,
         [Switch] $EscapeRegularExpression
     )
 
@@ -854,7 +855,7 @@ function Invoke-VariableSubstitution {
         if ($null -ne $newEntity) {
             switch ($newEntity.GetType().Name) {
                 'String' {
-                    $Parameters.GetEnumerator() | ForEach-Object {
+                    $Substitutes.GetEnumerator() | ForEach-Object {
                         $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
                         $curly = '${' + $_.Name.TrimStart('$') + '}'
 
@@ -863,10 +864,10 @@ function Invoke-VariableSubstitution {
                     }
                 }
                 'Object[]' {
-                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Parameters $params -EscapeRegularExpression:$regexEscape }
+                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
                 }
                 'PSCustomObject' {
-                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Parameters $params -EscapeRegularExpression:$regexEscape }
+                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
                 }
                 default {
                     # This is not needed, but to cover all possible use cases explicitly
@@ -881,7 +882,7 @@ function Invoke-VariableSubstitution {
 
 # TODO: Deprecate
 function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
-    return Invoke-VariableSubstitution -Entity $entity -Parameters $params -EscapeRegularExpression:$regexEscape
+    return Invoke-VariableSubstitution -Entity $entity -Substitutes $params -EscapeRegularExpression:$regexEscape
 }
 
 function format_hash([String] $hash) {

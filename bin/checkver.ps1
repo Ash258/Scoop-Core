@@ -227,7 +227,7 @@ foreach ($q in $Queue) {
 
     $wc = New-Object System.Net.Webclient
     $ua = $json.checkver.useragent
-    $ua = if ($ua) { Invoke-VariableSubstitution -Entity $ua -Parameters $substitutions } else { Get-UserAgent }
+    $ua = if ($ua) { Invoke-VariableSubstitution -Entity $ua -Substitutes $substitutions } else { Get-UserAgent }
     $wc.Headers.Add('User-Agent', $ua)
 
     Register-ObjectEvent $wc DownloadStringCompleted -ErrorAction Stop | Out-Null
@@ -270,7 +270,7 @@ foreach ($q in $Queue) {
         $regex = if ($json.checkver -is [System.String]) { $json.checkver } else { $UNIVERSAL_REGEX }
     }
 
-    $url = Invoke-VariableSubstitution -Entity $url -Parameters $substitutions
+    $url = Invoke-VariableSubstitution -Entity $url -Substitutes $substitutions
 
     $state = New-Object PSObject @{
         'app'      = (strip_ext $name)
