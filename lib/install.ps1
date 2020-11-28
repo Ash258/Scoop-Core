@@ -96,7 +96,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
 
     if ($manifest.changelog) {
         $changelog = $manifest.changelog
-        if (!$changelog.StartsWith('http')) { $changelog = Join-Path $dir $changelog }
+        if (!$changelog.StartsWith('http')) { $changelog = friendly_path (Join-Path $dir $changelog) }
 
         Write-UserMessage -Message "New changes in this release: '$changelog'" -Success
     }
