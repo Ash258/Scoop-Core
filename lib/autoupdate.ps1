@@ -406,7 +406,6 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
 
     # Update properties
     update_manifest_prop 'extract_dir' $json $substitutions
-
     update_manifest_prop 'changelog' $json $substitutions
 
     # Update license
