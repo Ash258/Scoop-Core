@@ -422,6 +422,9 @@
                     "description": "Specify message printed to user after autoupdate.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
+                "changelog": {
+                    "type": "string"
+                },
                 "architecture": {
                     "type": "object",
                     "additionalProperties": false,
@@ -444,7 +447,7 @@
                     "$ref": "#/definitions/hashExtraction"
                 },
                 "extract_dir": {
-                    "description": "Specify the 'extract_dir' property have to be updated.",
+                    "description": "Specify the 'extract_dir' property has to be updated.",
                     "type": "string"
                 }
             }
