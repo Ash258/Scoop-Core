@@ -735,16 +735,17 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
-    if ($installer.script) {
-        Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
-        return
-    }
 
     if ($msi) {
         install_msi $fname $dir $msi
     } elseif ($installer) {
         install_prog $fname $dir $installer $global
+    }
+
+    # Run install.script after installer.file
+    if ($installer.script) {
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
+        Invoke-Expression (@($installer.script) -join "`r`n")
     }
 }
 
