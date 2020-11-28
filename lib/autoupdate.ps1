@@ -379,7 +379,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $architecture = $_.Name
 
             # Create new url
-            $url = Invoke-VariableSubstitution -Entity (arch_specific "url" $json.autoupdate $architecture) -Parameters $substitutions
+            $url = Invoke-VariableSubstitution -Entity (arch_specific "url" $json.autoupdate $architecture) -Substitutes $substitutions
             $valid = $true
 
             if ($valid) {
