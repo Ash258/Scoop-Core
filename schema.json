@@ -422,6 +422,9 @@
                     "description": "Specify message printed to user after autoupdate.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
+                "changelog": {
+                    "type": "string"
+                },
                 "architecture": {
                     "type": "object",
                     "additionalProperties": false,
@@ -444,7 +447,7 @@
                     "$ref": "#/definitions/hashExtraction"
                 },
                 "extract_dir": {
-                    "description": "Specify the 'extract_dir' property have to be updated.",
+                    "description": "Specify the 'extract_dir' property has to be updated.",
                     "type": "string"
                 }
             }
@@ -502,6 +505,10 @@
         "notes": {
             "description": "Specify information to be displayed to user after installation.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
+        },
+        "changelog": {
+            "description": "Specify file/url pointing to release notes. File reference should be relative to application directory.",
+            "type": "string"
         },
         "depends": {
             "description": "Specify manifest(s) required to be installed before the application is installed.",
