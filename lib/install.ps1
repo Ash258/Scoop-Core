@@ -796,17 +796,20 @@ function install_prog($fname, $dir, $installer, $global) {
     $arg = @(args $installer.args $dir $global)
 
     if ($prog.EndsWith('.ps1')) {
+        Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
-        # TODO: Handle $LASTEXITCODE
+        if ($LASTEXITCODE -ne 0) {
+            throw [ScoopException] "Installation failed"
+        }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
             throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
-
-        # Don't remove installer if "keep" flag is set to true
-        if ($installer.keep -ne 'true') { Remove-Item $prog }
     }
+
+    # Don't remove installer if "keep" flag is set to true
+    if ($installer.keep -ne 'true') { Remove-Item $prog }
 }
 
 function run_uninstaller($manifest, $architecture, $dir) {
