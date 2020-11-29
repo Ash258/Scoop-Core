@@ -799,7 +799,7 @@ function install_prog($fname, $dir, $installer, $global) {
         Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
         if ($LASTEXITCODE -ne 0) {
-            throw [ScoopException] "Installation failed"
+            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE"
         }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
@@ -808,7 +808,7 @@ function install_prog($fname, $dir, $installer, $global) {
         }
     }
 
-    # Don't remove installer if "keep" flag is set to true
+    # Do not remove installer if "keep" flag is set to true
     if ($installer.keep -ne 'true') { Remove-Item $prog }
 }
 

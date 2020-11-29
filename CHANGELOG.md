@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.55-pre4
+## [0.55](https://github.com/Ash258/Scoop-Core/milestone/2)
+
+### 0.55-pre5
+
+- **install**
+    - Remove mutually exclusivity of `installer.script` and `installer.file`
+        - `script` property is executed after `file`
+    - Fix `installer.file` exit code from ps1 scripts
+    - Fix `installer.keep` inconsitency between powershell scripts and executables
+- Add changelong to repository
+- **autoupdate**: Initial preparation for array support
+- **manifests**: Add `changelog` property
+    - It will be shown on manifest installation/updates
+- **scoop-alias**: Add `path` and `edit` subcommands
+- **completion**: Correctly support `&&` and `||`
+- **scoop-(un)hold**: Support `--global` parameter
+- **persist**: Pre-create nested directories
+- **autoupdate**: Support base64 for all extraction types
+- Small code cleanup and refactorings
+
+### 0.55-pre4
 
 - **update**: Ignore merge commits in update log
 - `scoop --version` reports PowerShell version
@@ -8,23 +28,23 @@
 - **buckets**: Indicate successfull bucket removal
 - **buckets**: Indicate inability of bucket removal
 
-## 0.55-pre3
+### 0.55-pre3
 
 - Sync with upstream/master
 
-## 0.55-pre2
+### 0.55-pre2
 
 - `scoop search` reimplemented
 - Fix regression from `--help` addition
 - **decompress**: Fix 7zip requirements detection
 - **autoupdate**: Added `$headVersion` and `$tailVersion` substitutes
 
-## 0.55.1-pre
+### 0.55.1-pre
 
 - Allow `-h` and `--help` parameters for all scoop commands
 - Lots of refactorings
 
-## 0.55-pre - Abort deprecation 🎉
+### 0.55-pre - Abort deprecation 🎉
 
 - `abort` funcion completely eliminated
     - Multiple manifest installation is not broken in case of one failure. (for example)
@@ -47,7 +67,7 @@
 
 - Fosshub downloads hotfix
 
-## 0.5 - Fork initializaiton
+## [0.5 - Fork initializaiton](https://github.com/Ash258/Scoop-Core/milestone/1)
 
 - Licensed under `GPL-3.0-only`
 
