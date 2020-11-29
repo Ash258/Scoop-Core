@@ -49,8 +49,8 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
 
     if ($regex.Length -eq 0) { $regex = '^([a-fA-F\d]+)$' }
 
-    $regex = substitute $regex $templates $false
-    $regex = substitute $regex $substitutions $true
+    $regex = Invoke-VariableSubstitution -Entity $regex -Substitutes $templates -EscapeRegularExpression:$false
+    $regex = Invoke-VariableSubstitution -Entity $regex -Substitutes $substitutions -EscapeRegularExpression:$true
 
     debug $regex
 
@@ -59,7 +59,7 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
     # Find hash with filename in $hashfile
     if ($hash.Length -eq 0) {
         $filenameRegex = "([a-fA-F\d]{32,128})[\x20\t]+.*`$basename(?:[\x20\t]+\d+)?"
-        $filenameRegex = substitute $filenameRegex $substitutions $true
+        $filenameRegex = Invoke-VariableSubstitution -Entity $filenameRegex -Substitutes $substitutions -EscapeRegularExpression:$true
         if ($hashfile -match $filenameRegex) {
             $hash = $Matches[1]
         }
@@ -111,7 +111,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     $xml = [xml] $xml
 
     # Replace placeholders
-    if ($substitutions) { $xpath = substitute $xpath $substitutions }
+    if ($substitutions) { $xpath = Invoke-VariableSubstitution -Entity $xpath -Substitutes $substitutions }
 
     # Find all `significant namespace declarations` from the XML file
     $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
@@ -168,7 +168,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
 
     debug $substitutions
 
-    $hashfile_url = substitute $config.url $substitutions
+    $hashfile_url = Invoke-VariableSubstitution -Entity $config.url -Substitutes $substitutions
 
     debug $hashfile_url
 
@@ -300,7 +300,7 @@ function update_manifest_with_new_version($json, [String] $version, [String] $ur
 function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions) {
     # first try the global property
     if ($json.$prop -and $json.autoupdate.$prop) {
-        $json.$prop = substitute $json.autoupdate.$prop $substitutions
+        $json.$prop = Invoke-VariableSubstitution -Entity $json.autoupdate.$prop -Substitutes $substitutions
     }
 
     # check if there are architecture specific variants
@@ -308,54 +308,52 @@ function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions)
         $json.architecture | Get-Member -MemberType NoteProperty | ForEach-Object {
             $architecture = $_.Name
             if ($json.architecture.$architecture.$prop -and $json.autoupdate.architecture.$architecture.$prop) {
-                $json.architecture.$architecture.$prop = substitute (arch_specific $prop $json.autoupdate $architecture) $substitutions
+                $json.architecture.$architecture.$prop = Invoke-VariableSubstitution -Entity (arch_specific $prop $json.autoupdate $architecture) -Substitutes $substitutions
             }
         }
     }
 }
 
-function get_version_substitutions([String] $version, [Hashtable] $customMatches) {
-    $firstPart = $version -split '-' | Select-Object -First 1
-    $lastPart = $version -split '-' | Select-Object -Last 1
+function Get-VersionSubstitution ([String] $Version, [Hashtable] $CustomMatches = @{ }) {
+    $firstPart = $Version -split '-' | Select-Object -First 1
+    $lastPart = $Version -split '-' | Select-Object -Last 1
     $versionVariables = @{
-        '$version'           = $version
-        '$underscoreVersion' = ($version -replace '\.', '_')
-        '$dashVersion'       = ($version -replace '\.', '-')
-        '$cleanVersion'      = ($version -replace '\.')
+        '$version'           = $Version
+        '$underscoreVersion' = ($Version -replace '\.', '_')
+        '$dashVersion'       = ($Version -replace '\.', '-')
+        '$cleanVersion'      = ($Version -replace '\.')
         '$majorVersion'      = ($firstPart -split '\.' | Select-Object -First 1)
         '$minorVersion'      = ($firstPart -split '\.' | Select-Object -Skip 1 -First 1)
         '$patchVersion'      = ($firstPart -split '\.' | Select-Object -Skip 2 -First 1)
         '$buildVersion'      = ($firstPart -split '\.' | Select-Object -Skip 3 -First 1)
         '$preReleaseVersion' = $lastPart
     }
-    if ($version -match '(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)') {
+    if ($Version -match '(?<head>\d+\.\d+(?:\.\d+)?)(?<tail>.*)') {
         $versionVariables.Add('$matchHead', $Matches['head'])
         $versionVariables.Add('$headVersion', $Matches['head'])
         $versionVariables.Add('$matchTail', $Matches['tail'])
         $versionVariables.Add('$tailVersion', $Matches['tail'])
     }
-    if ($customMatches) {
-        $customMatches.GetEnumerator() | ForEach-Object {
-            if ($_.Name -ne '0') {
-                # .Add() cannot be used due to unskilled maintainers, who could use internal $matchHead or $matchTail variable and recive exception
-                $versionVariables.set_Item('$match' + (Get-Culture).TextInfo.ToTitleCase($_.Name), $_.Value)
-            }
+    if ($CustomMatches) {
+        $CustomMatches.GetEnumerator() | Where-Object -Property Name -NE -Value '0' | ForEach-Object {
+            # .Add() cannot be used due to unskilled maintainers, who could use internal $matchHead or $matchTail variable and receive exception
+            $versionVariables.set_Item('$match' + (Get-Culture).TextInfo.ToTitleCase($_.Name), $_.Value)
         }
     }
 
     return $versionVariables
 }
 
-function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable) {
+function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable) {
     Write-UserMessage -Message "Autoupdating $app" -Color DarkCyan
     $has_changes = $false
     $has_errors = $false
     [bool] $valid = $true
-    $substitutions = get_version_substitutions $version $MatchesHashtable
+    $substitutions = Get-VersionSubstitution -Version $version -CustomMatches $MatchesHashtable
 
     if ($json.url) {
         # Create new url
-        $url = substitute $json.autoupdate.url $substitutions
+        $url = Invoke-VariableSubstitution -Entity $json.autoupdate.url -Substitutes $substitutions
         $valid = $true
 
         if ($valid) {
@@ -381,7 +379,7 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
             $architecture = $_.Name
 
             # Create new url
-            $url = substitute (arch_specific "url" $json.autoupdate $architecture) $substitutions
+            $url = Invoke-VariableSubstitution -Entity (arch_specific "url" $json.autoupdate $architecture) -Substitutes $substitutions
             $valid = $true
 
             if ($valid) {
@@ -406,6 +404,7 @@ function autoupdate([String] $app, $dir, $json, [String] $version, [Hashtable] $
 
     # Update properties
     update_manifest_prop 'extract_dir' $json $substitutions
+    update_manifest_prop 'changelog' $json $substitutions
 
     # Update license
     update_manifest_prop 'license' $json $substitutions

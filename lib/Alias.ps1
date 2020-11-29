@@ -8,6 +8,33 @@ function Get-AliasesFromConfig {
     return get_config $ALIAS_CMD_ALIAS @{ }
 }
 
+function Get-ScoopAliasPath {
+    <#
+    .SYNOPSIS
+        Get fullpath to the executable file of registered alias.
+    .PARAMETER AliasName
+        Specifies the name of the alias.
+    .OUTPUTS
+        [System.String]
+            Path to the alias executable.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Name', 'Alias')]
+        [AllowEmptyString()]
+        [AllowNull()]
+        [String] $AliasName
+    )
+
+    begin {
+        if (($null -eq $AliasName) -or ($AliasName -eq '')) { throw [ScoopException] 'Alias name required' }
+    }
+
+    process { return shimdir $false | Join-Path -ChildPath "scoop-$AliasName.ps1" }
+}
+
 function Add-ScoopAlias {
     <#
     .SYNOPSIS
@@ -91,5 +118,5 @@ function Get-ScoopAlias {
 
     if ($aliases.Count -eq 0) { Write-UserMessage -Message 'No aliases defined' -Warning }
 
-    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
+    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -Property 'Name', 'Summary', 'Command' -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
 }

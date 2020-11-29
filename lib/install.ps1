@@ -93,6 +93,13 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     Write-UserMessage -Message "'$app' ($version) was installed successfully!" -Success
 
     show_notes $manifest $dir $original_dir $persist_dir
+
+    if ($manifest.changelog) {
+        $changelog = $manifest.changelog
+        if (!$changelog.StartsWith('http')) { $changelog = friendly_path (Join-Path $dir $changelog) }
+
+        Write-UserMessage -Message "New changes in this release: '$changelog'" -Success
+    }
 }
 
 function locate($app, $bucket) {
@@ -728,16 +735,17 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
-    if ($installer.script) {
-        Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
-        return
-    }
 
     if ($msi) {
         install_msi $fname $dir $msi
     } elseif ($installer) {
         install_prog $fname $dir $installer $global
+    }
+
+    # Run install.script after installer.file
+    if ($installer.script) {
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
+        Invoke-Expression (@($installer.script) -join "`r`n")
     }
 }
 
@@ -788,17 +796,20 @@ function install_prog($fname, $dir, $installer, $global) {
     $arg = @(args $installer.args $dir $global)
 
     if ($prog.EndsWith('.ps1')) {
+        Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
-        # TODO: Handle $LASTEXITCODE
+        if ($LASTEXITCODE -ne 0) {
+            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE"
+        }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
             throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
-
-        # Don't remove installer if "keep" flag is set to true
-        if ($installer.keep -ne 'true') { Remove-Item $prog }
     }
+
+    # Do not remove installer if "keep" flag is set to true
+    if ($installer.keep -ne 'true') { Remove-Item $prog }
 }
 
 function run_uninstaller($manifest, $architecture, $dir) {
@@ -875,7 +886,7 @@ function create_shims($manifest, $dir, $global, $arch) {
 
         if (!$bin) { throw [ScoopException] "Shim creation fail|-Cannot shim '$target': File does not exist" } # TerminatingError thrown
 
-        shim $bin $global $name (substitute $arg @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
+        shim $bin $global $name (Invoke-VariableSubstitution -Entity $arg -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
     }
 }
 
@@ -1067,7 +1078,7 @@ function show_notes($manifest, $dir, $original_dir, $persist_dir) {
         Write-UserMessage -Output:$false -Message @(
             'Notes'
             '-----'
-            (wraptext (substitute $manifest.notes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
+            (wraptext (Invoke-VariableSubstitution -Entity $manifest.notes -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
         )
     }
 }

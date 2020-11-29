@@ -140,7 +140,7 @@ function generate_user_manifest($app, $bucket, $version) {
 
     $path = usermanifestsdir | ensure
     try {
-        autoupdate $app "$path" $manifest $version $(@{ })
+        Invoke-Autoupdate $app "$path" $manifest $version $(@{ })
 
         return (usermanifest $app | Resolve-Path).Path
     } catch {
