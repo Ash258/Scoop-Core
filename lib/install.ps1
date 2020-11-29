@@ -735,16 +735,17 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
-    if ($installer.script) {
-        Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
-        return
-    }
 
     if ($msi) {
         install_msi $fname $dir $msi
     } elseif ($installer) {
         install_prog $fname $dir $installer $global
+    }
+
+    # Run install.script after installer.file
+    if ($installer.script) {
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
+        Invoke-Expression (@($installer.script) -join "`r`n")
     }
 }
 
@@ -795,17 +796,20 @@ function install_prog($fname, $dir, $installer, $global) {
     $arg = @(args $installer.args $dir $global)
 
     if ($prog.EndsWith('.ps1')) {
+        Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
-        # TODO: Handle $LASTEXITCODE
+        if ($LASTEXITCODE -ne 0) {
+            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE"
+        }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
             throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
-
-        # Don't remove installer if "keep" flag is set to true
-        if ($installer.keep -ne 'true') { Remove-Item $prog }
     }
+
+    # Do not remove installer if "keep" flag is set to true
+    if ($installer.keep -ne 'true') { Remove-Item $prog }
 }
 
 function run_uninstaller($manifest, $architecture, $dir) {

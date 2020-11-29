@@ -351,16 +351,16 @@
                     "type": "string"
                 },
                 "args": {
-                    "description": "Specify arguments to be passed to uninstaller file.",
-                    "$ref": "#/definitions/stringOrArrayOfStrings"
-                },
-                "script": {
-                    "description": "Specify PowerShell commands required to install application.",
+                    "description": "Specify arguments to be passed to installer file.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "keep": {
                     "description": "Specify the installer file should be kept for future use.",
                     "type": "boolean"
+                },
+                "script": {
+                    "description": "Specify PowerShell commands required to install application. installer.script will be executed after installer.file",
+                    "$ref": "#/definitions/stringOrArrayOfStrings"
                 }
             }
         },
