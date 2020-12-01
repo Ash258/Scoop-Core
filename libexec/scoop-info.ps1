@@ -39,7 +39,8 @@ if (!$manifest_file) {
     $manifest_file = manifest_path $app $bucket
 }
 
-$dir = versiondir $app 'current' $global
+$currentVersion = Select-CurrentVersion -AppName $app -Global:$global
+$dir = versiondir $app $currentVersion $global
 $original_dir = versiondir $app $manifest.version $global
 $persist_dir = persistdir $app $global
 
@@ -78,7 +79,17 @@ if ($manifest.license) {
     }
     $message += "License: $license"
 }
-if ($manifest.changelog) { $message += "Changelog: $($manifest.changelog)" }
+if ($manifest.changelog) {
+    $ch = $manifest.changelog
+    if (!$ch.StartsWith('http')) {
+        if ($status.installed) {
+            $ch = Join-Path $dir $ch
+        } else {
+            $ch = "Could be found in file '$ch' inside application directory. Install application to see a recent changes"
+        }
+    }
+    $message += "Changelog: $ch"
+}
 
 # Manifest file
 $message += @('Manifest:', "  $manifest_file")
