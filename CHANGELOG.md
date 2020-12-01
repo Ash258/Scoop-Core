@@ -4,6 +4,8 @@
 
 ### 0.55-pre5
 
+- **scoop-install**: Fix installlation of different/older versions
+- **scoop-info**: Respect NO_JUNCTION config
 - Add changelong to repository
 - **autoupdate**: Initial preparation for array support
 - **manifests**: Add `changelog` property
