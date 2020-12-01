@@ -57,10 +57,10 @@ if ($status.installed) {
     $architecture = $install.architecture
 }
 
-Write-Output "Name: $app"
-if ($manifest.description) { Write-Output "Description: $($manifest.description)" }
-Write-Output "Version: $version_output"
-Write-Output "Website: $($manifest.homepage)"
+$message = @("Name: $app")
+$message += "Version: $version_output"
+if ($manifest.description) { $message += "Description: $($manifest.description)" }
+if ($manifest.homepage) { $message += "Website: $($manifest.homepage)" }
 
 # Show license
 # TODO: Rework
@@ -76,47 +76,52 @@ if ($manifest.license) {
     } else {
         $license = "$($manifest.license) (https://spdx.org/licenses/$($manifest.license).html)"
     }
-    Write-Output "License: $license"
+    $message += "License: $license"
 }
+if ($manifest.changelog) { $message += "Changelog: $($manifest.changelog)" }
 
 # Manifest file
-Write-Output "Manifest:`n  $manifest_file"
+$message += @('Manifest:', "  $manifest_file")
 
+# Show installed versions
 if ($status.installed) {
-    # Show installed versions
-    Write-Output 'Installed:'
+    $message += 'Installed:'
     $versions = Get-InstalledVersion -AppName $app -Global:$global
     $versions | ForEach-Object {
         $dir = versiondir $app $_ $global
         if ($global) { $dir += ' *global*' }
-        Write-Output "  $dir"
+        $message += "  $dir"
     }
 } else {
-    Write-Output 'Installed: No'
+    $message += 'Installed: No'
 }
 
 $binaries = @(arch_specific 'bin' $manifest $architecture)
 if ($binaries) {
-    $binary_output = "Binaries:`n "
+    $message += 'Binaries:'
+    $add = ''
     $binaries | ForEach-Object {
+        $addition = "$_"
         if ($_ -is [System.Array]) {
-            $binary_output += " $($_[1]).exe"
-        } else {
-            $binary_output += " $_"
+            $addition = $_[0]
+            if ($_[1]) {
+                $addition = "$($_[1]).exe"
+            }
         }
+        $add = "$add $addition"
     }
-    Write-Output $binary_output
+    $message += $add
 }
 
 $env_set = arch_specific 'env_set' $manifest $architecture
 $env_add_path = @(arch_specific 'env_add_path' $manifest $architecture)
 
 if ($env_set -or $env_add_path) {
-    if ($status.installed) {
-        Write-Output 'Environment:'
-    } else {
-        Write-Output 'Environment: (simulated)'
+    $m = 'Environment:'
+    if (!$status.installed) {
+        $m += ' (simulated)'
     }
+    $message += $m
 }
 
 if ($env_set) {
@@ -125,18 +130,20 @@ if ($env_set) {
         if (!$value) {
             $value = format $env_set.$($_.name) @{ 'dir' = $dir }
         }
-        Write-Output "  $($_.name)=$value"
+        $message += "  $($_.name)=$value"
     }
 }
 if ($env_add_path) {
     $env_add_path | Where-Object { $_ } | ForEach-Object {
-        if ($_ -eq '.') {
-            Write-Output "  PATH=%PATH%;$dir"
-        } else {
-            Write-Output "  PATH=%PATH%;$dir\$_"
+        $to = "$dir"
+        if ($_ -ne '.') {
+            $to = "  PATH=%PATH%;$to\$_"
         }
+        $message += $to
     }
 }
+
+Write-UserMessage -Message $message -Output
 
 # Show notes
 show_notes $manifest $dir $original_dir $persist_dir
