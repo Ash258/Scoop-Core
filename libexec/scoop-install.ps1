@@ -152,6 +152,9 @@ foreach ($app in $apps) {
 
     $cleanApp, $bucket = parse_app $app
 
+    # Prevent checking of already installed applications if specific version was provided.
+    # In this case app will be fullpath to the manifest in \workspace folder and specific version will contains <app>@<version>
+    # Allow to install zstd@1.4.4 after 1.4.5 was installed before
     if ($specific_versions -contains $app) {
         if (is_installed $cleanApp $global) { continue }
     }

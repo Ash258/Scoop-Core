@@ -203,7 +203,7 @@ function Invoke-Check {
         try {
             if ($Version -ne '') { $ver = $Version }
 
-            autoupdate $appName $Dir $json $ver $matchesHashtable
+            Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
         }
@@ -223,11 +223,11 @@ Get-ChildItem $Dir "$Search.*" -File | ForEach-Object {
 foreach ($q in $Queue) {
     $name, $json = $q
 
-    $substitutions = get_version_substitutions $json.version
+    $substitutions = Get-VersionSubstitution -Version $json.version
 
     $wc = New-Object System.Net.Webclient
     $ua = $json.checkver.useragent
-    $ua = if ($ua) { substitute $ua $substitutions } else { Get-UserAgent }
+    $ua = if ($ua) { Invoke-VariableSubstitution -Entity $ua -Substitutes $substitutions } else { Get-UserAgent }
     $wc.Headers.Add('User-Agent', $ua)
 
     Register-ObjectEvent $wc DownloadStringCompleted -ErrorAction Stop | Out-Null
@@ -270,7 +270,7 @@ foreach ($q in $Queue) {
         $regex = if ($json.checkver -is [System.String]) { $json.checkver } else { $UNIVERSAL_REGEX }
     }
 
-    $url = substitute $url $substitutions
+    $url = Invoke-VariableSubstitution -Entity $url -Substitutes $substitutions
 
     $state = New-Object PSObject @{
         'app'      = (strip_ext $name)

@@ -179,9 +179,9 @@ function debug($obj) {
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor DarkGray
         $msg | Where-Object { ![String]::IsNullOrWhiteSpace($_) } |
             Select-Object -Skip 2 | # Skip headers
-            ForEach-Object {
-                Write-Host "$prefix $param.$($_)" -ForegroundColor DarkCyan
-            }
+                ForEach-Object {
+                    Write-Host "$prefix $param.$($_)" -ForegroundColor DarkCyan
+                }
     } else {
         Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor DarkCyan -NoNewline
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
@@ -837,20 +837,64 @@ function is_scoop_outdated() {
     return $res
 }
 
-function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
-    if ($entity -is [Array]) {
-        return $entity | ForEach-Object { substitute $_ $params $regexEscape }
-    } elseif ($entity -is [String]) {
-        $params.GetEnumerator() | ForEach-Object {
-            $value = if (($regexEscape -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
-            $curly = '${' + $_.Name.TrimStart('$') + '}'
+function Invoke-VariableSubstitution {
+    <#
+    .SYNOPSIS
+        Substitute (find and replace) provided parameters in provided entity.
+    .PARAMETER Entity
+        Specifies the entity to be substituted (searched in).
+    .PARAMETER Substitutes
+        Specifies the hashtable providing name and value pairs for "find and replace".
+        Hashtable keys should start with $ (dollar sign). Curly bracket variable syntax will be substituted automatically.
+    .PARAMETER EscapeRegularExpression
+        Specifies to escape regular expressions before replacing values.
+    #>
+    [CmdletBinding()]
+    param(
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        $Entity,
+        [Parameter(Mandatory)]
+        [Alias('Parameters')]
+        [HashTable] $Substitutes,
+        [Switch] $EscapeRegularExpression
+    )
 
-            $entity = $entity.Replace($curly, $value)
-            $entity = $entity.Replace($_.Name, $value)
+    process {
+        $EscapeRegularExpression | Out-Null # PowerShell/PSScriptAnalyzer#1472
+        $newEntity = $Entity
+
+        if ($null -ne $newEntity) {
+            switch ($newEntity.GetType().Name) {
+                'String' {
+                    $Substitutes.GetEnumerator() | ForEach-Object {
+                        $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
+                        $curly = '${' + $_.Name.TrimStart('$') + '}'
+
+                        $newEntity = $newEntity.Replace($curly, $value)
+                        $newEntity = $newEntity.Replace($_.Name, $value)
+                    }
+                }
+                'Object[]' {
+                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                'PSCustomObject' {
+                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                default {
+                    # This is not needed, but to cover all possible use cases explicitly
+                    $newEntity = $newEntity
+                }
+            }
         }
 
-        return $entity
+        return $newEntity
     }
+}
+
+# TODO: Deprecate
+function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
+    return Invoke-VariableSubstitution -Entity $entity -Substitutes $params -EscapeRegularExpression:$regexEscape
 }
 
 function format_hash([String] $hash) {
