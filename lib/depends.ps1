@@ -77,7 +77,13 @@ function script_deps($script) {
     if (($script -like '*Expand-DarkArchive *') -and !(Test-HelperInstalled -Helper 'Dark')) { $deps += 'dark' }
     if ((($script -like '*Expand-7zipArchive *') -or ($script -like '*extract_7zip *')) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((($script -like '*Expand-MsiArchive *') -or ($script -like '*extract_msi *')) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
-    if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *')) -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+    if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *'))) {
+        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+        } else {
+            if (!(Test-HelperInstalled -Helper 'InnoExtract')) { $deps += 'innoextract' }
+        }
+    }
 
     return $deps
 }
@@ -86,9 +92,15 @@ function install_deps($manifest, $arch) {
     $deps = @()
     $urls = url $manifest $arch
 
-    if ($manifest.innosetup -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
     if ((Test-7zipRequirement -URL $urls) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((Test-LessmsiRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
+    if ($manifest.innosetup) {
+        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+        } else {
+            if (!(Test-HelperInstalled -Helper 'InnoExtract')) { $deps += 'innoextract' }
+        }
+    }
 
     $pre_install = arch_specific 'pre_install' $manifest $arch
     $installer = arch_specific 'installer' $manifest $arch

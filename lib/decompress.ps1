@@ -194,26 +194,41 @@ function Expand-InnoArchive {
     )
 
     process {
-        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
-        $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
+        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
+            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
+            $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
+            $innoPath = Get-HelperPath -Helper 'Innounp'
+            $inno = 'innounp'
 
-        switch -Regex ($ExtractDir) {
-            '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
-            '^{.*' { $argList += "-c$ExtractDir" }
-            default { $argList += '-c{app}' }
+            switch -Regex ($ExtractDir) {
+                '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
+                '^{.*' { $argList += "-c$ExtractDir" }
+                default { $argList += '-c{app}' }
+            }
+        } else {
+            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
+            $argList = @('--extract', '--silent', '--output-dir', $DestinationPath, $Path)
+            $innoPath = Get-HelperPath -Helper 'Innoextract'
+            $inno = 'innoextract'
+
+            switch -Regex ($ExtractDir) {
+                '^[^{].*' { $argList += "--include 'app\$ExtractDir'" }
+                '^{.*' { $argList += "-c$ExtractDir" }
+                default { $argList += '-c{app}' }
+            }
         }
         if ($Switches) { $argList += (-split $Switches) }
 
         try {
-            # TODO: Find out extract_dir issue.
-            # When there is no specified directory in archive innounp will just exit with 0 and version of file
-            $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Innounp') $argList -LogPath $logPath
+            $status = Invoke-ExternalCommand $innoPath $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
-            throw [ScoopException] '''innounp'' is not installed or cannot be used' # TerminatingError thrown
+            throw [ScoopException] "'$inno' is not installed or cannot be used" # TerminatingError thrown
         }
+
         if (!$status) {
             throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n $(friendly_path $logPath)" # TerminatingError thrown
         }
+
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
         # Remove original archive file
