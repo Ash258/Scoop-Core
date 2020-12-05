@@ -737,10 +737,19 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
+    $script = $installer.script
+
+    if ($script) {
+        # Skip installer if installer property specify only 1 property == script
+        # If there is file or args next to the script, both should be called
+        # if script is only one then define property
+        # TODO: Implement
+        $skipInstaller = $true
+    }
 
     if ($msi) {
         install_msi $fname $dir $msi
-    } elseif ($installer) {
+    } elseif ($installer -and !$skipInstaller) {
         install_prog $fname $dir $installer $global
     }
 
