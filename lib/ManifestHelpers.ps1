@@ -167,20 +167,29 @@ function New-JavaShortcutWrapper {
 
 #region Asserts
 function Assert-Administrator {
+    <#
+    .SYNOPSIS
+        Test administrator privileges.
+    #>
     if (!(is_admin)) { throw [ScoopException] 'Administrator privileges are required' }
 }
 
 function Assert-ScoopConfigValue {
+    <#
+    .SYNOPSIS
+        Test specific value of scoop's configuration.
+    #>
     param(
         [Parameter(Mandatory)]
         [String] $ConfigOption,
         [Parameter(Mandatory)]
         $ExpectedValue
+        # TODO: Add parameter to define operator (Where-Object)
     )
 
     process {
         $actualValue = get_config $ConfigOption
-        if ($actualValue -ne $ExpectedValue) { throw [ScoopException] 'Specific option is needed' }
+        if ($actualValue -ne $ExpectedValue) { throw [ScoopException] "Configuration option '$ConfigOption' needs to be set to '$ExpectedValue'" }
     }
 }
 #endregion Asserts
