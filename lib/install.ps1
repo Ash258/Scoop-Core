@@ -1,4 +1,4 @@
-'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -1051,37 +1051,6 @@ function env_rm($manifest, $global, $arch) {
             $name = $_.name
             env $name $global $null
             if (Test-Path env:\$name) { Remove-Item env:\$name }
-        }
-    }
-}
-
-function Invoke-ManifestScript {
-    <#
-    .SYNOPSIS
-        Execute script properties defined in manifest.
-    .PARAMETER Manifest
-        Specifies manifest object.
-    .PARAMETER ScriptName
-        Specifies property name.
-    .PARAMETER Architecture
-        Specifies architecture.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [Alias('InputObject')]
-        $Manifest,
-        [Parameter(Mandatory)]
-        [String] $ScriptName,
-        [String] $Architecture
-    )
-
-    process {
-        $script = arch_specific $ScriptName $Manifest $Architecture
-        if ($script) {
-            $print = $ScriptName -replace '_', '-'
-            Write-UserMessage -Message "Running $print script..." -Output:$false
-            Invoke-Expression (@($script) -join "`r`n")
         }
     }
 }
