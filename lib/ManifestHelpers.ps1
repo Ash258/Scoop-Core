@@ -170,7 +170,7 @@ function Assert-Administrator {
     if (!(is_admin)) { throw [ScoopException] 'Administrator privileges are required' }
 }
 
-function Assert-ScoopConfigValus {
+function Assert-ScoopConfigValue {
     param(
         [Parameter(Mandatory)]
         [String] $ConfigOption,

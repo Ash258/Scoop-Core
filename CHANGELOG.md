@@ -4,6 +4,11 @@
 
 ### 0.55-pre5
 
+- **install**
+    - Remove mutually exclusivity of `installer.script` and `installer.file`
+        - `script` property is executed after `file`
+    - Fix `installer.file` exit code from ps1 scripts
+    - Fix `installer.keep` inconsitency between powershell scripts and executables
 - **manifests**: Present `pre_download` property
 - **scoop-install**: Fix installlation of different/older versions
 - **scoop-info**: Respect NO_JUNCTION config
