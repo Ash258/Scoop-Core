@@ -363,7 +363,7 @@
                     "type": "boolean"
                 },
                 "script": {
-                    "description": "Specify PowerShell commands required to install application. installer.script will be executed after installer.file. If running file and script sequentially is desired, you need to explcitly specify file or args properties.",
+                    "description": "Specify PowerShell commands required to install application. installer.script will be executed after installer.file. If running file and script sequentially is desired, you need to explicitly specify file or args properties.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 }
             }
