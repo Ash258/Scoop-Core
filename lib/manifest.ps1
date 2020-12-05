@@ -128,11 +128,11 @@ function Invoke-ManifestScript {
     .SYNOPSIS
         Execute script properties defined in manifest.
     .PARAMETER Manifest
-        Specifies manifest object.
+        Specifies the manifest object.
     .PARAMETER ScriptName
-        Specifies property name.
+        Specifies the property name.
     .PARAMETER Architecture
-        Specifies architecture.
+        Specifies the architecture.
     #>
     [CmdletBinding()]
     param(
