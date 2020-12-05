@@ -1,4 +1,4 @@
-'Helpers', 'core' | ForEach-Object {
+'Helpers', 'core', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -172,6 +172,19 @@ function Assert-Administrator {
         Test administrator privileges.
     #>
     if (!(is_admin)) { throw [ScoopException] 'Administrator privileges are required' }
+}
+
+function Assert-WindowsMinimalVersion {
+    <#
+    .SYNOPSIS
+        Test minimal windows version requirement.
+    #>
+    param([String] $Version)
+
+    $cmp = Compare-Version -ReferenceVersion (([Environment]::OSVersion.Version.ToString())) -DifferenceVersion $Version
+    if ($cmp -eq 1) {
+        throw [ScoopException] "Application requires at least '$Version' Windows version"
+    }
 }
 
 function Assert-ScoopConfigValue {

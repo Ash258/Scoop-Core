@@ -5,7 +5,7 @@
 ### 0.55-pre5
 
 - **manifests**: Introduce manifest helpers to avoid repeating lines in manifests
-    - `Assert-Administrator`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
+    - `Assert-Administrator`, `Assert-WindowsMinimalVersion`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
 - **install**
     - Remove mutually exclusivity of `installer.script` and `installer.file`
         - `script` property is executed after `file`
