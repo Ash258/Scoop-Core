@@ -255,6 +255,8 @@ function Update-App {
     # Remove and replace whole region after proper implementation
     Write-UserMessage -Message 'Downloading new version' -Output
 
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
+
     if (Test-Aria2Enabled) {
         dl_with_cache_aria2 $App $version $manifest $architecture $SCOOP_CACHE_DIRECTORY $manifest.cookie $true (!$SkipHashCHeck)
     } else {
