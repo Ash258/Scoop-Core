@@ -9,7 +9,7 @@ function Test-Persistence {
         Persistence check helper for files.
     .DESCRIPTION
         This will save some lines to not always write `if (!(Test-Path "$persist_dir\$file")) { New-item "$dir\$file" | Out-Null }` inside manifests.
-        variables `$currentFile`, `$filePersistPath`, `$fileDirPath` are exposed and could be used inside `Execution` block.
+        variables `$currentFile`, `$currentFilePersist`, `$currentFileDir` are exposed and could be used inside `Execution` block.
     .PARAMETER File
         Specifies the file to be checked.
         Do not prefix with $dir. All files are already checked against $dir and $persist_dir.
@@ -29,16 +29,17 @@ function Test-Persistence {
         [Alias('Value')]
         [Object[]] $Content,
         [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('ScriptBlock')]
         [ScriptBlock] $Execution
     )
 
     process {
         for ($ind = 0; $ind -lt $File.Count; ++$ind) {
             $currentFile = $File[$ind]
-            $filePersistPath = Join-Path $persist_dir $currentFile
-            $fileDirPath = Join-Path $dir $currentFile
+            $currentFileDir = Join-Path $dir $currentFile
+            $currentFilePersist = Join-Path $persist_dir $currentFile
 
-            if (!(Test-Path -LiteralPath $filePersistPath -PathType 'Leaf')) {
+            if (!(Test-Path -LiteralPath $currentFilePersist -PathType 'Leaf')) {
                 if ($Execution) {
                     & $Execution
                 } else {
@@ -54,8 +55,8 @@ function Test-Persistence {
                     }
 
                     # File needs to be precreated in case of nested directories
-                    New-Item -Path $fileDirPath -ItemType 'File' -Force | Out-Null
-                    if ($cont) { Out-UTF8File -Path $fileDirPath -Value $cont }
+                    New-Item -Path $currentFileDir -ItemType 'File' -Force | Out-Null
+                    if ($cont) { Out-UTF8File -Path $currentFileDir -Value $cont }
                 }
             }
         }
