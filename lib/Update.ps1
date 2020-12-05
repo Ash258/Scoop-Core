@@ -1,4 +1,4 @@
-'core', 'Git', 'Helpers', 'buckets', 'install' | ForEach-Object {
+'core', 'Git', 'Helpers', 'buckets', 'install', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -254,6 +254,8 @@ function Update-App {
     #region Workaround of #2220
     # Remove and replace whole region after proper implementation
     Write-UserMessage -Message 'Downloading new version' -Output
+
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
 
     if (Test-Aria2Enabled) {
         dl_with_cache_aria2 $App $version $manifest $architecture $SCOOP_CACHE_DIRECTORY $manifest.cookie $true (!$SkipHashCHeck)

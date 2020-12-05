@@ -80,6 +80,31 @@ function Write-UserMessage {
     }
 }
 
+function Confirm-DirectoryExistence {
+    <#
+    .SYNOPSIS
+        Make sure that directory exists.
+    .PARAMETER Directory
+        Specifies directory to be tested and created.
+    .OUTPUTS
+        System.Management.Automation.PathInfo
+            Resolved path
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PathInfo])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Dir', 'Path', 'LiteralPath', 'InputObject')]
+        [String] $Directory
+    )
+
+    process {
+        if (!(Test-Path $Directory -PathType 'Container')) { New-Item $Directory -ItemType 'Directory' | Out-Null }
+
+        return Resolve-Path $Directory
+    }
+}
+
 function Set-TerminatingError {
     <#
     .SYNOPSIS
