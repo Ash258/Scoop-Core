@@ -162,7 +162,7 @@ function New-JavaShortcutWrapper {
 
     process {
         foreach ($f in $FileName) {
-            (Join-Path $dir "$f.bat") | Out-UTF8Content -Value "@start javaw.exe -jar `"%~dp0$f.jar`" %*"
+            Join-Path $dir "$f.bat" | Out-UTF8Content -Value "@start javaw.exe -jar `"%~dp0$f.jar`" %*"
         }
     }
 }
