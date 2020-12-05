@@ -1,4 +1,4 @@
-'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -63,6 +63,8 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $dir = ensure (versiondir $app $version $global)
     $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
+
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
 
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
     pre_install $manifest $architecture
