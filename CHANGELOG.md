@@ -4,6 +4,7 @@
 
 ### 0.55-pre5
 
+- **manifests**: Present `pre_download` property
 - **scoop-install**: Fix installlation of different/older versions
 - **scoop-info**: Respect NO_JUNCTION config
 - Add changelog to repository

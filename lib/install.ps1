@@ -64,6 +64,8 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
 
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
+
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
     pre_install $manifest $architecture
     run_installer $fname $manifest $architecture $dir $global
@@ -1049,6 +1051,34 @@ function env_rm($manifest, $global, $arch) {
             $name = $_.name
             env $name $global $null
             if (Test-Path env:\$name) { Remove-Item env:\$name }
+        }
+    }
+}
+
+function Invoke-ManifestScript {
+    <#
+    .SYNOPSIS
+        Short description
+    .PARAMETER Manifest
+    .PARAMETER ScriptName
+    .PARAMETER Architecture
+        Specifies which architecture should be
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $Manifest,
+        [Parameter(Mandatory)]
+        [String] $ScriptName,
+        [String] $Architecture
+    )
+
+    process {
+        $script = arch_specific $ScriptName $Manifest $Architecture
+        if ($script) {
+            $print = $ScriptName -replace '_', '-'
+            Write-UserMessage -Message "Running $print script..." -Output:$false
+            Invoke-Expression (@($script) -join "`r`n")
         }
     }
 }
