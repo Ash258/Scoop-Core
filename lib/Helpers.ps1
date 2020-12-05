@@ -94,8 +94,8 @@ function Confirm-DirectoryExistence {
     [OutputType([System.Management.Automation.PathInfo])]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Alias('Dir', 'Path', 'LiteralPath')]
-        [System.IO.DirectoryInfo] $Directory
+        [Alias('Dir', 'Path', 'LiteralPath', 'InputObject')]
+        [String] $Directory
     )
 
     process {

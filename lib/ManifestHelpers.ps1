@@ -23,7 +23,7 @@ function Test-Persistence {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Alias('Path', 'LiteralPath', 'Name')]
+        [Alias('Path', 'LiteralPath', 'Name', 'InputObject')]
         [String[]] $File,
         [Parameter(ValueFromPipelineByPropertyName)]
         [Alias('Value')]
@@ -38,7 +38,7 @@ function Test-Persistence {
             $filePersistPath = Join-Path $persist_dir $currentFile
             $fileDirPath = Join-Path $dir $currentFile
 
-            if (!(Test-Path -LiteralPath $filePersistPath -PathType Leaf)) {
+            if (!(Test-Path -LiteralPath $filePersistPath -PathType 'Leaf')) {
                 if ($Execution) {
                     & $Execution
                 } else {
@@ -54,7 +54,7 @@ function Test-Persistence {
                     }
 
                     # File needs to be precreated in case of nested directories
-                    New-Item -Path $fileDirPath -ItemType File -Force | Out-Null
+                    New-Item -Path $fileDirPath -ItemType 'File' -Force | Out-Null
                     if ($cont) { Out-UTF8File -Path $fileDirPath -Value $cont }
                 }
             }
@@ -67,22 +67,22 @@ function Remove-AppDirItem {
     <#
     .SYNOPSIS
         Removes the given item from application directory.
-        Wildcards are supported.
     .PARAMETER Item
-        Specifies the item for removing from $dir.
+        Specifies the item, which should be removed from $dir.
+        Wildcards are supported.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [ValidateNotNullOrEmpty()]
         [SupportsWildcards()]
-        [System.IO.FileInfo[]] $Item
+        [String[]] $Item
     )
 
     process {
         # GCI is not suitable as it do not support nested folder with include
         foreach ($it in $Item) {
-            Join-Path $dir $it | Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
+            Join-Path $dir $it | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse
         }
     }
 }
