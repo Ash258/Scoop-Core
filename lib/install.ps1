@@ -1060,13 +1060,16 @@ function Invoke-ManifestScript {
     .SYNOPSIS
         Short description
     .PARAMETER Manifest
+        Specifies manifest object.
     .PARAMETER ScriptName
+        Specifies property name.
     .PARAMETER Architecture
-        Specifies which architecture should be
+        Specifies architecture.
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [Alias('InputObject')]
         $Manifest,
         [Parameter(Mandatory)]
         [String] $ScriptName,
