@@ -1058,7 +1058,7 @@ function env_rm($manifest, $global, $arch) {
 function Invoke-ManifestScript {
     <#
     .SYNOPSIS
-        Short description
+        Execute script properties defined in manifest.
     .PARAMETER Manifest
         Specifies manifest object.
     .PARAMETER ScriptName
