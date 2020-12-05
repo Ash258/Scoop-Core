@@ -740,8 +740,8 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     $script = $installer.script
 
     if ($script) {
-        # Skip installer if installer property specify only 1 property == script
-        # If there is file or args next to the script, both should be called
+        # Skip installer if installer property specifies only 1 property == script
+        # If there is file or args next to the script, both should be called, script first
         $props = @($installer.PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty' | Select-Object -ExpandProperty 'Name')
         if ($props -and ($props.Count -eq 1) -and ($props -contains 'script')) {
             $skipInstaller = $true
