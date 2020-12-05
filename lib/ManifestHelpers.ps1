@@ -181,7 +181,7 @@ function Assert-WindowsMinimalVersion {
     #>
     param([String] $Version)
 
-    $cmp = Compare-Version -ReferenceVersion (([Environment]::OSVersion.Version.ToString())) -DifferenceVersion $Version
+    $cmp = Compare-Version -ReferenceVersion ([Environment]::OSVersion.Version.ToString()) -DifferenceVersion $Version
     if ($cmp -eq 1) {
         throw [ScoopException] "Application requires at least '$Version' Windows version"
     }
