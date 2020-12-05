@@ -100,7 +100,7 @@ function Edit-File {
         Specifies the string for replacing all occurrences.
         Empty string is default => Found string will be removed.
     .PARAMETER Regex
-        Specifies if regular expression should be used instead of simple match.
+        Specifies to use regular expression instead of simple match.
     #>
     [CmdletBinding()]
     param(
@@ -114,11 +114,11 @@ function Edit-File {
 
     begin {
         # Use file from $dir
-        if (Join-Path $dir $File | Test-Path -PathType Leaf) { $File = Join-Path $dir $File }
+        if (Join-Path $dir $File | Test-Path -PathType 'Leaf') { $File = Join-Path $dir $File }
     }
 
     process {
-        if (!(Test-Path $File)) {
+        if (!(Test-Path $File -PathType 'Leaf')) {
             Write-UserMessage -Message "File '$File' does not exist" -Err
             return
         }
@@ -150,11 +150,12 @@ function New-JavaShortcutWrapper {
         Creates new shim-like batch file wrapper to spawn jar files within start menu (using shortcut).
     .PARAMETER FileName
         Specifies the jar executable filename without .jar extension.
+        Do not pass fullpath, just FILENAME!
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Alias('Name')]
+        [Alias('Name', 'InputObject')]
         [System.IO.FileInfo[]] $FileName
     )
 
