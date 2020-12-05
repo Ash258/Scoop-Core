@@ -123,6 +123,37 @@ function supports_architecture($manifest, $architecture) {
     return -not [String]::IsNullOrEmpty((arch_specific 'url' $manifest $architecture))
 }
 
+function Invoke-ManifestScript {
+    <#
+    .SYNOPSIS
+        Execute script properties defined in manifest.
+    .PARAMETER Manifest
+        Specifies the manifest object.
+    .PARAMETER ScriptName
+        Specifies the property name.
+    .PARAMETER Architecture
+        Specifies the architecture.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [Alias('InputObject')]
+        $Manifest,
+        [Parameter(Mandatory)]
+        [String] $ScriptName,
+        [String] $Architecture
+    )
+
+    process {
+        $script = arch_specific $ScriptName $Manifest $Architecture
+        if ($script) {
+            $print = $ScriptName -replace '_', '-'
+            Write-UserMessage -Message "Running $print script..." -Output:$false
+            Invoke-Expression (@($script) -join "`r`n")
+        }
+    }
+}
+
 function generate_user_manifest($app, $bucket, $version) {
     $null, $manifest, $bucket, $null = Find-Manifest $app $bucket
 

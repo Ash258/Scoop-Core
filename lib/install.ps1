@@ -1,4 +1,4 @@
-'Helpers', 'autoupdate', 'buckets', 'decompress', 'ManifestHelpers' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress', 'manifest', 'ManifestHelpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -63,6 +63,8 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $dir = ensure (versiondir $app $version $global)
     $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
+
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
 
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
     pre_install $manifest $architecture
@@ -735,17 +737,16 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
+    if ($installer.script) {
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
+        Invoke-Expression (@($installer.script) -join "`r`n")
+        return
+    }
 
     if ($msi) {
         install_msi $fname $dir $msi
     } elseif ($installer) {
         install_prog $fname $dir $installer $global
-    }
-
-    # Run install.script after installer.file
-    if ($installer.script) {
-        Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
     }
 }
 
@@ -796,20 +797,17 @@ function install_prog($fname, $dir, $installer, $global) {
     $arg = @(args $installer.args $dir $global)
 
     if ($prog.EndsWith('.ps1')) {
-        Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
-        if ($LASTEXITCODE -ne 0) {
-            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE"
-        }
+        # TODO: Handle $LASTEXITCODE
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
             throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
-    }
 
-    # Do not remove installer if "keep" flag is set to true
-    if ($installer.keep -ne 'true') { Remove-Item $prog }
+        # Don't remove installer if "keep" flag is set to true
+        if ($installer.keep -ne 'true') { Remove-Item $prog }
+    }
 }
 
 function run_uninstaller($manifest, $architecture, $dir) {
@@ -1242,6 +1240,14 @@ function unlink_persist_data($dir) {
 # check whether write permission for Users usergroup is set to global persist dir, if not then set
 function persist_permission($manifest, $global) {
     if ($global -and $manifest.persist -and (is_admin)) {
+        $path = persistdir $null $global
+        $user = New-Object System.Security.Principal.SecurityIdentifier 'S-1-5-32-545'
+        $target_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, 'Write', 'ObjectInherit', 'none', 'Allow')
+        $acl = Get-Acl -Path $path
+        $acl.SetAccessRule($target_rule)
+        $acl | Set-Acl -Path $path
+    }
+}
         $path = persistdir $null $global
         $user = New-Object System.Security.Principal.SecurityIdentifier 'S-1-5-32-545'
         $target_rule = New-Object System.Security.AccessControl.FileSystemAccessRule($user, 'Write', 'ObjectInherit', 'none', 'Allow')
