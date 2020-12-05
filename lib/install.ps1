@@ -742,9 +742,10 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     if ($script) {
         # Skip installer if installer property specify only 1 property == script
         # If there is file or args next to the script, both should be called
-        # if script is only one then define property
-        # TODO: Implement
-        $skipInstaller = $true
+        $props = @($installer.PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty' | Select-Object -ExpandProperty 'Name')
+        if ($props -and ($props.Count -eq 1) -and ($props -contains 'script')) {
+            $skipInstaller = $true
+        }
     }
 
     if ($msi) {
@@ -753,10 +754,11 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
         install_prog $fname $dir $installer $global
     }
 
-    # Run install.script after installer.file
-    if ($installer.script) {
+    # Run installer.script after installer.file
+    # This allow to modify files after installer was executed and before binaries/shortcuts are created/linked
+    if ($script) {
         Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
+        Invoke-Expression (@($script) -join "`r`n")
     }
 }
 
