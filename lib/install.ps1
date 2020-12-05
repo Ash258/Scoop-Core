@@ -812,7 +812,7 @@ function install_prog($fname, $dir, $installer, $global) {
         Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
         if ($LASTEXITCODE -ne 0) {
-            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE"
+            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE" # TerminatingError thrown
         }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
