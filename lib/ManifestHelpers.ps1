@@ -1,4 +1,4 @@
-'Helpers' | ForEach-Object {
+'Helpers', 'core' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -58,60 +58,6 @@ function Test-Persistence {
                     if ($cont) { Out-UTF8File -Path $fileDirPath -Value $cont }
                 }
             }
-        }
-    }
-}
-
-function Copy-ToPersist {
-    <#
-    .SYNOPSIS
-        Manually "persist" file.
-    .DESCRIPTION
-        In case of file is in nested directory, the structure will not be preserved in $persist_dir
-    .PARAMETER Item
-        Specifies the items to be copied from $dir into $persist_dir
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [SupportsWildcards()]
-        [ValidateNotNullOrEmpty()]
-        [Alias('Path', 'Name', 'File')]
-        [System.IO.FileInfo[]] $Item
-    )
-
-    begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
-
-    process {
-        foreach ($it in $Item) {
-            Join-Path $dir $it | Copy-Item -Destination $persist_dir -ErrorAction 'SilentlyContinue' -Force
-        }
-    }
-}
-
-function Copy-FromPersist {
-    <#
-    .SYNOPSIS
-        Manually "persist" file.
-    .DESCRIPTION
-        In case of file is in nested directory, the structure will not be preserved in $dir
-    .PARAMETER Item
-        Specifies the items to be copied from $persist_dir into $dir
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [SupportsWildcards()]
-        [ValidateNotNullOrEmpty()]
-        [Alias('Path', 'Name', 'File')]
-        [System.IO.FileInfo[]] $Item
-    )
-
-    begin { Confirm-DirectoryExistence -Directory $persist_dir | Out-Null }
-
-    process {
-        foreach ($it in $Item) {
-            Join-Path $persist_dir $it | Copy-Item -Destination $dir -ErrorAction 'SilentlyContinue' -Force
         }
     }
 }
@@ -218,3 +164,23 @@ function New-JavaShortcutWrapper {
         }
     }
 }
+
+#region Asserts
+function Assert-Administrator {
+    if (!(is_admin)) { throw [ScoopException] 'Administrator privileges are required' }
+}
+
+function Assert-ScoopConfigValus {
+    param(
+        [Parameter(Mandatory)]
+        [String] $ConfigOption,
+        [Parameter(Mandatory)]
+        $ExpectedValue
+    )
+
+    process {
+        $actualValue = get_config $ConfigOption
+        if ($actualValue -ne $ExpectedValue) { throw [ScoopException] 'Specific option is needed' }
+    }
+}
+#endregion Asserts
