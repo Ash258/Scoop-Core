@@ -190,22 +190,12 @@ function Expand-InnoArchive {
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
         [String] $Switches,
-        [Switch] $Removal
+        [Switch] $Removal,
+        [Switch] $UseInnoextract
     )
 
     process {
-        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
-            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
-            $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
-            $innoPath = Get-HelperPath -Helper 'Innounp'
-            $inno = 'innounp'
-
-            switch -Regex ($ExtractDir) {
-                '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
-                '^{.*' { $argList += "-c$ExtractDir" }
-                default { $argList += '-c{app}' }
-            }
-        } else {
+        if ((get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract) {
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
             $argList = @('--extract', '--silent', '--output-dir', $DestinationPath, $Path)
             $innoPath = Get-HelperPath -Helper 'Innoextract'
@@ -213,6 +203,17 @@ function Expand-InnoArchive {
 
             switch -Regex ($ExtractDir) {
                 '^[^{].*' { $argList += "--include 'app\$ExtractDir'" }
+                '^{.*' { $argList += "-c$ExtractDir" } # TODO: Fix
+                default { }
+            }
+        } else {
+            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
+            $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
+            $innoPath = Get-HelperPath -Helper 'Innounp'
+            $inno = 'innounp'
+
+            switch -Regex ($ExtractDir) {
+                '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
                 '^{.*' { $argList += "-c$ExtractDir" }
                 default { $argList += '-c{app}' }
             }
