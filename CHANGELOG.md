@@ -4,10 +4,18 @@
 
 ### 0.55-pre5
 
+- **manifests**: Introduce manifest helpers to avoid repeating lines in manifests
+    - `Assert-Administrator`, `Assert-WindowsMinimalVersion`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
+- **install**
+    - Remove mutually exclusivity of `installer.script` and `installer.file`
+        - `script` property is executed after `file`
+    - Fix `installer.file` exit code from ps1 scripts
+    - Fix `installer.keep` inconsitency between powershell scripts and executables
+- **manifests**: Present `pre_download` property
 - **scoop-install**: Fix installlation of different/older versions
 - **scoop-info**: Respect NO_JUNCTION config
-- Add changelong to repository
-- **autoupdate**: Initial preparation for array support
+- Add changelog to repository
+- **autoupdate**: Initial preparations for array support
 - **manifests**: Add `changelog` property
     - It will be shown on manifest installation/updates also in `scoop info` output
 - **scoop-alias**: Add `path` and `edit` subcommands
@@ -32,7 +40,7 @@
 ### 0.55-pre2
 
 - `scoop search` reimplemented
-- Fix regression from `--help` addition
+- **scoop-config**: Fix regression from `--help` addition
 - **decompress**: Fix 7zip requirements detection
 - **autoupdate**: Added `$headVersion` and `$tailVersion` substitutes
 
@@ -96,6 +104,7 @@
 - Git operations no longer change user context
 - Nongit buckets are not updated == invalid repository error will not be shown
 - Update log will not show commits with `[scoop skip]` or `[shovel skip]` in title
+- Refactored handling of manifests versions
 - Exit codes are handled in a saner way
     - See `scoop --help` for used exit codes
 - Internal application files are not using generic name
