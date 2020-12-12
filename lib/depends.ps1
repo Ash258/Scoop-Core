@@ -78,10 +78,10 @@ function script_deps($script) {
     if ((($script -like '*Expand-7zipArchive *') -or ($script -like '*extract_7zip *')) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((($script -like '*Expand-MsiArchive *') -or ($script -like '*extract_msi *')) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
     if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *'))) {
-        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
-            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
-        } else {
+        if ((get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or ($script -like '*Expand-InnoArchive* -UseInnoextract')) {
             if (!(Test-HelperInstalled -Helper 'InnoExtract')) { $deps += 'innoextract' }
+        } else {
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
         }
     }
 
@@ -96,9 +96,9 @@ function install_deps($manifest, $arch) {
     if ((Test-LessmsiRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
     if ($manifest.innosetup) {
         if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
-            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+            if (!(Test-HelperInstalled -Helper 'Innoextract')) { $deps += 'innoextract' }
         } else {
-            if (!(Test-HelperInstalled -Helper 'InnoExtract')) { $deps += 'innoextract' }
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
         }
     }
 
