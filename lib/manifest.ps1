@@ -2,6 +2,42 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
+
+$ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+
+function ConvertFrom-Manifest {
+    <#
+    .SYNOPSIS
+        Parse manifest file into object.
+    .PARAMETER Path
+        Specifies the path to the file representing manifest.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('LiteralPath')]
+        [System.IO.FileInfo] $Path
+    )
+
+    process {
+        if (!(Test-Path $Path -PathType 'Leaf')) { return $null }
+
+        $result = $null
+
+        switch ($Path.Extension) {
+            '.json' {
+                $result = Get-Content $Path -Encoding 'UTF8' -Raw | ConvertFrom-Json -ErrorAction 'Stop'
+            }
+            default {
+                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Err
+                $result = Get-Content $Path -Encoding 'UTF8' -Raw | ConvertFrom-Json -ErrorAction 'Stop'
+            }
+        }
+
+        return $result
+    }
+}
+
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
 
