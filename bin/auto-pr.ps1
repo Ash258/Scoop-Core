@@ -185,10 +185,10 @@ foreach ($changedFile in hub diff --name-only) {
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
             execute "hub commit -m '${applicationName}: Update to version $version'"
         } else {
-            Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -ForegroundColor Yellow
+            Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
     } else {
-        pull_requests $manifest $applicationName $Upstream $changedFile
+        pull_requests $manifestObject $applicationName $Upstream $changedFile
     }
 }
 
