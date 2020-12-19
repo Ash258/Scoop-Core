@@ -31,12 +31,58 @@ function ConvertFrom-Manifest {
                 $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
             }
             default {
-                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Err
+                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
                 $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
             }
         }
 
         return $result
+    }
+}
+
+function ConvertTo-Manifest {
+    <#
+    .SYNOPSIS
+        Convert manifest object into string.
+    .PARAMETER File
+        Specifies the path to the file where manifest will be saved.
+    .PARAMETER Manifest
+        Specifies the manifest object.
+    .PARAMETER Extension
+        Specifies the structure of resulted string (json, yaml, yml)
+        Ignored if File is provided.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('Path', 'LiteralPath')]
+        [System.IO.FileInfo] $File,
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('InputObject', 'Content')]
+        $Manifest,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [String] $Extension
+    )
+
+    process {
+        $ext = if ($File) { $File.Extension.TrimStart('.') } else { $Extension }
+        $content = $null
+
+        switch ($ext) {
+            'json' {
+                $content = $Manifest | ConvertToPrettyJson
+            }
+            default {
+                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
+                $content = $Manifest | ConvertToPrettyJson
+            }
+        }
+
+        if ($File) {
+            Out-UTF8File -File $File -Content $content
+        } else {
+            return $content
+        }
     }
 }
 

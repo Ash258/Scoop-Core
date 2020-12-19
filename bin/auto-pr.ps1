@@ -159,14 +159,19 @@ if (!$SkipCheckver) {
 }
 
 foreach ($changedFile in hub diff --name-only) {
+    $applicationName = $gci.BaseName
     $gci = Get-Item $changedFile
     if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
         Write-UserMessage "Skipping $changedFile" -Info
         continue
     }
 
-    $applicationName = $gci.BaseName
-    $manifestObject = ConvertFrom-Manifest -Path $changedFile
+    try {
+        $manifestObject = ConvertFrom-Manifest -Path $changedFile
+    } catch {
+        Write-UserMessage "Invalid manifest: $changedFile" -Err
+        continue
+    }
     $version = $manifestObject.version
 
     if (!$version) {
