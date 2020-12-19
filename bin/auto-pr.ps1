@@ -90,7 +90,7 @@ function execute($cmd) {
 }
 
 # json object, application name, upstream repository, relative path to manifest file
-function pull_requests($json, [String] $app, [String] $upstream, [String] $manifest) {
+function pull_requests($json, [String] $app, [String] $upstream, [String] $manifestFile) {
     $version = $json.version
     $homepage = $json.homepage
     $branch = "manifest/$app-$version"
@@ -106,7 +106,7 @@ function pull_requests($json, [String] $app, [String] $upstream, [String] $manif
 
     Write-UserMessage "Creating update $app ($version) ..." -ForegroundColor 'DarkCyan'
     execute "hub checkout -b $branch"
-    execute "hub add $manifest"
+    execute "hub add $manifestFile"
     execute "hub commit -m '${app}: Update to version $version'"
     Write-UserMessage "Pushing update $app ($version) ..." -ForegroundColor 'DarkCyan'
     execute "hub push origin $branch"
@@ -160,11 +160,14 @@ if (!$SkipCheckver) {
 
 foreach ($changedFile in hub diff --name-only) {
     $gci = Get-Item $changedFile
-    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) { continue }
+    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $changedFile" -Info
+        continue
+    }
 
     $applicationName = $gci.BaseName
-    $manifest = ConvertFrom-Manifest $changedFile
-    $version = $manifest.version
+    $manifestObject = ConvertFrom-Manifest -Path $changedFile
+    $version = $manifestObject.version
 
     if (!$version) {
         Write-UserMessage -Message "Invalid manifest: $changedFile ..." -Err

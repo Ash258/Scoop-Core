@@ -13,6 +13,7 @@ function ConvertFrom-Manifest {
         Specifies the path to the file representing manifest.
     #>
     [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [Alias('LiteralPath')]
@@ -23,14 +24,15 @@ function ConvertFrom-Manifest {
         if (!(Test-Path $Path -PathType 'Leaf')) { return $null }
 
         $result = $null
+        $content = Get-Content $Path -Encoding 'UTF8' -Raw
 
         switch ($Path.Extension) {
             '.json' {
-                $result = Get-Content $Path -Encoding 'UTF8' -Raw | ConvertFrom-Json -ErrorAction 'Stop'
+                $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
             }
             default {
                 Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Err
-                $result = Get-Content $Path -Encoding 'UTF8' -Raw | ConvertFrom-Json -ErrorAction 'Stop'
+                $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
             }
         }
 
