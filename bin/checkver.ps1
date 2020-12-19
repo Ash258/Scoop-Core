@@ -204,9 +204,10 @@ function Invoke-Check {
         try {
             if ($Version -ne '') { $ver = $Version }
 
-            # TODO: Pass $gci
-            $gci | Out-Null
-            Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+            $newManifest = Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+
+            Write-UserMessage -Message "Writing updated $appName manifest" -Color 'DarkGreen'
+            ConvertTo-Manifest -Path $gci.FullName -Manifest $newManifest
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
         }

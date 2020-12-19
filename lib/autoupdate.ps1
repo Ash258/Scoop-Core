@@ -409,19 +409,15 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
     # Update license
     update_manifest_prop 'license' $json $substitutions
 
+    $newManifest = $null
     if ($has_changes -and !$has_errors) {
-        # Write file
-        Write-UserMessage -Message "Writing updated $app manifest" -Color DarkGreen
-
-        $path = Join-Path $dir "$app.json"
-
-        $json | ConvertToPrettyJson | Out-UTF8File -Path $path
-
         # Notes
-        if ($json.autoupdate.note) {
-            Write-UserMessage -Message '', $json.autoupdate.note -Color DarkYellow
-        }
+        if ($json.autoupdate.note) { Write-UserMessage -Message '', $json.autoupdate.note -Color 'DarkYellow' }
+
+        $newManifest = $json
     } else {
-        Write-UserMessage -Message "No updates for $app" -Color DarkGray
+        Write-UserMessage -Message "No updates for $app" -Color 'DarkGray'
     }
+
+    return $newManifest
 }

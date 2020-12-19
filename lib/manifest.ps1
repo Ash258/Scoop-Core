@@ -257,7 +257,10 @@ function generate_user_manifest($app, $bucket, $version) {
 
     $path = usermanifestsdir | ensure
     try {
-        Invoke-Autoupdate $app "$path" $manifest $version $(@{ })
+        $newManifest = Invoke-Autoupdate $app "$path" $manifest $version $(@{ })
+
+        Write-UserMessage -Message "Writing updated $app manifest" -Color 'DarkGreen'
+        ConvertTo-Manifest -Path (Join-Path $path "$app.json") -Manifest $newManifest
 
         return (usermanifest $app | Resolve-Path).Path
     } catch {
