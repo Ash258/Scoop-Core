@@ -1,4 +1,4 @@
-'core', 'Helpers', 'autoupdate', 'buckets' | ForEach-Object {
+'core', 'Helpers', 'autoupdate', 'buckets', 'json' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -76,6 +76,7 @@ function ConvertTo-Manifest {
             default {
                 Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
                 $content = $Manifest | ConvertToPrettyJson
+                $content = $content -replace "`t", (' ' * 4)
             }
         }
 
