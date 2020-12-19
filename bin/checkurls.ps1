@@ -2,23 +2,23 @@
 .SYNOPSIS
     List manifests which do not have valid URLs.
 .PARAMETER App
-    Manifest name to search.
+    Specifies the manifest name to search.
     Wildcards is supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies where to search for manifest(s).
 .PARAMETER Timeout
-    How long (seconds) the request can be pending before it times out.
+    Specifies how long (seconds) the request can be pending before it times out.
 .PARAMETER SkipValid
-    Manifests will all valid URLs will not be shown.
+    Specifies to not show manifests, which have all URLs valid.
 #>
 param(
     [SupportsWildcards()]
     [String] $App = '*',
     [Parameter(Mandatory = $true)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir,
     [Int] $Timeout = 5,
     [Switch] $SkipValid
@@ -34,18 +34,18 @@ $Dir = Resolve-Path $Dir
 $Queue = @()
 
 Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
-    $manifest = parse_json $_.FullName
-    $Queue += , @($_.Name, $manifest)
+    $manifest = ConvertFrom-Manifest -Path $_.FullName
+    $Queue += , @($_.BaseName, $manifest)
 }
 
 Write-Host '[' -NoNewline
-Write-Host 'U' -NoNewline -ForegroundColor Cyan
+Write-Host 'U' -ForegroundColor 'Cyan' -NoNewline
 Write-Host ']RLs'
 Write-Host ' | [' -NoNewline
-Write-Host 'O' -NoNewline -ForegroundColor Green
+Write-Host 'O' -ForegroundColor 'Green' -NoNewline
 Write-Host ']kay'
 Write-Host ' |  | [' -NoNewline
-Write-Host 'F' -NoNewline -ForegroundColor Red
+Write-Host 'F' -ForegroundColor 'Red' -NoNewline
 Write-Host ']ailed'
 Write-Host ' |  |  |'
 
@@ -103,7 +103,7 @@ foreach ($man in $Queue) {
 
     # URLS
     Write-Host '[' -NoNewline
-    Write-Host $urls.Length -NoNewline -ForegroundColor Cyan
+    Write-Host $urls.Length -ForegroundColor 'Cyan' -NoNewline
     Write-Host ']' -NoNewline
 
     # Okay
@@ -122,9 +122,9 @@ foreach ($man in $Queue) {
     Write-Host '[' -NoNewline
     Write-Host $failed -ForegroundColor $fColor -NoNewline
     Write-Host '] ' -NoNewline
-    Write-Host (strip_ext $name)
+    Write-Host $name
 
     $errors | ForEach-Object {
-        Write-Host "       > $_" -ForegroundColor DarkRed
+        Write-Host "       > $_" -ForegroundColor 'DarkRed'
     }
 }
