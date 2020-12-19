@@ -2,21 +2,21 @@
 .SYNOPSIS
     Check if manifest contains checkver and autoupdate property.
 .PARAMETER App
-    Manifest name.
+    Specifies the manifest name.
     Wirldcards are supported.
 .PARAMETER Dir
-    Location of manifests.
+    Specifies the location of manifests.
 .PARAMETER SkipSupported
-    Manifests with checkver and autoupdate will not be presented.
+    Specifies to not show manifests with checkver and autoupdate properties.
 #>
 param(
     [SupportsWildcards()]
     [String] $App = '*',
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir,
     [Switch] $SkipSupported
 )
@@ -30,24 +30,29 @@ $SkipSupported | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
 
 Write-Host '[' -NoNewline
-Write-Host 'C' -NoNewline -ForegroundColor Green
+Write-Host 'C' -NoNewline -ForegroundColor 'Green'
 Write-Host ']heckver'
 Write-Host ' | [' -NoNewline
-Write-Host 'A' -NoNewline -ForegroundColor Cyan
+Write-Host 'A' -NoNewline -ForegroundColor 'Cyan'
 Write-Host ']utoupdate'
 Write-Host ' |  |'
 
-Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
-    $json = parse_json $_.FullName
+foreach ($file in Get-ChildItem $Dir "$App.*" -File) {
+    try {
+        $json = ConvertFrom-Manifest -Path $file.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($file.Name)" -Err
+        continue
+    }
 
     if ($SkipSupported -and $json.checkver -and $json.autoupdate) { return }
 
     Write-Host '[' -NoNewline
-    Write-Host $(if ($json.checkver) { 'C' } else { ' ' }) -NoNewline -ForegroundColor Green
+    Write-Host $(if ($json.checkver) { 'C' } else { ' ' }) -ForegroundColor 'Green' -NoNewline
     Write-Host ']' -NoNewline
 
     Write-Host '[' -NoNewline
-    Write-Host $(if ($json.autoupdate) { 'A' } else { ' ' }) -NoNewline -ForegroundColor Cyan
+    Write-Host $(if ($json.autoupdate) { 'A' } else { ' ' }) -ForegroundColor 'Cyan' -NoNewline
     Write-Host '] ' -NoNewline
-    Write-Host (strip_ext $_.Name)
+    Write-Host $file.BaseName
 }

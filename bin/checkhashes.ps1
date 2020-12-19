@@ -5,7 +5,7 @@
     Specifies the manifest name to be checked (without extension).
     Wildcards are supported.
 .PARAMETER Dir
-    Specifies where to search for manifest(s).
+    Specifies the location of manifests.
 .PARAMETER Update
     Specifies to update the manifest file with updated hashes.
 .PARAMETER ForceUpdate

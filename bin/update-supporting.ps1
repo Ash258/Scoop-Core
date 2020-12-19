@@ -2,7 +2,7 @@
 .SYNOPSIS
     Update supporting tools to the latest version.
 .PARAMETER Supporting
-    Name of supporting tool to be updated.
+    Specifies the name of supporting tool to be updated.
 #>
 param([String] $Supporting = '*')
 
@@ -17,15 +17,21 @@ foreach ($sup in $Sups) {
     $folder = $sup.Directory
     $dir = Join-Path $folder "$name\bin"
 
-    Write-UserMessage -Message "Updating $name" -Color Magenta
+    Write-UserMessage -Message "Updating $name" -Color 'Magenta'
 
     $checkver = Join-Path $PSScriptRoot 'checkver.ps1'
     Invoke-Expression "& $checkver -App $name -Dir $folder -Update"
 
-    $manifest = parse_json $sup.FullName
-    ensure $dir | Out-Null
+    try {
+        $manifest = ConvertFrom-Manifest -Path $sup.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($sup.Name)" -Err
+        continue
+    }
+    Confirm-DirectoryExistence $dir | Out-Null
 
-    dl_urls $name $manifest.version $manifest '' default_architecture $dir $true $true | Out-Null
+    $fname = dl_urls $name $manifest.version $manifest '' default_architecture $dir $true $true
+    $fname | Out-Null
     # Pre install is enough now
     pre_install $manifest $architecture
 

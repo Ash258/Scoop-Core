@@ -10,7 +10,7 @@
     Specifies the manifest name to search.
     Placeholders are supported.
 .PARAMETER Dir
-    Specifies the directory where to search for manifests.
+    Specifies the location of manifests.
 .PARAMETER Push
     Specifies to push updates directly to 'origin master'.
 .PARAMETER Request

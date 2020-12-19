@@ -71,6 +71,7 @@ function ConvertTo-Manifest {
         switch ($ext) {
             'json' {
                 $content = $Manifest | ConvertToPrettyJson
+                $content = $content -replace "`t", (' ' * 4)
             }
             default {
                 Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info

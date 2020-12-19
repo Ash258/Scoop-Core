@@ -5,7 +5,7 @@
     Specifies the manifest name to search.
     Wildcards is supported.
 .PARAMETER Dir
-    Specifies where to search for manifest(s).
+    Specifies the location of manifests.
 .PARAMETER Timeout
     Specifies how long (seconds) the request can be pending before it times out.
 .PARAMETER SkipValid
@@ -14,7 +14,7 @@
 param(
     [SupportsWildcards()]
     [String] $App = '*',
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [ValidateScript( {
             if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
             $true
@@ -33,9 +33,14 @@ $Timeout | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
 $Queue = @()
 
-Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
-    $manifest = ConvertFrom-Manifest -Path $_.FullName
-    $Queue += , @($_.BaseName, $manifest)
+foreach ($file in Get-ChildItem $Dir "$App.*" -File) {
+    try {
+        $manifest = ConvertFrom-Manifest -Path $file.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($file.BaseName)" -Err
+        continue
+    }
+    $Queue += , @($file.BaseName, $manifest)
 }
 
 Write-Host '[' -NoNewline

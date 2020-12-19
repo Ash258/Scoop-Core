@@ -2,9 +2,9 @@
 .SYNOPSIS
     Format manifest.
 .PARAMETER App
-    Manifest to format.
+    Specifies the manifest name.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 .EXAMPLE
     PS BUCKETROOT> .\bin\formatjson.ps1
     Format all manifests inside bucket directory.
@@ -17,9 +17,9 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir
 )
 
@@ -32,15 +32,21 @@ $Dir = Resolve-Path $Dir
 function _infoMes ($name, $mes) { Write-UserMessage -Message "${name}: $mes" -Info }
 
 foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
-    $path = $m.Fullname
-
-    if ($m.Extension -notin '.json', '.yml', '.yaml') { continue }
-
-    $manifest = parse_json $path
     $name = $m.Basename
+    if ($m.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($m.Name)" -Info
+        continue
+    }
+
+    try {
+        $manifest = ConvertFrom-Manifest -Path $m.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($m.Name)" -Err
+        continue
+    }
 
     #region Migrations and fixes
-    # Checkver
+    #region Checkver
     $checkver = $manifest.checkver
     if ($checkver -and ($checkver.GetType() -ne [System.String])) {
         # Remove not needed url
@@ -52,14 +58,14 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
         if ($checkver.jp) {
             _infoMes $name 'checkver.jp -> checkver.jsonpath'
 
-            $checkver | Add-Member -MemberType NoteProperty -Name 'jsonpath' -Value $checkver.jp
+            $checkver | Add-Member -MemberType 'NoteProperty' -Name 'jsonpath' -Value $checkver.jp
             $checkver.PSObject.Properties.Remove('jp')
         }
 
         if ($checkver.re) {
             _infoMes $name 'checkver.re -> checkver.regex'
 
-            $checkver | Add-Member -MemberType NoteProperty -Name 'regex' -Value $checkver.re
+            $checkver | Add-Member -MemberType 'NoteProperty' -Name 'regex' -Value $checkver.re
             $checkver.PSObject.Properties.Remove('re')
 
             if ($checkver.reverse) {
@@ -67,7 +73,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
 
                 $rev = $checkver.reverse
                 $checkver.PSObject.Properties.Remove('reverse')
-                $checkver | Add-Member -MemberType NoteProperty -Name 'reverse' -Value $rev
+                $checkver | Add-Member -MemberType 'NoteProperty' -Name 'reverse' -Value $rev
             }
         }
 
@@ -82,7 +88,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
 
             $repl = $checkver.replace
             $checkver.PSObject.Properties.Remove('replace')
-            $checkver | Add-Member -MemberType NoteProperty -Name 'replace' -Value $repl
+            $checkver | Add-Member -MemberType 'NoteProperty' -Name 'replace' -Value $repl
         }
 
         # Only one github property and homepage is set to github repository
@@ -94,8 +100,9 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
 
         $manifest.checkver = $checkver
     }
+    #endregion Checkver
 
-    # Architecture properties sort
+    #region Architecture properties sort
     foreach ($mainProp in 'architecture', 'autoupdate') {
         if ($mainProp -eq 'autoupdate') {
             if ($manifest.$mainProp.architecture) {
@@ -117,7 +124,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
         $newArch = [PSCustomObject] @{ }
 
         '64bit', '32bit' | ForEach-Object {
-            if ($arch.$_) { $newArch | Add-Member -MemberType NoteProperty -Name $_ -Value $arch.$_ }
+            if ($arch.$_) { $newArch | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $arch.$_ }
         }
 
         if ($arch.PSObject.Properties.Name[0] -ne '64bit') {
@@ -131,22 +138,23 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
             $manifest.$mainProp = $newArch
         }
     }
+    #endregion Architecture properties sort
 
     $newManifest = [PSCustomObject] @{ }
     '##', '_comment', 'version', 'description', 'homepage', 'license', 'notes', 'depends' | ForEach-Object {
         if ($manifest.$_) {
-            $newManifest | Add-Member -MemberType NoteProperty -Name $_ -Value $manifest.$_
+            $newManifest | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $manifest.$_
             $manifest.PSObject.Properties.Remove($_)
         }
     }
 
     # Add remaining properties in same order
     $manifest.PSObject.Properties.Name | ForEach-Object {
-        $newManifest | Add-Member -MemberType NoteProperty -Name $_ -Value $manifest.$_
+        $newManifest | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $manifest.$_
     }
 
     $manifest = $newManifest
     #endregion Migrations and fixes
 
-    ($manifest | ConvertToPrettyJson) -replace "`t", (' ' * 4) | Out-UTF8File -File $path
+    ConvertTo-Manifest -Path $m.FullName -Manifest $manifest
 }
