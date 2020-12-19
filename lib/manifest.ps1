@@ -16,7 +16,7 @@ function ConvertFrom-Manifest {
     [OutputType([System.Management.Automation.PSCustomObject])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [Alias('LiteralPath')]
+        [Alias('LiteralPath', 'File')]
         [System.IO.FileInfo] $Path
     )
 
