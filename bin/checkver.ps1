@@ -201,10 +201,11 @@ function Invoke-Check {
 
     if ($Update -and $json.autoupdate) {
         if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color 'DarkMagenta' }
-        try {
-            if ($Version -ne '') { $ver = $Version }
+        if ($Version -ne '') { $ver = $Version }
 
+        try {
             $newManifest = Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+            if ($null -eq $newManifest) { throw "Could not update $appname" }
 
             Write-UserMessage -Message "Writing updated $appName manifest" -Color 'DarkGreen'
             ConvertTo-Manifest -Path $gci.FullName -Manifest $newManifest
