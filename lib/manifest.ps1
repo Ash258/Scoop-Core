@@ -2,8 +2,9 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-$ALLOWED_MANIFEST_EXTENSION = @('json') # Go with just json until refYaml1
-# $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+Import-Module "$PSScriptRoot\..\supporting\yaml\bin\Powershell-Yaml.psd1" -Prefix 'CloudBase'
+
+$ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
 
 function ConvertFrom-Manifest {
     <#
@@ -29,6 +30,10 @@ function ConvertFrom-Manifest {
         switch ($Path.Extension) {
             '.json' {
                 $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
+            }
+            { $_ -in '.yaml', '.yml' } {
+                # Ugly hotfix to prevent ordering of properties and PSCustomObject
+                $result = ConvertFrom-CloudBaseYaml -Yaml $content -Ordered | ConvertTo-Json -Depth 100 | ConvertFrom-Json
             }
             default {
                 Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
@@ -72,6 +77,9 @@ function ConvertTo-Manifest {
             'json' {
                 $content = $Manifest | ConvertToPrettyJson
                 $content = $content -replace "`t", (' ' * 4)
+            }
+            { $_ -in 'yaml', 'yml' } {
+                $content = ConvertTo-CloudBaseYaml -Data $Manifest
             }
             default {
                 Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
