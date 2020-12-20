@@ -220,7 +220,7 @@ function Test-HelpersInstalled {
 function Test-Config {
     <#
     .SYNOPSIS
-        Test i various recommended scoop configuration options are set.
+        Test if various recommended scoop configurations are set correctly.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
