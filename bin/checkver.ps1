@@ -4,17 +4,17 @@
 .DESCRIPTION
     Checks websites for newer versions using an (optional) regular expression defined in the manifest.
 .PARAMETER App
-    Manifest name to search.
+    Specifies the manifest name.
     Wildcards are supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 .PARAMETER Update
-    Update given manifest
+    Specifies to write updated manifest into file.
 .PARAMETER ForceUpdate
-    Update given manifest(s) even when there is no new version.
-    Useful for hash updates.
+    Specifies to write given manifest(s) even when there is no new version.
+    Useful for hash updates or formating.
 .PARAMETER SkipUpdated
-    Updated manifests will not be shown.
+    Specifies to not show up-to-date manifests.
 .EXAMPLE
     PS BUCKETROOT > .\bin\checkver.ps1
     Check all manifest inside default directory.
@@ -51,9 +51,9 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir,
     [Switch] $Update,
     [Switch] $ForceUpdate,
@@ -79,7 +79,7 @@ $GITHUB_REGEX = "/releases/tag/$UNIVERSAL_REGEX"
 #region Functions
 function next($AppName, $Err) {
     Write-Host "${AppName}: " -NoNewline
-    Write-UserMessage -Message $Err -Color DarkRed
+    Write-UserMessage -Message $Err -Color 'DarkRed'
 
     # Just throw something to invoke try-catch
     throw 'error'
@@ -181,16 +181,16 @@ function Invoke-Check {
 
     # version hasn't changed (step over if forced update)
     if ($ver -eq $expectedVersion -and !$ForceUpdate) {
-        Write-UserMessage -Message $ver -Color DarkGreen
+        Write-UserMessage -Message $ver -Color 'DarkGreen'
         return
     }
 
-    Write-Host $ver -ForegroundColor DarkRed -NoNewline
+    Write-Host $ver -ForegroundColor 'DarkRed' -NoNewline
     Write-Host " (scoop version is $expectedVersion)" -NoNewline
     $updateAvailable = (Compare-Version -ReferenceVersion $expectedVersion -DifferenceVersion $ver) -ne 0
 
     if ($json.autoupdate -and $updateAvailable) {
-        Write-UserMessage -Message ' autoupdate available' -Color Cyan
+        Write-UserMessage -Message ' autoupdate available' -Color 'Cyan'
     } else {
         Write-UserMessage -Message ''
     }
@@ -199,10 +199,10 @@ function Invoke-Check {
     if ($ForceUpdate) { $Update = $true }
 
     if ($Update -and $json.autoupdate) {
-        if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color DarkMagenta }
-        try {
-            if ($Version -ne '') { $ver = $Version }
+        if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color 'DarkMagenta' }
+        if ($Version -ne '') { $ver = $Version }
 
+        try {
             Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err

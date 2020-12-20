@@ -54,21 +54,21 @@ if ($apps) {
 
         $install_info = install_info $app $ver $global
         Write-Host "  $app " -NoNewline
-        Write-Host -f DarkCyan $ver -NoNewline
+        Write-Host $ver -ForegroundColor 'DarkCyan' -NoNewline
 
-        if ($global) { Write-Host -f DarkGreen ' *global*' -NoNewline }
+        if ($global) { Write-Host ' *global*' -ForegroundColor 'DarkGreen' -NoNewline }
 
-        if (!$install_info) { Write-Host ' *failed*' -ForegroundColor DarkRed -NoNewline }
-        if ($install_info.hold) { Write-Host ' *hold*' -ForegroundColor DarkMagenta -NoNewline }
+        if (!$install_info) { Write-Host ' *failed*' -ForegroundColor 'DarkRed' -NoNewline }
+        if ($install_info.hold) { Write-Host ' *hold*' -ForegroundColor 'DarkMagenta' -NoNewline }
 
         if ($install_info.bucket) {
-            Write-Host -f Yellow " [$($install_info.bucket)]" -NoNewline
+            Write-Host " [$($install_info.bucket)]" -ForegroundColor 'Yellow' -NoNewline
         } elseif ($install_info.url) {
-            Write-Host -f Yellow " [$($install_info.url)]" -NoNewline
+            Write-Host " [$($install_info.url)]" -ForegroundColor 'Yellow' -NoNewline
         }
 
         if ($install_info.architecture -and $def_arch -ne $install_info.architecture) {
-            Write-Host -f DarkRed " {$($install_info.architecture)}" -NoNewline
+            Write-Host " {$($install_info.architecture)}" -ForegroundColor 'DarkRed' -NoNewline
         }
         Write-Host ''
     }

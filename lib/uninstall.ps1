@@ -43,7 +43,7 @@ function Uninstall-ScoopApplication {
     )
 
     # Do not uninstall when there is any process opened from application directory
-    $processdir = appdir $App $Global | Resolve-Path | Select-Object -ExpandProperty Path
+    $processdir = appdir $App $Global | Resolve-Path | Select-Object -ExpandProperty 'Path'
     $processes = Get-Process | Where-Object { $_.Path -like "$processdir\*" }
     if ($processes) {
         $plPr = pluralize $processes.Count 'Process' 'Processes'
@@ -65,7 +65,7 @@ function Uninstall-ScoopApplication {
     Write-UserMessage -Message "Uninstalling '$App' ($version)" -Output:$false
 
     try {
-        Test-Path $dir -ErrorAction Stop | Out-Null
+        Test-Path $dir -ErrorAction 'Stop' | Out-Null
     } catch [UnauthorizedAccessException] {
         Write-UserMessage -Message "Access denied: $dir. You might need to restart." -Err
         return $false
@@ -96,7 +96,7 @@ function Uninstall-ScoopApplication {
         try {
             # Unlink all potential old link before doing recursive Remove-Item
             unlink_persist_data $dir
-            Remove-Item $dir -Recurse -Force -ErrorAction Stop
+            Remove-Item $dir -ErrorAction 'Stop' -Recurse -Force
         } catch {
             if (Test-Path $dir) {
                 Write-UserMessage -Message "Couldn't remove '$(friendly_path $dir)'; it may be in use." -Err
@@ -104,6 +104,7 @@ function Uninstall-ScoopApplication {
             }
         }
 
+        # TODO: foreach
         Get-InstalledVersion -AppName $App -Global:$Global | ForEach-Object {
             Write-UserMessage -Message "Removing older version ($_)." -Output:$false
 
@@ -111,7 +112,7 @@ function Uninstall-ScoopApplication {
             try {
                 # Unlink all potential old link before doing recursive Remove-Item
                 unlink_persist_data $dir
-                Remove-Item $dir -ErrorAction Stop -Recurse -Force
+                Remove-Item $dir -ErrorAction 'Stop' -Recurse -Force
             } catch {
                 Write-UserMessage -Message "Couldn't remove '$(friendly_path $dir)'; it may be in use." -Err
                 return $false
@@ -123,7 +124,7 @@ function Uninstall-ScoopApplication {
             try {
                 # If last install failed, the directory seems to be locked and this
                 # will throw an error about the directory not existing
-                Remove-Item $appdir -ErrorAction Stop -Recurse -Force
+                Remove-Item $appdir -ErrorAction 'Stop' -Recurse -Force
             } catch {
                 if ((Test-Path $appdir)) { return $false } # only throw if the dir still exists
             }
@@ -136,7 +137,7 @@ function Uninstall-ScoopApplication {
 
         if (Test-Path $persist_dir) {
             try {
-                Remove-Item $persist_dir -ErrorAction Stop -Recurse -Force
+                Remove-Item $persist_dir -ErrorAction 'Stop' -Recurse -Force
             } catch {
                 Write-UserMessage -Message "Couldn't remove '$(friendly_path $persist_dir)'" -Err
                 return $false

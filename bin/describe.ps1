@@ -2,19 +2,19 @@
 .SYNOPSIS
     Search for application description on homepage.
 .PARAMETER App
-    Manifest name to search.
+    Specifies the manifest name.
     Wildcards are supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 #>
 param(
     [SupportsWildcards()]
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir
 )
 
@@ -50,12 +50,12 @@ $Queue | ForEach-Object {
 
     $description, $descr_method = find_description $manifest.homepage $home_html
     if (!$description) {
-        Write-UserMessage -Message "`nDescription not found ($($manifest.homepage))" -Color Red
+        Write-UserMessage -Message "`nDescription not found ($($manifest.homepage))" -Color 'Red'
         return
     }
 
     $description = clean_description $description
 
     Write-UserMessage -Message "(found by $descr_method)"
-    Write-UserMessage -Message "  ""$description""" -Color Green
+    Write-UserMessage -Message "  ""$description""" -Color 'Green'
 }

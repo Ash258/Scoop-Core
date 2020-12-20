@@ -37,7 +37,7 @@ function Find-BucketDirectory {
 function Get-LocalBucket {
     <#
     .SYNOPSIS
-        List all local buckets.
+        List all local bucket names.
     #>
 
     return (Get-ChildItem -Directory $SCOOP_BUCKETS_DIRECTORY).Name
