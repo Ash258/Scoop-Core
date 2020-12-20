@@ -81,7 +81,7 @@ function ConvertTo-Manifest {
         }
 
         if ($File) {
-            Out-UTF8File -File $File -Content $content
+            Out-UTF8File -File $File.FullName -Content $content
         } else {
             return $content
         }
