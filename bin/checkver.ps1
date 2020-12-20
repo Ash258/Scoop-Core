@@ -229,7 +229,7 @@ foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
     try {
         $m = ConvertFrom-Manifest -Path $ff.FullName
     } catch {
-        Write-UserMessage -Message "Invalid manifest: $($ff.BaseName)" -Err
+        Write-UserMessage -Message "Invalid manifest: $($ff.Name)" -Err
         continue
     }
     if ($m.checkver) { $Queue += , @($ff, $m) }
