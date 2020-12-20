@@ -54,6 +54,11 @@ function err ([String] $name, [String[]] $message) {
 $MANIFESTS = @()
 # Gather all required manifests
 foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
+    if ($single.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($single.Name)" -Info
+        continue
+    }
+
     $name = $single.BaseName
     try {
         $manifest = ConvertFrom-Manifest -Path $single.FullName

@@ -2,8 +2,8 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-
-$ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+$ALLOWED_MANIFEST_EXTENSION = @('json') # Go with just json until refYaml1
+# $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
 
 function ConvertFrom-Manifest {
     <#

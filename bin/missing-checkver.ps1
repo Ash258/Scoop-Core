@@ -38,6 +38,11 @@ Write-Host ']utoupdate'
 Write-Host ' |  |'
 
 foreach ($file in Get-ChildItem $Dir "$App.*" -File) {
+    if ($file.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($file.Name)" -Info
+        continue
+    }
+
     try {
         $json = ConvertFrom-Manifest -Path $file.FullName
     } catch {
