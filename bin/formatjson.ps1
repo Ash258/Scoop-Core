@@ -32,17 +32,17 @@ $Dir = Resolve-Path $Dir
 
 function _infoMes ($name, $mes) { Write-UserMessage -Message "${name}: $mes" -Info }
 
-foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
-    $name = $m.Basename
-    if ($m.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
-        Write-UserMessage "Skipping $($m.Name)" -Info
+foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
+    $name = $gci.Basename
+    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($gci.Name)" -Info
         continue
     }
 
     try {
-        $manifest = ConvertFrom-Manifest -Path $m.FullName
+        $manifest = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
-        Write-UserMessage -Message "Invalid manifest: $($m.Name)" -Err
+        Write-UserMessage -Message "Invalid manifest: $($gci.Name)" -Err
         continue
     }
 
@@ -157,5 +157,5 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
     $manifest = $newManifest
     #endregion Migrations and fixes
 
-    ConvertTo-Manifest -Path $m.FullName -Manifest $manifest
+    ConvertTo-Manifest -Path $gci.FullName -Manifest $manifest
 }
