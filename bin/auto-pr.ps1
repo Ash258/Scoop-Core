@@ -157,6 +157,7 @@ if (!$SkipCheckver) {
     }
 }
 
+# TODO: Limit just /bucket??
 foreach ($changedFile in hub diff --name-only) {
     $gci = Get-Item $changedFile
     $applicationName = $gci.BaseName
@@ -166,7 +167,7 @@ foreach ($changedFile in hub diff --name-only) {
     }
 
     try {
-        $manifestObject = ConvertFrom-Manifest -Path $changedFile
+        $manifestObject = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage "Invalid manifest: $changedFile" -Err
         continue
