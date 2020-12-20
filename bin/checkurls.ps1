@@ -33,19 +33,19 @@ $Timeout | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
 $Queue = @()
 
-foreach ($file in Get-ChildItem $Dir "$App.*" -File) {
-    if ($file.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
-        Write-UserMessage "Skipping $($file.Name)" -Info
+foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
+    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($gci.Name)" -Info
         continue
     }
 
     try {
-        $manifest = ConvertFrom-Manifest -Path $file.FullName
+        $manifest = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
-        Write-UserMessage -Message "Invalid manifest: $($file.BaseName)" -Err
+        Write-UserMessage -Message "Invalid manifest: $($gci.Name)" -Err
         continue
     }
-    $Queue += , @($file.BaseName, $manifest)
+    $Queue += , @($gci.BaseName, $manifest)
 }
 
 Write-Host '[' -NoNewline

@@ -53,15 +53,15 @@ function err ([String] $name, [String[]] $message) {
 
 $MANIFESTS = @()
 # Gather all required manifests
-foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
-    if ($single.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
-        Write-UserMessage "Skipping $($single.Name)" -Info
+foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
+    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($gci.Name)" -Info
         continue
     }
 
-    $name = $single.BaseName
+    $name = $gci.BaseName
     try {
-        $manifest = ConvertFrom-Manifest -Path $single.FullName
+        $manifest = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         err $name 'Invalid manifest'
         continue
@@ -98,7 +98,7 @@ foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
         'manifest' = $manifest
         'urls'     = $urls
         'hashes'   = $hashes
-        'gci'      = $single
+        'gci'      = $gci
     }
 }
 
