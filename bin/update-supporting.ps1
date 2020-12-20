@@ -10,7 +10,7 @@ param([String] $Supporting = '*')
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-$Sups = Join-Path $PSScriptRoot '..\supporting\*' | Get-ChildItem -File -Include "$Supporting.*"
+$Sups = Join-Path $PSScriptRoot '..\supporting\*' | Get-ChildItem -Include "$Supporting.*" -File
 
 foreach ($sup in $Sups) {
     $name = $sup.BaseName
@@ -20,7 +20,7 @@ foreach ($sup in $Sups) {
     Write-UserMessage -Message "Updating $name" -Color 'Magenta'
 
     $checkver = Join-Path $PSScriptRoot 'checkver.ps1'
-    Invoke-Expression "& $checkver -App $name -Dir $folder -Update"
+    & "$checkver" -App "$name" -Dir "$folder" -Update
 
     try {
         $manifest = ConvertFrom-Manifest -Path $sup.FullName

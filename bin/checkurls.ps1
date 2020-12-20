@@ -3,7 +3,7 @@
     List manifests which do not have valid URLs.
 .PARAMETER App
     Specifies the manifest name to search.
-    Wildcards is supported.
+    Wildcards are supported.
 .PARAMETER Dir
     Specifies the location of manifests.
 .PARAMETER Timeout

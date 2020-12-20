@@ -7,9 +7,9 @@ function Get-LatestVersion {
     .SYNOPSIS
         Gets the latest version of app from manifest.
     .PARAMETER AppName
-        Specifies application's name.
+        Specifies the application's name.
     .PARAMETER Bucket
-        Specifies bucket which the app belongs to.
+        Specifies the bucket which the app belongs to.
     .PARAMETER Uri
         Specifies remote app manifest's URI.
     #>
@@ -33,7 +33,7 @@ function Get-InstalledVersion {
     .SYNOPSIS
         Gets all installed version of app, by checking version directories' 'scoop-install.json'
     .PARAMETER AppName
-        Specifies application's name.
+        Specifies the application's name.
     .PARAMETER Global
         Specifies globally installed application.
     .NOTES
@@ -43,7 +43,7 @@ function Get-InstalledVersion {
     [CmdletBinding()]
     [OutputType([Object[]])]
     param (
-        [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [Alias('App')]
         [String] $AppName,
         [Parameter(Position = 1)]
@@ -54,7 +54,7 @@ function Get-InstalledVersion {
         $appPath = appdir $AppName $Global
         $result = @()
 
-        if (Test-Path $appPath -PathType Container) {
+        if (Test-Path $appPath -PathType 'Container') {
             # TODO: Keep only scoop-install.json
             $arr = @((Get-ChildItem "$appPath\*\install.json"), (Get-ChildItem "$appPath\*\scoop-install.json"))
             $versions = @(($arr | Sort-Object -Property LastWriteTimeUtc).Directory.Name) | Where-Object { $_ -ne 'current' }
@@ -70,7 +70,7 @@ function Select-CurrentVersion {
     .SYNOPSIS
         Select current version of installed app, from 'current\manifest.json' or modified time of version directory
     .PARAMETER AppName
-        Specifies application's name.
+        Specifies the application's name.
     .PARAMETER Global
         Specifies globally installed application.
     #>
@@ -88,7 +88,7 @@ function Select-CurrentVersion {
         $appPath = appdir $AppName $Global
 
         $currentPath = Join-Path $appPath 'current'
-        if (Test-Path $currentPath -PathType Container) {
+        if (Test-Path $currentPath -PathType 'Container') {
             $currentVersion = (installed_manifest $AppName 'current' $Global).version
             # Get version from link target in case of nightly
             if ($currentVersion -eq 'nightly') { $currentVersion = ((Get-Item $currentPath).Target | Get-Item).BaseName }
@@ -106,7 +106,7 @@ function Compare-Version {
     .SYNOPSIS
         Compares versions, mainly according to SemVer's rules.
     .PARAMETER ReferenceVersion
-        Specifies a version used as a reference for comparison.
+        Specifies the version used as a reference for comparison.
     .PARAMETER DifferenceVersion
         Specifies the version that are compared to the reference version.
     .PARAMETER Delimiter
@@ -195,7 +195,7 @@ function Split-Version {
     .SYNOPSIS
         Splits version by Delimiter, convert number string to number, and separate letters from numbers.
     .PARAMETER Version
-        Specifies a version to be splitted.
+        Specifies the version to be splitted.
     .PARAMETER Delimiter
         Specifies the delimiter of version (Literal).
     #>

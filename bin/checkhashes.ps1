@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Check if ALL urls inside manifest have correct hashes.
+    Check if all urls defined in manifest have correct hashes.
 .PARAMETER App
     Specifies the manifest name to be checked (without extension).
     Wildcards are supported.
@@ -45,11 +45,10 @@ param(
 $Dir = Resolve-Path $Dir
 if ($ForceUpdate) { $Update = $true }
 # Cleanup
-if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -ErrorAction SilentlyContinue -Force -Recurse }
+if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse }
 
 function err ([String] $name, [String[]] $message) {
-    Write-Host "${name}: " -ForegroundColor 'Red' -NoNewline
-    Write-Host ($message -join "`r`n") -ForegroundColor 'Red'
+    Write-UserMessage "${name}: ", ($message -join "`r`n") -Color 'Red'
 }
 
 $MANIFESTS = @()

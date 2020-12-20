@@ -5,6 +5,10 @@
 $ALIAS_CMD_ALIAS = 'alias'
 
 function Get-AliasesFromConfig {
+    <#
+    .SYNOPSIS
+        Get hahstable of all aliases defined in config.
+    #>
     return get_config $ALIAS_CMD_ALIAS @{ }
 }
 
@@ -71,7 +75,7 @@ $Command
 "@
 
     # Add alias to config
-    $aliases | Add-Member -Name $Name -Value $aliasFileName -MemberType NoteProperty
+    $aliases | Add-Member -Name $Name -Value $aliasFileName -MemberType 'NoteProperty'
 
     set_config $ALIAS_CMD_ALIAS $aliases | Out-Null
 }
@@ -105,7 +109,7 @@ function Get-ScoopAlias {
     param([Switch] $Verbose)
     $aliases = @()
 
-    $props = @((Get-AliasesFromConfig).PSObject.Properties | Where-Object -Property MemberType -EQ -Value NoteProperty)
+    $props = @((Get-AliasesFromConfig).PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty')
     if ($props.Count -eq 0) { $props = @() }
 
     $props.GetEnumerator() | ForEach-Object {

@@ -3,7 +3,7 @@
     Check if manifest contains checkver and autoupdate property.
 .PARAMETER App
     Specifies the manifest name.
-    Wirldcards are supported.
+    Wildcards are supported.
 .PARAMETER Dir
     Specifies the location of manifests.
 .PARAMETER SkipSupported
@@ -30,10 +30,10 @@ $SkipSupported | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
 
 Write-Host '[' -NoNewline
-Write-Host 'C' -NoNewline -ForegroundColor 'Green'
+Write-Host 'C' -ForegroundColor 'Green' -NoNewline
 Write-Host ']heckver'
 Write-Host ' | [' -NoNewline
-Write-Host 'A' -NoNewline -ForegroundColor 'Cyan'
+Write-Host 'A' -ForegroundColor 'Cyan' -NoNewline
 Write-Host ']utoupdate'
 Write-Host ' |  |'
 

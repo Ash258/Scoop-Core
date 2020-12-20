@@ -31,7 +31,7 @@ foreach ($a in $apps) {
     $app, $bucket, $version = parse_app $app
 
     # Skip scoop
-    if ($app -eq 'scoop') { return }
+    if ($app -eq 'scoop') { continue }
 
     # Set global flag when running reset command on specific app
     if (($null -eq $global) -and (installed $app $true)) { $global = $true }

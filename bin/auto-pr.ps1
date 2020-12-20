@@ -8,7 +8,7 @@
     Must be in format '<user>/<repo>:<branch>'
 .PARAMETER App
     Specifies the manifest name to search.
-    Placeholders are supported.
+    Wildcards are supported.
 .PARAMETER Dir
     Specifies the location of manifests.
 .PARAMETER Push
@@ -29,7 +29,6 @@
     PS BUCKETROOT > .\bin\auto-pr.ps1 -Push
     Update all manifests inside 'bucket/' directory.
 #>
-
 param(
     [Parameter(Mandatory)]
     [ValidateScript( {
@@ -65,12 +64,12 @@ if ($Help -or (!$Push -and !$Request)) {
 Usage: auto-pr.ps1 [OPTION]
 
 Mandatory options:
-  -p,  -push                push updates directly to 'origin master'
-  -r,  -request             create pull-requests on 'upstream master' for each update
+  -p,  -push                Push updates directly to 'origin master'
+  -r,  -request             Create pull-requests on 'upstream master' for each update
 
 Optional options:
-  -u,  -upstream            upstream repository with target branch
-                            only used if -r is set (default: lukesampson/scoop:master)
+  -u,  -upstream            Upstream repository with target branch
+                            Only used if -r is set (default: lukesampson/scoop:master)
   -h,  -help
 '@
     exit 0

@@ -3,6 +3,7 @@
     Format manifest.
 .PARAMETER App
     Specifies the manifest name.
+    Wildcards are supported.
 .PARAMETER Dir
     Specifies the location of manifests.
 .EXAMPLE
@@ -141,7 +142,7 @@ foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
     #endregion Architecture properties sort
 
     $newManifest = [PSCustomObject] @{ }
-    '##', '_comment', 'version', 'description', 'homepage', 'license', 'notes', 'depends' | ForEach-Object {
+    '##', '_comment', 'version', 'description', 'homepage', 'license', 'notes', 'changelog', 'depends' | ForEach-Object {
         if ($manifest.$_) {
             $newManifest | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $manifest.$_
             $manifest.PSObject.Properties.Remove($_)

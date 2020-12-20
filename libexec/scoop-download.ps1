@@ -77,7 +77,7 @@ foreach ($app in $application) {
         $checkHash = $false
     }
 
-    Write-UserMessage "Starting download for $app" -Color Green
+    Write-UserMessage "Starting download for $app" -Color 'Green'
 
     $registered = $false
     # TODO: Rework with proper wrappers after #3149
