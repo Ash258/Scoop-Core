@@ -90,7 +90,7 @@ function Test-MainBucketAdded {
 function Test-LongPathEnabled {
     <#
     .SYNOPSIS
-        Test if long paths options is enabled.
+        Test if long paths option is enabled.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
