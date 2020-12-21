@@ -2,7 +2,7 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-Import-Module "$PSScriptRoot\..\supporting\yaml\bin\Powershell-Yaml.psd1" -Prefix 'CloudBase'
+Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase'
 
 $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
 

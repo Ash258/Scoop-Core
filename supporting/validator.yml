@@ -1,13 +1,14 @@
-version: 1.0.2
+version: 1.0.3
 description: Scoop validator
-homepage: https://github.com/ScoopInstaller/Validator
-license: Unlicense
-url: https://github.com/ScoopInstaller/Validator/releases/download/v1.0.2/validator.zip
-hash: eecc3122d4e9a73e8e5cf742e7af2e60c5a77360b64c514166c0250ed13120a9
-pre_install: Remove-AppDirItem 'checksum*'
+homepage: https://github.com/Ash258/Scoop-Validator
+license:
+  identifier: GPL-3.0-only
+  url: https://github.com/Ash258/Scoop-Validator/blob/main/LICENSE
+url: https://github.com/Ash258/Scoop-Validator/releases/download/1.0.3/validator.zip
+hash: 49a8c7cbd266f232edd01855eeb4f47d491f451059fbcfebe48fbbe71a757237
 checkver: github
 autoupdate:
-  url: https://github.com/ScoopInstaller/Validator/releases/download/v$version/validator.zip
+  url: https://github.com/Ash258/Scoop-Validator/releases/download/$version/validator.zip
   hash:
     url: $url.sha256
 
