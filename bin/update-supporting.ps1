@@ -4,7 +4,7 @@
 .PARAMETER Supporting
     Specifies the name of supporting tool to be updated.
 #>
-param([String] $Supporting = '*')
+param([String] $Supporting = '*', [Switch] $Install)
 
 $ErrorActionPreference = 'Stop'
 $checkver = Join-Path $PSScriptRoot 'checkver.ps1'
@@ -22,6 +22,8 @@ foreach ($sup in $Sups) {
     Write-UserMessage -Message "Updating $name" -Color 'Magenta'
 
     & "$checkver" -App "$name" -Dir "$folder" -Update
+
+    if (!$Install) { continue }
 
     try {
         $manifest = ConvertFrom-Manifest -Path $sup.FullName

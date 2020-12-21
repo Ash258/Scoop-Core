@@ -213,7 +213,8 @@
                 "bucket/*.y*ml",
                 "deprecated/*.y*ml",
                 "TODO/*.y*ml",
-            ]
+                "supporting/*.y*ml",
+            ],
         },
         "yaml.schemaStore.enable": true,
         "yaml.validate": true,
