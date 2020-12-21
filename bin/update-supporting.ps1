@@ -6,11 +6,13 @@
 #>
 param([String] $Supporting = '*')
 
+$ErrorActionPreference = 'Stop'
+$checkver = Join-Path $PSScriptRoot 'checkver.ps1'
+$Sups = Join-Path $PSScriptRoot '..\supporting\*' | Get-ChildItem -Include "$Supporting.*" -File
+
 'decompress', 'Helpers', 'manifest', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
-
-$Sups = Join-Path $PSScriptRoot '..\supporting\*' | Get-ChildItem -Include "$Supporting.*" -File
 
 foreach ($sup in $Sups) {
     $name = $sup.BaseName
@@ -19,7 +21,6 @@ foreach ($sup in $Sups) {
 
     Write-UserMessage -Message "Updating $name" -Color 'Magenta'
 
-    $checkver = Join-Path $PSScriptRoot 'checkver.ps1'
     & "$checkver" -App "$name" -Dir "$folder" -Update
 
     try {
@@ -28,12 +29,20 @@ foreach ($sup in $Sups) {
         Write-UserMessage -Message "Invalid manifest: $($sup.Name)" -Err
         continue
     }
-    Confirm-DirectoryExistence $dir | Out-Null
 
-    $fname = dl_urls $name $manifest.version $manifest '' default_architecture $dir $true $true
+    Remove-Module 'powershell-yaml'
+    Start-Sleep -Seconds 2
+
+    Rename-Item $dir 'old' -ErrorAction 'SilentlyContinue'
+    Confirm-DirectoryExistence $dir | Out-Null
+    Start-Sleep -Seconds 2
+
+    $fname = dl_urls $name $manifest.version $manifest '' (default_architecture) $dir $true $true
     $fname | Out-Null
     # Pre install is enough now
     pre_install $manifest $architecture
 
     Write-UserMessage -Message "$name done" -Success
+
+    Join-Path $folder "$name\old" | Remove-Item -Force -Recurse
 }
