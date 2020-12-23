@@ -1,0 +1,14 @@
+version: 1.0.3
+description: Scoop validator
+homepage: https://github.com/Ash258/Scoop-Validator
+license:
+  identifier: GPL-3.0-only
+  url: https://github.com/Ash258/Scoop-Validator/blob/main/LICENSE
+url: https://github.com/Ash258/Scoop-Validator/releases/download/1.0.3/validator.zip
+hash: 49a8c7cbd266f232edd01855eeb4f47d491f451059fbcfebe48fbbe71a757237
+checkver: github
+autoupdate:
+  url: https://github.com/Ash258/Scoop-Validator/releases/download/$version/validator.zip
+  hash:
+    url: $url.sha256
+

@@ -4,17 +4,17 @@
 .DESCRIPTION
     Checks websites for newer versions using an (optional) regular expression defined in the manifest.
 .PARAMETER App
-    Manifest name to search.
+    Specifies the manifest name.
     Wildcards are supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 .PARAMETER Update
-    Update given manifest
+    Specifies to write updated manifest into file.
 .PARAMETER ForceUpdate
-    Update given manifest(s) even when there is no new version.
-    Useful for hash updates.
+    Specifies to write given manifest(s) even when there is no new version.
+    Useful for hash updates or formating.
 .PARAMETER SkipUpdated
-    Updated manifests will not be shown.
+    Specifies to not show up-to-date manifests.
 .EXAMPLE
     PS BUCKETROOT > .\bin\checkver.ps1
     Check all manifest inside default directory.
@@ -51,9 +51,9 @@ param(
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir,
     [Switch] $Update,
     [Switch] $ForceUpdate,
@@ -79,7 +79,7 @@ $GITHUB_REGEX = "/releases/tag/$UNIVERSAL_REGEX"
 #region Functions
 function next($AppName, $Err) {
     Write-Host "${AppName}: " -NoNewline
-    Write-UserMessage -Message $Err -Color DarkRed
+    Write-UserMessage -Message $Err -Color 'DarkRed'
 
     # Just throw something to invoke try-catch
     throw 'error'
@@ -90,6 +90,7 @@ function Invoke-Check {
 
     $state = $EventToCheck.SourceEventArgs.UserState
 
+    $gci = $state.gci
     $appName = $state.app
     $json = $state.json
     $url = $state.url
@@ -181,16 +182,16 @@ function Invoke-Check {
 
     # version hasn't changed (step over if forced update)
     if ($ver -eq $expectedVersion -and !$ForceUpdate) {
-        Write-UserMessage -Message $ver -Color DarkGreen
+        Write-UserMessage -Message $ver -Color 'DarkGreen'
         return
     }
 
-    Write-Host $ver -ForegroundColor DarkRed -NoNewline
+    Write-Host $ver -ForegroundColor 'DarkRed' -NoNewline
     Write-Host " (scoop version is $expectedVersion)" -NoNewline
     $updateAvailable = (Compare-Version -ReferenceVersion $expectedVersion -DifferenceVersion $ver) -ne 0
 
     if ($json.autoupdate -and $updateAvailable) {
-        Write-UserMessage -Message ' autoupdate available' -Color Cyan
+        Write-UserMessage -Message ' autoupdate available' -Color 'Cyan'
     } else {
         Write-UserMessage -Message ''
     }
@@ -199,11 +200,15 @@ function Invoke-Check {
     if ($ForceUpdate) { $Update = $true }
 
     if ($Update -and $json.autoupdate) {
-        if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color DarkMagenta }
-        try {
-            if ($Version -ne '') { $ver = $Version }
+        if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color 'DarkMagenta' }
+        if ($Version -ne '') { $ver = $Version }
 
-            Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+        try {
+            $newManifest = Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+            if ($null -eq $newManifest) { throw "Could not update $appname" }
+
+            Write-UserMessage -Message "Writing updated $appName manifest" -Color 'DarkGreen'
+            ConvertTo-Manifest -Path $gci.FullName -Manifest $newManifest
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
         }
@@ -215,13 +220,24 @@ function Invoke-Check {
 Get-Event | ForEach-Object { Remove-Event $_.SourceIdentifier }
 
 #region Main
-Get-ChildItem $Dir "$Search.*" -File | ForEach-Object {
-    $m = parse_json $_.FullName
-    if ($m.checkver) { $Queue += , @($_.Name, $m) }
+foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
+    if ($ff.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($ff.Name)" -Info
+        continue
+    }
+
+    try {
+        $m = ConvertFrom-Manifest -Path $ff.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($ff.Name)" -Err
+        continue
+    }
+    if ($m.checkver) { $Queue += , @($ff, $m) }
 }
 
 foreach ($q in $Queue) {
-    $name, $json = $q
+    $gci, $json = $q
+    $name = $gci.Name
 
     $substitutions = Get-VersionSubstitution -Version $json.version
 
@@ -281,6 +297,7 @@ foreach ($q in $Queue) {
         'xpath'    = $xpath
         'reverse'  = $reverse
         'replace'  = $replace
+        'gci'      = $gci
     }
 
     $wc.Headers.Add('Referer', (strip_filename $url))

@@ -5,6 +5,14 @@
 
 #region helpers
 function Test-7zipRequirement {
+    <#
+    .SYNOPSIS
+        Test if file or url requires 7zip to be installed.
+    .PARAMETER URL
+        Specifies the string representing URL.
+    .PARAMETER File
+        Specifies the filename.
+    #>
     [CmdletBinding(DefaultParameterSetName = 'URL')]
     [OutputType([Boolean])]
     param (
@@ -16,7 +24,6 @@ function Test-7zipRequirement {
     )
 
     if (!$File -and ($null -eq $URL)) { return $false }
-
 
     if ($URL) {
         # For dependencies resolving
@@ -31,6 +38,14 @@ function Test-7zipRequirement {
 }
 
 function Test-LessmsiRequirement {
+    <#
+    .SYNOPSIS
+        Test if file or url requires lessmsi to be installed.
+    .PARAMETER URL
+        Specifies the string representing URL.
+    .PARAMETER File
+        Specifies the filename.
+    #>
     [CmdletBinding()]
     [OutputType([Boolean])]
     param (
@@ -50,6 +65,22 @@ function Test-LessmsiRequirement {
 #endregion helpers
 
 function Expand-7zipArchive {
+    <#
+    .SYNOPSIS
+        Extract files from 7zip archive.
+    .PARAMETER Path
+        Specifies the path to the archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Overwrite
+        Specifies how files with same names inside archive are handled.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
@@ -67,7 +98,7 @@ function Expand-7zipArchive {
     begin {
         if (get_config '7ZIPEXTRACT_USE_EXTERNAL' $false) {
             try {
-                $7zPath = (Get-Command '7z' -CommandType Application | Select-Object -First 1).Source
+                $7zPath = (Get-Command '7z' -CommandType 'Application' | Select-Object -First 1).Source
             } catch [System.Management.Automation.CommandNotFoundException] {
                 throw [ScoopException] "Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7zip manually and try again." # TerminatingError thrown
             }
@@ -122,6 +153,20 @@ function Expand-7zipArchive {
 }
 
 function Expand-MsiArchive {
+    <#
+    .SYNOPSIS
+        Extract files from msi files.
+    .PARAMETER Path
+        Specifies the path to the file.
+    .PARAMETER DestinationPath
+        Specifies the location, where file should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside file.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the file after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
@@ -181,6 +226,20 @@ function Expand-MsiArchive {
 }
 
 function Expand-InnoArchive {
+    <#
+    .SYNOPSIS
+        Extract files from innosetup file.
+    .PARAMETER Path
+        Specifies the path to the file.
+    .PARAMETER DestinationPath
+        Specifies the location, where file should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside file.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the file after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
@@ -222,6 +281,18 @@ function Expand-InnoArchive {
 }
 
 function Expand-ZipArchive {
+    <#
+    .SYNOPSIS
+        Extract files from zip archive.
+    .PARAMETER Path
+        Specifies the path to the archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
@@ -277,6 +348,18 @@ function Expand-ZipArchive {
 }
 
 function Expand-DarkArchive {
+    <#
+    .SYNOPSIS
+        Extract files from dark installers.
+    .PARAMETER Path
+        Specifies the path to the dark installer.
+    .PARAMETER DestinationPath
+        Specifies the location, where installer should be extracted.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the installer after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]

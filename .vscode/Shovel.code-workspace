@@ -5,7 +5,10 @@
             "DavidAnson.vscode-markdownlint",
             "EditorConfig.EditorConfig",
             "fabiospampinato.vscode-terminals",
+            "ms-dotnettools.csharp",
             "ms-vscode.powershell-preview",
+            "ms-vscode-remote.remote-ssh",
+            "ms-vscode-remote.remote-containers",
             "redhat.vscode-yaml",
             "usernamehw.errorlens",
             "yzhang.markdown-all-in-one",
@@ -13,7 +16,7 @@
     },
     "folders": [
         {
-            "path": "../../Core",
+            "path": "../",
             "name": "Shovel",
         },
         {
@@ -77,24 +80,31 @@
     "settings": {
         "breadcrumbs.enabled": true,
         "editor.autoClosingBrackets": "beforeWhitespace",
+        "editor.autoIndent": "full",
+        "editor.insertSpaces": true,
         "editor.renderControlCharacters": true,
         "editor.renderWhitespace": "all",
         "editor.rulers": [
-            120,
+            120, // General preference
             127, // Github PR
             {
                 "column": 127,
-                "color": "#BC92EA"
+                "color": "#6912c5"
             },
             139, // Github
             {
                 "column": 139,
-                "color": "#db0505"
+                "color": "#ff0505"
             },
             150,
             180,
             240,
         ],
+        "editor.tabSize": 4,
+        "files.encoding": "utf8",
+        "files.eol": "\r\n",
+        "files.insertFinalNewline": true,
+        "files.trimTrailingWhitespace": true,
         "git.inputValidationSubjectLength": 71,
         "json.schemas": [
             {
@@ -103,6 +113,7 @@
                     "bucket/*.json*",
                     "deprecated/*.json*",
                     "TODO/*.json*",
+                    "supporting/*.json*",
                 ],
             },
         ],
@@ -111,71 +122,60 @@
         "terminal.integrated.shellArgs.windows": [
             "-NoLogo",
             "-NoExit",
-            "-Command",
-            ". \"${env:CMDER_ROOT}\\config\\user_profile.ps1\"",
         ],
         "terminal.integrated.windowsEnableConpty": true,
         "terminals.terminals": [
             {
-                "name": "Powershell (Cmder)",
+                "name": "Powershell",
                 "shellPath": "powershell.exe",
                 "shellArgs": [
                     "-NoLogo",
                     "-NoExit",
-                    "-Command",
-                    ". \"${env:CMDER_ROOT}\\config\\user_profile.ps1\"",
                 ],
                 "focus": true,
                 "open": true,
             },
             {
-                "name": "Powershell Core (Cmder)",
-                "shellPath": "${env:SCOOP}\\apps\\pwsh\\current\\pwsh.exe",
+                "name": "Powershell Core",
+                "shellPath": "pwsh.exe",
                 "shellArgs": [
                     "-NoLogo",
                     "-NoExit",
-                    "-Command",
-                    ". \"${env:CMDER_ROOT}\\config\\user_profile.ps1\"",
                 ],
                 "focus": true,
                 "open": true,
             },
             {
-                "name": "Powershell Core Preview (Cmder)",
-                "shellPath": "${env:SCOOP}\\apps\\pwsh-preview\\current\\pwsh.exe",
+                "name": "Powershell Core Preview",
+                "shellPath": "pwsh-preview.exe",
                 "shellArgs": [
                     "-NoLogo",
                     "-NoExit",
-                    "-Command",
-                    ". \"${env:CMDER_ROOT}\\config\\user_profile.ps1\"",
                 ],
                 "focus": true,
                 "open": true,
             },
         ],
         // #region Language Specific settings
-        "editor.autoIndent": "full",
-        "editor.insertSpaces": true,
-        "editor.tabSize": 4,
-        "files.encoding": "utf8",
-        "files.eol": "\r\n",
-        "files.insertFinalNewline": true,
-        "files.trimTrailingWhitespace": true,
         "markdown.extension.italic.indicator": "_",
         "markdown.extension.list.indentationSize": "inherit",
         "markdown.extension.orderedList.marker": "one",
         "markdown.extension.orderedList.autoRenumber": true,
         "markdown.extension.tableFormatter.enabled": true,
         "markdown.extension.toc.levels": "2..6",
+        "powershell.codeFolding.enable": true,
+        "powershell.codeFolding.showLastLine": true,
         "powershell.codeFormatting.addWhitespaceAroundPipe": true,
         "powershell.codeFormatting.alignPropertyValuePairs": true,
         "powershell.codeFormatting.autoCorrectAliases": true,
         "powershell.codeFormatting.ignoreOneLineBlock": true,
+        "powershell.codeFormatting.newLineAfterCloseBrace": true,
         "powershell.codeFormatting.newLineAfterOpenBrace": true,
         "powershell.codeFormatting.openBraceOnSameLine": true,
         "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
         "powershell.codeFormatting.preset": "OTBS",
         "powershell.codeFormatting.trimWhitespaceAroundPipe": true,
+        "powershell.codeFormatting.useConstantStrings": true,
         "powershell.codeFormatting.useCorrectCasing": true,
         "powershell.codeFormatting.whitespaceAfterSeparator": true,
         "powershell.codeFormatting.whitespaceAroundOperator": true,
@@ -183,13 +183,13 @@
         "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
         "powershell.codeFormatting.whitespaceBetweenParameters": true,
         "powershell.codeFormatting.whitespaceInsideBrace": true,
-        "powershell.codeFormatting.newLineAfterCloseBrace": true,
-        "powershell.codeFormatting.useConstantStrings": true,
+        "powershell.helpCompletion": "BlockComment",
         "powershell.integratedConsole.showOnStartup": false,
         "[makefile]": {
-            "editor.insertSpaces": false
+            "editor.insertSpaces": false,
         },
         "[yaml]": {
+            "editor.insertSpaces": true,
             "editor.tabSize": 2,
             "editor.quickSuggestions": {
                 "other": true,
@@ -213,7 +213,8 @@
                 "bucket/*.y*ml",
                 "deprecated/*.y*ml",
                 "TODO/*.y*ml",
-            ]
+                "supporting/*.y*ml",
+            ],
         },
         "yaml.schemaStore.enable": true,
         "yaml.validate": true,

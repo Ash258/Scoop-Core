@@ -1,12 +1,15 @@
 {
     "version": "0.4.2",
-    "desciption": "Powershell module for yaml parsing",
+    "description": "Powershell module for yaml parsing",
     "homepage": "https://github.com/cloudbase/powershell-yaml",
-    "license": "Apache-2.0",
+    "license": {
+        "identifier": "Apache-2.0",
+        "url": "https://github.com/cloudbase/powershell-yaml/blob/master/LICENSE"
+    },
     "url": "https://psg-prod-eastus.azureedge.net/packages/powershell-yaml.0.4.2.nupkg",
     "hash": "47f21c151775c2f0d8a21c86cedca3998f0bbcfd309b27977c9024f48da9787c",
     "pre_install": [
-        "@('package', 'Tests', '_rels', '*.xml') | ForEach-Object { Remove-Item \"$dir\\$_\" -Force -Recurse }",
+        "Remove-AppDirItem 'package', 'Tests', '_rels', '*.xml'",
         "Get-ChildItem \"$dir\\*\" -Exclude '*.dll', '*.psd1', '*.ps1', '*.psm1', 'LICENSE' -File -Recurse | Remove-Item"
     ],
     "checkver": {

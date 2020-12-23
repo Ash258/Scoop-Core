@@ -65,16 +65,16 @@ if (!$apps) {
                     Write-UserMessage -Message "${app}: $($status.version) -> $($status.latest_version)$globText" -Warning -SkipSeverity
                 }
             } elseif ($applicationsParam -ne '*') {
-                Write-UserMessage -Message "${app}: $($status.version) (latest available version)" -Color Green
+                Write-UserMessage -Message "${app}: $($status.version) (latest available version)" -Color 'Green'
             }
         }
 
         $c = $outdatedApplications.Count
         if ($c -eq 0) {
-            Write-UserMessage -Message 'Latest versions for all apps are installed! For more information try ''scoop status''' -Color Green
+            Write-UserMessage -Message 'Latest versions for all apps are installed! For more information try ''scoop status''' -Color 'Green'
         } else {
             $a = pluralize $c 'app' 'apps'
-            Write-UserMessage -Message "Updating $c outdated ${a}:" -Color DarkCyan
+            Write-UserMessage -Message "Updating $c outdated ${a}:" -Color 'DarkCyan'
         }
     }
 
