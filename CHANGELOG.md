@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
+
+### 0.6-pre1
+
+- **scoop-install**: Prevent repeated installation of same manifest/url/local file again
+- **binaries**: Support YAMl typed manifests
+- General code cleanup and docuementation tweaks
+
 ## [0.55](https://github.com/Ash258/Scoop-Core/milestone/2)
 
 ### 0.55-pre5
