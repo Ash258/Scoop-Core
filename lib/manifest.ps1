@@ -5,6 +5,7 @@
 Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase'
 
 $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+$ALLOWED_MANIFEST_EXTENSION_REGEX = $ALLOWED_MANIFEST_EXTENSION -join '|'
 
 function ConvertFrom-Manifest {
     <#
@@ -98,9 +99,16 @@ function ConvertTo-Manifest {
 
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
+    $buc = Find-BucketDirectory -Bucket $bucket
+    $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*"
+    $path = $null
 
-    # TODO: YAML
-    return Find-BucketDirectory $bucket | Join-Path -ChildPath "$name.json"
+    if ($file) {
+        if ($file.Count -gt 1) { $file = $file[0] }
+        $path = $file.FullName
+    }
+
+    return $path
 }
 
 function parse_json {
@@ -132,7 +140,10 @@ function url_manifest($url) {
 function manifest($app, $bucket, $url) {
     if ($url) { return url_manifest $url }
 
-    return parse_json (manifest_path $app $bucket)
+    $path = manifest_path $app $bucket
+    $manifest = ConvertFrom-Manifest -Path $path
+
+    return $manifest
 }
 
 function save_installed_manifest($app, $bucket, $dir, $url) {

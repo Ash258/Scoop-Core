@@ -137,7 +137,6 @@ function Search-LocalBucket {
     )
 
     begin {
-        $architecture = default_architecture
         $apps = @()
         $result = @()
     }
