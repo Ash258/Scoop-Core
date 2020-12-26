@@ -71,7 +71,7 @@ switch ($Option) {
             break
         }
 
-        if (Test-Path $path -PathType Leaf) {
+        if (Test-Path $path -PathType 'Leaf') {
             if ($Option -eq 'edit') {
                 Start-Process $path
             } elseif ($Option -eq 'path') {

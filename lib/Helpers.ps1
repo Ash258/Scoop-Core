@@ -105,36 +105,6 @@ function Confirm-DirectoryExistence {
     }
 }
 
-function Set-TerminatingError {
-    <#
-    .SYNOPSIS
-        Throw [ScoopException] helper for universal exception handling.
-    .DESCRIPTION
-        Format <Category>|-<detail> should be respected all the time as it will allow to dynamically post new issue prompts
-        in manifest scripts and mainly it is easy and unified way how to detect reportable problems.
-        Use 'Ignore|-<details>' If you do not want to show new issue prompt. Usually in problems not related to specific manifest
-    .PARAMETER Title
-        Specifies the exception message.
-        It should be in format '<Category>|-<detail>'.
-    .PARAMETER ID
-        Specifies the global identifier of the error condition.
-    #>
-    param([Alias('Message')] [String] $Title, [String] $ID = 'Scoop', [Switch] $ForceThrow)
-
-    if (!$ForceThrow -and ($PSCmdlet -and $IsWindows)) {
-        $PSCmdlet.ThrowTerminatingError(
-            [System.Management.Automation.ErrorRecord]::new(
-                ([ScoopException]::new($Title)),
-                $ID,
-                [System.Management.Automation.ErrorCategory]::OpenError,
-                $null
-            )
-        )
-    } else {
-        throw [ScoopException]::new($Title)
-    }
-}
-
 function Stop-ScoopExecution {
     <#
     .SYNOPSIS
@@ -193,7 +163,7 @@ function Out-UTF8File {
     )
     process {
         if ($PSVersionTable.PSVersion.Major -ge 6) {
-            Set-Content -LiteralPath $File -Value $Content -Encoding utf8
+            Set-Content -LiteralPath $File -Value $Content -Encoding 'utf8'
         } else {
             [System.IO.File]::WriteAllLines($File, ($Content -join "`r`n"))
         }
@@ -245,7 +215,7 @@ function Get-MagicByte {
     )
 
     process {
-        if (!(Test-Path $File -PathType Leaf)) { return '' }
+        if (!(Test-Path $File -PathType 'Leaf')) { return '' }
 
         if ((Get-Command Get-Content).Parameters.ContainsKey('AsByteStream')) {
             # PowerShell Core (6.0+) '-Encoding byte' is replaced by '-AsByteStream'
@@ -270,9 +240,9 @@ function Get-MagicByte {
 }
 
 function _resetAlias($name, $value) {
-    $existing = Get-Alias $name -ErrorAction Ignore
+    $existing = Get-Alias $name -ErrorAction 'Ignore'
 
-    if ($existing -and ($existing | Where-Object -Property Options -Match 'readonly')) {
+    if ($existing -and ($existing | Where-Object -Property 'Options' -Match 'readonly')) {
         if ($existing.Definition -ne $value) {
             Write-UserMessage "Alias $name is read-only; cannot reset it." -Warning
         }
@@ -289,16 +259,16 @@ function _resetAlias($name, $value) {
         return
     }
 
-    Set-Alias $name $value -Scope Script -Option AllScope
+    Set-Alias $name $value -Scope 'Script' -Option 'AllScope'
 }
 
 function Reset-Alias {
     # For aliases where there's a local function, re-alias so the function takes precedence
-    $aliases = Get-Alias | Where-Object -Property Options -NotMatch 'readonly|allscope' | Select-Object -ExpandProperty Name
+    $aliases = Get-Alias | Where-Object -Property 'Options' -NotMatch 'readonly|allscope' | Select-Object -ExpandProperty 'Name'
     Get-ChildItem Function: | ForEach-Object {
         $fn = $_.Name
         if ($fn -in $aliases) {
-            Set-Alias $fn Local:$fn -Scope Script
+            Set-Alias $fn Local:$fn -Scope 'Script'
         }
     }
 
@@ -312,7 +282,7 @@ function Reset-Alias {
         'gm'     = 'Get-Member'
         'iex'    = 'Invoke-Expression'
         'ls'     = 'Get-ChildItem'
-        'mkdir'  = { New-Item -Type Directory @args }
+        'mkdir'  = { New-Item -Type 'Directory' @args }
         'mv'     = 'Move-Item'
         'rm'     = 'Remove-Item'
         'sc'     = 'Set-Content'
@@ -345,7 +315,7 @@ function New-IssuePrompt {
     $url = known_bucket_repo $Bucket
     $bucketPath = Join-Path $SCOOP_BUCKETS_DIRECTORY $Bucket
 
-    if ((Test-Path $bucketPath) -and (Join-Path $bucketPath '.git' | Test-Path -PathType Container)) {
+    if ((Test-Path $bucketPath) -and (Join-Path $bucketPath '.git' | Test-Path -PathType 'Container')) {
         $remote = Invoke-GitCmd -Repository $bucketPath -Command 'config' -Argument '--get', 'remote.origin.url'
         # Support ssh and http syntax
         # git@PROVIDER:USER/REPO.git
@@ -357,7 +327,7 @@ function New-IssuePrompt {
     }
 
     if (!$url) {
-        Write-UserMessage -Message 'Please contact the manifest maintainer!' -Color DarkRed
+        Write-UserMessage -Message 'Please contact the manifest maintainer!' -Color 'DarkRed'
         return
     }
 
@@ -377,7 +347,7 @@ function New-IssuePrompt {
         }
     }
 
-    Write-UserMessage -Message "$msg`n$url" -Color DarkRed
+    Write-UserMessage -Message "$msg`n$url" -Color 'DarkRed'
 }
 
 #region Exceptions

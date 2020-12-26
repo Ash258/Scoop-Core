@@ -37,7 +37,7 @@ function Update-ScoopCoreClone {
     if (!(Test-Path $newDir -PathType Container)) { Stop-ScoopExecution -Message 'Scoop update failed.' }
 
     # Replace non-git scoop with the git version
-    Remove-Item $TargetDirectory -ErrorAction Stop -Force -Recurse
+    Remove-Item $TargetDirectory -ErrorAction 'Stop' -Force -Recurse
     Move-Item $newDir $TargetDirectory
 }
 
@@ -104,7 +104,7 @@ function Update-ScoopLocalBucket {
             $g = Join-Path $loc '.git'
 
             # Make sure main bucket, which was downloaded as zip, will be properly "converted" into git
-            if (($b -eq 'main') -and !(Test-Path $g -PathType Container)) {
+            if (($b -eq 'main') -and !(Test-Path $g -PathType 'Container')) {
                 Remove-Bucket -Name 'main'
                 Add-Bucket -Name 'main'
             }
@@ -153,7 +153,7 @@ function Update-Scoop {
 
     # Clone new installation or pull changes
     $par = @{ 'Repo' = $configRepo; 'Branch' = $configBranch; 'TargetDirectory' = $currentDir }
-    if (Join-Path $currentDir '.git' | Test-Path -PathType Container) {
+    if (Join-Path $currentDir '.git' | Test-Path -PathType 'Container') {
         Update-ScoopCorePull @par
     } else {
         Update-ScoopCoreClone @par
@@ -294,7 +294,7 @@ function Update-App {
         $dir = versiondir $App $oldVersion $Global
 
         $old = Join-Path $dir "..\_$version.old"
-        if (Test-Path $old -PathType Container) {
+        if (Test-Path $old -PathType 'Container') {
             $i = 1
             while (Test-Path "$old($i)") { ++$i }
             Move-Item $dir "$old($i)"

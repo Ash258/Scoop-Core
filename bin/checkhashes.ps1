@@ -1,19 +1,19 @@
 <#
 .SYNOPSIS
-    Check if ALL urls inside manifest have correct hashes.
+    Check if all urls defined in manifest have correct hashes.
 .PARAMETER App
-    Manifest to be checked.
+    Specifies the manifest name to be checked (without extension).
     Wildcards are supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 .PARAMETER Update
-    When there are mismatched hashes, manifest will be updated.
+    Specifies to update the manifest file with updated hashes.
 .PARAMETER ForceUpdate
-    Manifest will be updated all the time. Not only when there are mismatched hashes.
+    Specifies to update the manifest file even without hashes were not changed.
 .PARAMETER SkipCorrect
-    Manifests without mismatch will not be shown.
+    Specifies to not show manifest without mismatched hashes.
 .PARAMETER UseCache
-    Downloaded files will not be deleted after script finish.
+    Specifies to not delete downloaded files from cache.
     Should not be used, because check should be used for downloading actual version of file (as normal user, not finding in some document from vendors, which could be damaged / wrong (Example: Slack@3.3.1 lukesampson/scoop-extras#1192)), not some previously downloaded.
 .EXAMPLE
     PS BUCKETROOT> .\bin\checkhashes.ps1
@@ -25,11 +25,11 @@
 param(
     [SupportsWildcards()]
     [String] $App = '*',
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir,
     [Switch] $Update,
     [Switch] $ForceUpdate,
@@ -45,17 +45,27 @@ param(
 $Dir = Resolve-Path $Dir
 if ($ForceUpdate) { $Update = $true }
 # Cleanup
-if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -ErrorAction SilentlyContinue -Force -Recurse }
+if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse }
 
 function err ([String] $name, [String[]] $message) {
-    Write-Host "$name`: " -ForegroundColor Red -NoNewline
-    Write-Host ($message -join "`r`n") -ForegroundColor Red
+    Write-UserMessage "${name}: ", ($message -join "`r`n") -Color 'Red'
 }
 
 $MANIFESTS = @()
-foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
-    $name = (strip_ext $single.Name)
-    $manifest = parse_json $single.FullName
+# Gather all required manifests
+foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
+    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+        Write-UserMessage "Skipping $($gci.Name)" -Info
+        continue
+    }
+
+    $name = $gci.BaseName
+    try {
+        $manifest = ConvertFrom-Manifest -Path $gci.FullName
+    } catch {
+        err $name 'Invalid manifest'
+        continue
+    }
 
     # Skip nighly manifests, since their hash validation is skipped
     if ($manifest.version -eq 'nightly') { continue }
@@ -88,11 +98,9 @@ foreach ($single in Get-ChildItem $Dir "$App.*" -File) {
         'manifest' = $manifest
         'urls'     = $urls
         'hashes'   = $hashes
+        'gci'      = $gci
     }
 }
-
-# Clear any existing events
-Get-Event | ForEach-Object { Remove-Event $_.SourceIdentifier }
 
 foreach ($current in $MANIFESTS) {
     $count = 0
@@ -134,19 +142,19 @@ foreach ($current in $MANIFESTS) {
     if ($mismatched.Length -eq 0 ) {
         if (!$SkipCorrect) {
             Write-Host "$($current.app): " -NoNewline
-            Write-Host 'OK' -ForegroundColor Green
+            Write-Host 'OK' -ForegroundColor 'Green'
         }
     } else {
         Write-Host "$($current.app): " -NoNewline
-        Write-Host 'Mismatch found ' -ForegroundColor Red
+        Write-Host 'Mismatch found ' -ForegroundColor 'Red'
         $mismatched | ForEach-Object {
             $file = cache_path $current.app $version $current.urls[$_]
             Write-UserMessage -Message "`tURL:`t`t$($current.urls[$_])"
             if (Test-Path $file) {
                 Write-UserMessage -Message "`tFirst bytes:`t$(Get-MagicByte -File $file -Pretty)"
             }
-            Write-UserMessage -Message "`tExpected:`t$($current.hashes[$_])" -Color Green
-            Write-UserMessage -Message "`tActual:`t`t$($actuals[$_])" -Color Red
+            Write-UserMessage -Message "`tExpected:`t$($current.hashes[$_])" -Color 'Green'
+            Write-UserMessage -Message "`tActual:`t`t$($actuals[$_])" -Color 'Red'
         }
     }
 
@@ -154,7 +162,7 @@ foreach ($current in $MANIFESTS) {
         if ($current.manifest.url -and $current.manifest.hash) {
             $current.manifest.hash = $actuals
         } else {
-            $platforms = ($current.manifest.architecture | Get-Member -MemberType NoteProperty).Name
+            $platforms = ($current.manifest.architecture | Get-Member -MemberType 'NoteProperty').Name
             # Defaults to zero, don't know, which architecture is available
             $64bit_count = 0
             $32bit_count = 0
@@ -171,10 +179,8 @@ foreach ($current in $MANIFESTS) {
             }
         }
 
-        Write-UserMessage -Message "Writing updated $($current.app) manifest" -Color DarkGreen
+        Write-UserMessage -Message "Writing updated $($current.app) manifest" -Color 'DarkGreen'
 
-        $p = Join-Path $Dir "$($current.app).json"
-
-        $current.manifest | ConvertToPrettyJson | Out-UTF8File -Path $p
+        ConvertTo-Manifest -Path $current.gci.FullName -Manifest $current.manifest
     }
 }

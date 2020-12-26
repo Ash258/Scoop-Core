@@ -16,7 +16,7 @@ Reset-Alias
 if (!$command) { Stop-ScoopExecution -Message 'Parameter <command> missing' -Usage (my_usage) }
 
 try {
-    $gcm = Get-Command $Command -ErrorAction Stop
+    $gcm = Get-Command $Command -ErrorAction 'Stop'
 } catch {
     Stop-ScoopExecution -Message "Command '$command' not found"
 }
