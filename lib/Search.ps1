@@ -137,6 +137,7 @@ function Search-LocalBucket {
     )
 
     begin {
+        $architecture = default_architecture
         $apps = @()
         $result = @()
     }
@@ -148,9 +149,9 @@ function Search-LocalBucket {
                 'name'              = $app
                 'version'           = $manifest.version
                 'description'       = $manifest.description
-                'bin'               = @(arch_specific 'bin' $manifest $arch)
+                'bin'               = @(arch_specific 'bin' $manifest $architecture)
                 'matchingBinaries'  = @()
-                'shortcuts'         = @(arch_specific 'shortcuts' $manifest $arch)
+                'shortcuts'         = @(arch_specific 'shortcuts' $manifest $architecture)
                 'matchingShortcuts' = @()
             }
         }
