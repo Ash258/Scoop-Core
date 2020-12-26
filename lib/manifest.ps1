@@ -141,7 +141,11 @@ function manifest($app, $bucket, $url) {
     if ($url) { return url_manifest $url }
 
     $path = manifest_path $app $bucket
-    $manifest = ConvertFrom-Manifest -Path $path
+    try {
+        $manifest = ConvertFrom-Manifest -Path $path
+    } catch {
+        $manifest = $null
+    }
 
     return $manifest
 }
