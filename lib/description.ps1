@@ -18,7 +18,7 @@ function find_description($url, $html, $redir = $false) {
     if ($refresh -and !$redir) {
         $wc = New-Object Net.Webclient
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        $html = $wc.downloadstring($refresh)
+        $html = $wc.DownloadString($refresh)
 
         return find_description $refresh $html $true
     }
@@ -50,9 +50,9 @@ function clean_description($description) {
 # Collects meta tags from $html into hashtables.
 function meta_tags($html) {
     $tags = @()
-    $meta = ([System.Text.RegularExpressions.Regex] '<meta [^>]+>').matches($html)
+    $meta = ([System.Text.RegularExpressions.Regex] '<meta [^>]+>').Matches($html)
     $meta | ForEach-Object {
-        $attrs = ([System.Text.RegularExpressions.Regex] '([\w-]+)="([^"]+)"').matches($_.Value)
+        $attrs = ([System.Text.RegularExpressions.Regex] '([\w-]+)="([^"]+)"').Matches($_.Value)
         $hash = @{ }
         $attrs | ForEach-Object {
             $hash[$_.Groups[1].value] = $_.Groups[2].Value
@@ -111,15 +111,15 @@ function strip_html($html) {
         if ($encoding_meta -match 'charset\s*=\s*(.*)') {
             $charset = $matches[1]
             try {
-                $encoding = [text.encoding]::getencoding($charset)
+                $encoding = [Text.Encoding]::GetEncoding($charset)
             } catch {
                 Write-Warning 'Unknown charset'
             }
             if ($encoding) {
-                $html = ([regex]'&#(\d+);?').replace($html, {
+                $html = ([regex]'&#(\d+);?').Replace($html, {
                         param($m)
                         try {
-                            return $encoding.getstring($m.Groups[1].Value)
+                            return $encoding.GetString($m.Groups[1].Value)
                         } catch {
                             return $m.value
                         }

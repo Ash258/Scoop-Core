@@ -37,7 +37,7 @@ function print_summaries {
         $commands.Add("$command ", $summary) # add padding
     }
 
-    $commands.GetEnumerator() | Sort-Object -Property Name | Format-Table -AutoSize -HideTableHeaders -Wrap
+    $commands.GetEnumerator() | Sort-Object -Property 'Name' | Format-Table -AutoSize -HideTableHeaders -Wrap
 }
 
 function my_usage {

@@ -28,7 +28,7 @@ function cacheinfo($file) {
 }
 
 function show($app) {
-    $files = @(Get-ChildItem $SCOOP_CACHE_DIRECTORY | Where-Object -Property Name -Match "^$app")
+    $files = @(Get-ChildItem $SCOOP_CACHE_DIRECTORY | Where-Object -Property 'Name' -Match "^$app")
     $total_length = ($files | Measure-Object length -Sum).sum -as [double]
 
     $f_app = @{ 'Expression' = { "$($_.app) ($($_.version))" } }
@@ -46,7 +46,7 @@ switch ($cmd) {
     'rm' {
         if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
         Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Force -Recurse
-        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt" | Remove-Item -ErrorAction SilentlyContinue -Force -Recurse
+        Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt" | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse
     }
     'show' {
         show $app

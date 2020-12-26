@@ -5,6 +5,8 @@
         "EditorConfig.EditorConfig",
         "fabiospampinato.vscode-terminals",
         "ms-vscode.powershell-preview",
+        "ms-vscode-remote.remote-ssh",
+        "ms-vscode-remote.remote-containers",
         "redhat.vscode-yaml",
         "usernamehw.errorlens",
         "yzhang.markdown-all-in-one",

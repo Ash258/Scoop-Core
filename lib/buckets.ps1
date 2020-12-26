@@ -37,7 +37,7 @@ function Find-BucketDirectory {
 function Get-LocalBucket {
     <#
     .SYNOPSIS
-        List all local buckets.
+        List all local bucket names.
     #>
 
     return (Get-ChildItem -Directory $SCOOP_BUCKETS_DIRECTORY).Name
@@ -131,47 +131,14 @@ function Remove-Bucket {
 
             if (!(Test-Path $bucketDirectory)) { throw "'$b' bucket not found" }
 
-            Remove-Item $bucketDirectory -Force -Recurse
+            try {
+                Remove-Item $bucketDirectory -Force -Recurse -ErrorAction Stop
+            } catch {
+                throw "Bucket '$b' cannot be removed: $($_.Exception.Message)"
+            }
+            Write-UserMessage -Message "'$b' bucket removed" -Success
         }
     }
-}
-
-# TODO: Drop/Deprecate
-function new_issue_msg($app, $bucket, $title, $body) {
-    $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
-    $url = known_bucket_repo $bucket
-    $bucket_path = Join-Path $SCOOP_BUCKETS_DIRECTORY $bucket
-
-    if ((Test-Path $bucket_path) -and (Join-Path $bucket_path '.git' | Test-Path -PathType Container)) {
-        $remote = Invoke-GitCmd -Repository $bucket_path -Command 'config' -Argument '--get', 'remote.origin.url'
-        # Support ssh and http syntax
-        # git@PROVIDER:USER/REPO.git
-        # https://PROVIDER/USER/REPO.git
-        # https://regex101.com/r/OMEqfV
-        if ($remote -match '(?:@|:\/\/)(?<provider>.+?)[:\/](?<user>.*)\/(?<repo>.+?)(?:\.git)?$') {
-            $url = "https://$($Matches.Provider)/$($Matches.User)/$($Matches.Repo)"
-        }
-    }
-
-    if (!$url) { return 'Please contact the bucket maintainer!' }
-
-    $title = [System.Web.HttpUtility]::UrlEncode("$app@$($manifest.version): $title")
-    $body = [System.Web.HttpUtility]::UrlEncode($body)
-    $msg = "`nPlease try again"
-
-    switch -Wildcard ($url) {
-        '*github.*' {
-            $url = $url -replace '\.git$'
-            $url = "$url/issues/new?title=$title"
-            if ($body) { $url += "&body=$body" }
-            $msg = "$msg or create a new issue by using the following link and paste your console output:"
-        }
-        default {
-            Write-UserMessage -Message 'Not supported platform' -Info
-        }
-    }
-
-    return "$msg`n$url"
 }
 
 #region Deprecated

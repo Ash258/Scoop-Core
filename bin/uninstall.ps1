@@ -2,9 +2,9 @@
 .SYNOPSIS
     Uninstall ALL scoop applications and scoop itself.
 .PARAMETER global
-    Global applications will be uninstalled.
+    Specifies to uninstall global applications.
 .PARAMETER purge
-    Persisted data will be deleted.
+    Specifies to delete persisted data.
 #>
 param(
     [bool] $global,
