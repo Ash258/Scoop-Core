@@ -36,14 +36,17 @@ function uninstall_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    $module_name = $psmodule.name
-    Write-UserMessage -Message "Uninstalling PowerShell module '$module_name'."
+    $moduleName = $psmodule.name
+    Write-UserMessage -Message "Uninstalling PowerShell module '$moduleName'."
 
-    $linkfrom = Join-Path $modulesdir $module_name
-    if (Test-Path $linkfrom) {
-        Write-UserMessage -Message "Removing $(friendly_path $linkfrom)"
-        $linkfrom = Resolve-Path $linkfrom
-        & "$env:COMSPEC" /c "rmdir `"$linkfrom`""
+    $from = if ($global) { $SCOOP_GLOBAL_MODULE_DIRECTORY } else { $SCOOP_MODULE_DIRECTORY }
+    $linkFrom = Join-Path $from $moduleName
+
+    if (Test-Path $linkFrom) {
+        Write-UserMessage -Message "Removing $(friendly_path $linkFrom)"
+        $linkfrom = Resolve-Path $linkFrom
+        # TODO: Drop comspec
+        & "$env:COMSPEC" /c "rmdir `"$linkFrom`""
     }
 }
 
