@@ -13,7 +13,9 @@ function install_psmodule($manifest, $dir, $global) {
     $modules = if ($global) { $SCOOP_GLOBAL_MODULE_DIRECTORY } else { $SCOOP_MODULE_DIRECTORY }
     $modules = Confirm-DirectoryExistence -Path $modules
 
-    ensure_in_psmodulepath $modules $global
+    # Add both global and local
+    ensure_in_psmodulepath $SCOOP_MODULE_DIRECTORY $false
+    ensure_in_psmodulepath $SCOOP_GLOBAL_MODULE_DIRECTORY $true
 
     $moduleName = $psmodule.name
     if (!$moduleName) { throw [ScoopException] "Invalid manifest|-The 'name' property is missing from 'psmodule'" } # TerminatingError thrown
@@ -53,6 +55,7 @@ function uninstall_psmodule($manifest, $dir, $global) {
 function ensure_in_psmodulepath($dir, $global) {
     $path = env 'psmodulepath' $global
     if (!$global -and ($null -eq $path)) {
+        # Add "default" psmodule path
         $path = Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Modules'
     }
 
