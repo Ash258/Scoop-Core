@@ -3,32 +3,34 @@
 }
 
 $SCOOP_MODULE_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'modules'
+$SCOOP_GLOBAL_MODULE_DIRECTORY = Join-Path $SCOOP_GLOBAL_ROOT_DIRECTORY 'modules'
 $modulesdir = $SCOOP_MODULE_DIRECTORY
 
 function install_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    $modules = if ($global) { $SCOOP_GLOBAL_ROOT_DIRECTORY } else { $SCOOP_ROOT_DIRECTORY }
-    $modules = Join-Path $modules 'modules'
+    $modules = if ($global) { $SCOOP_GLOBAL_MODULE_DIRECTORY } else { $SCOOP_MODULE_DIRECTORY }
+    $modules = ensure $modules
 
-    $modulesdir = ensure $modules
     ensure_in_psmodulepath $modules $global
 
-    $module_name = $psmodule.name
-    if (!$module_name) { throw [ScoopException] "Invalid manifest|-The 'name' property is missing from 'psmodule'" } # TerminatingError thrown
+    $moduleName = $psmodule.name
+    if (!$moduleName) { throw [ScoopException] "Invalid manifest|-The 'name' property is missing from 'psmodule'" } # TerminatingError thrown
 
-    $linkfrom = Join-Path $modulesdir $module_name
-    Write-UserMessage -Message "Installing PowerShell module '$module_name'"
-    Write-UserMessage -Message "Linking $(friendly_path $linkfrom) => $(friendly_path $dir)"
+    $linkFrom = Join-Path $modules $moduleName
+    Write-UserMessage -Message "Installing PowerShell module '$moduleName'"
+    Write-UserMessage -Message "Linking $(friendly_path $linkFrom) => $(friendly_path $dir)"
 
-    if (Test-Path $linkfrom) {
-        Write-UserMessage -Message "$(friendly_path $linkfrom) already exists. It will be replaced." -Warning
-        $linkfrom = Resolve-Path $linkfrom
-        & "$env:COMSPEC" /c "rmdir `"$linkfrom`""
+    if (Test-Path $linkFrom) {
+        Write-UserMessage -Message "$(friendly_path $linkFrom) already exists. It will be replaced." -Warning
+        $linkFrom = Resolve-Path $linkFrom
+        # TODO: Drop comspec
+        & "$env:COMSPEC" /c "rmdir `"$linkFrom`""
     }
 
-    & "$env:COMSPEC" /c "mklink /j `"$linkfrom`" `"$dir`"" | Out-Null
+    # TODO: Drop comspec
+    & "$env:COMSPEC" /c "mklink /j `"$linkFrom`" `"$dir`"" | Out-Null
 }
 
 function uninstall_psmodule($manifest, $dir, $global) {
