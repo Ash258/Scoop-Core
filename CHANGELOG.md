@@ -3,7 +3,7 @@
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
 - **scoop-install**: Allow modules to be installed globally
-- **binaries**: Support YAMl typed manifests
+- **binaries**: Support YAML typed manifests
 - General code cleanup and documentation tweaks
 
 ## [0.55](https://github.com/Ash258/Scoop-Core/milestone/2)
