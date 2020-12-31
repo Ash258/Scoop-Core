@@ -38,7 +38,7 @@ function is_installed($app, $global, $version) {
             return $all -contains $version
         }
 
-        $version = Select-CurrentVersion -App $app -Global:$global
+        $version = Select-CurrentVersion -AppName $app -Global:$global
         if (!(install_info $app $version $global)) {
             Write-UserMessage -Err -Message @(
                 "It looks like a previous installation of $app failed."
