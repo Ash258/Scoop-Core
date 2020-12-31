@@ -24,14 +24,21 @@
 
 Reset-Alias
 
-function is_installed($app, $global) {
+function is_installed($app, $global, $version) {
     if ($app.EndsWith('.json')) {
         $app = [System.IO.Path]::GetFileNameWithoutExtension($app)
     }
+
     if (installed $app $global) {
         function gf($g) { if ($g) { ' --global' } }
 
-        $version = Select-CurrentVersion -AppName $app -Global:$global
+        # Explicitly provided version indicate local workspace manifest with older version of already installed application
+        if ($version) {
+            $all = @(Get-InstalledVersion -App $app -Global:$global)
+            return $all -contains $version
+        }
+
+        $version = Select-CurrentVersion -App $app -Global:$global
         if (!(install_info $app $version $global)) {
             Write-UserMessage -Err -Message @(
                 "It looks like a previous installation of $app failed."
@@ -155,17 +162,16 @@ foreach ($app in $apps) {
     $cleanApp, $bucket = parse_app $app
 
     # shovel install zstd@1.4.3 .\alfa.json https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/bat.json
-    Write-Host $specific_versions -f magenta
-    Write-Host $app -f magenta
-    Write-Host $cleanApp -f magenta
     # Prevent checking of already installed applications if specific version was provided.
     # In this case app will be fullpath to the manifest in \workspace folder and specific version will contains <app>@<version>
     # Allow to install zstd@1.4.4 after 1.4.5 was installed before
-    if ($specific_versions -like "$cleanApp@*") {
-        Write-Host 'yes'
+    if ((Test-Path $app) -and ((Get-Item $app).Directory.FullName -eq (usermanifestsdir))) {
+        $_v = (ConvertFrom-Manifest -Path $app).version
+    } else {
+        $_v = $null
     }
-    Write-Host 'before' -f darkred
-    if (is_installed $cleanApp $global) { continue }
+
+    if (is_installed $cleanApp $global $_v) { continue }
 
     # Install
     try {
