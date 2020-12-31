@@ -231,6 +231,8 @@ function Invoke-ManifestScript {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
         [Alias('InputObject')]
         $Manifest,
         [Parameter(Mandatory)]
