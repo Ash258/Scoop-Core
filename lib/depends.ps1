@@ -84,6 +84,11 @@ function script_deps($script) {
             if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
         }
     }
+    if (($script -like '*Expand-ZstdArchive *') -and !(Test-HelperInstaller -Helper 'Zstd')) {
+        # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
+        if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+        $deps += 'zstd'
+    }
 
     return $deps
 }
@@ -100,6 +105,11 @@ function install_deps($manifest, $arch) {
         } else {
             if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
         }
+    }
+    if ((Test-ZstdRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Zstd')) {
+        # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
+        if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+        $deps += 'zstd'
     }
 
     $pre_install = arch_specific 'pre_install' $manifest $arch

@@ -11,7 +11,7 @@ param(
     [bool] $purge
 )
 
-'core', 'Helpers', 'install', 'shortcuts', 'Versions', 'manifest', 'uninstall' | ForEach-Object {
+'core', 'Helpers', 'install', 'shortcuts', 'Versions', 'manifest', 'Uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
