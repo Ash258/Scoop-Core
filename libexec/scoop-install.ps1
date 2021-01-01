@@ -24,17 +24,24 @@
 
 Reset-Alias
 
-function is_installed($app, $global) {
+function is_installed($app, $global, $version) {
     if ($app.EndsWith('.json')) {
         $app = [System.IO.Path]::GetFileNameWithoutExtension($app)
     }
+
     if (installed $app $global) {
         function gf($g) { if ($g) { ' --global' } }
+
+        # Explicitly provided version indicate local workspace manifest with older version of already installed application
+        if ($version) {
+            $all = @(Get-InstalledVersion -AppName $app -Global:$global)
+            return $all -contains $version
+        }
 
         $version = Select-CurrentVersion -AppName $app -Global:$global
         if (!(install_info $app $version $global)) {
             Write-UserMessage -Err -Message @(
-                "It looks like a previous installation of $app failed."
+                "It looks like a previous installation of '$app' failed."
                 "Run 'scoop uninstall $app$(gf $global)' before retrying the install."
             )
             return $true
@@ -155,9 +162,13 @@ foreach ($app in $apps) {
     # Prevent checking of already installed applications if specific version was provided.
     # In this case app will be fullpath to the manifest in \workspace folder and specific version will contains <app>@<version>
     # Allow to install zstd@1.4.4 after 1.4.5 was installed before
-    if ($specific_versions -contains $app) {
-        if (is_installed $cleanApp $global) { continue }
+    if ((Test-Path $app) -and ((Get-Item $app).Directory.FullName -eq (usermanifestsdir))) {
+        $_v = (ConvertFrom-Manifest -Path $app).version
+    } else {
+        $_v = $null
     }
+
+    if (is_installed $cleanApp $global $_v) { continue }
 
     # Install
     try {

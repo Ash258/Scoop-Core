@@ -83,7 +83,7 @@ function Write-UserMessage {
 function Confirm-DirectoryExistence {
     <#
     .SYNOPSIS
-        Make sure that directory exists.
+        Make sure that directory exists. ensure replacement
     .PARAMETER Directory
         Specifies directory to be tested and created.
     .OUTPUTS

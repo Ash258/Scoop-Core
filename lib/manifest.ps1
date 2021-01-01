@@ -2,7 +2,7 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase'
+Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase' -Verbose:$false
 
 $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
 
@@ -231,6 +231,8 @@ function Invoke-ManifestScript {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
         [Alias('InputObject')]
         $Manifest,
         [Parameter(Mandatory)]
