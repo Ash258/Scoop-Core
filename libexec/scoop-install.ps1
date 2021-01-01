@@ -34,7 +34,7 @@ function is_installed($app, $global, $version) {
 
         # Explicitly provided version indicate local workspace manifest with older version of already installed application
         if ($version) {
-            $all = @(Get-InstalledVersion -App $app -Global:$global)
+            $all = @(Get-InstalledVersion -AppName $app -Global:$global)
             return $all -contains $version
         }
 
