@@ -4,6 +4,7 @@
 
 ### 0.6-pre1
 
+- **scoop-install**: Add `Expand-ZstdArchive` function for extracting standalone zstd archives
 - **scoop-install**: Allow modules to be installed globally
 - **scoop-install**: Prevent repeated installation of same manifest/url/local file
 - **binaries**: Support YAML typed manifests
