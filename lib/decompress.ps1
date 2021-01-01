@@ -454,12 +454,17 @@ function Expand-ZstdArchive {
                 throw "Decompress error|-Failed to extract files from $currentPath.`nLog file:`n  $(friendly_path $currentLogPath)"
             }
 
-            Remove-Item -Path $currentLogPath -ErrorAction SilentlyContinue -Force
+            if ($currentExtractDir) {
+                movedir (Join-Path $currentDestinationPath $currentExtractDir) $currentDestinationPath | Out-Null
+                Remove-Item $currentDestinationPath -Recurse -Force
+            }
+
+            Remove-Item -Path $currentLogPath -ErrorAction 'SilentlyContinue' -Force
         }
     }
 
     end {
-        if ($Removal) { Remove-Item -Path $Path -ErrorAction SilentlyContinue -Force }
+        if ($Removal) { Remove-Item -Path $Path -Force }
     }
 }
 
