@@ -24,6 +24,7 @@ local configOptions = parser({
     'aria2-options',
     'debug' .. booleanParser,
     'default-architecture' .. architectureParser,
+    'INNOSETUP_USE_INNOEXTRACT' .. booleanParser,
     'MSIEXTRACT_USE_LESSMSI' .. booleanParser,
     'NO_JUNCTIONS' .. booleanParser,
     'SCOOP_REPO',
