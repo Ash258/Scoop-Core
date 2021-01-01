@@ -17,8 +17,9 @@ function install_psmodule($manifest, $dir, $global) {
     $modules = Confirm-DirectoryExistence -Path $modules
 
     # Add both global and local
-    ensure_in_psmodulepath $SCOOP_MODULE_DIRECTORY $false
+    # TODO: Test properly all side effects and consider adding just the one needed
     ensure_in_psmodulepath $SCOOP_GLOBAL_MODULE_DIRECTORY $true
+    ensure_in_psmodulepath $SCOOP_MODULE_DIRECTORY $false
 
     $linkFrom = Join-Path $modules $moduleName
     Write-UserMessage -Message "Installing PowerShell module '$moduleName'", "Linking $(friendly_path $linkFrom) => $(friendly_path $dir)"
