@@ -451,7 +451,7 @@ function Expand-ZstdArchive {
 
     begin {
         $zstdPath = Get-HelperPath -Helper 'Zstd'
-        if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' }
+        if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' } # TerminatingError thrown
 
         $argList = @('-d', '-v')
         if ($Switches) { $argList += (-split $Switches) }
