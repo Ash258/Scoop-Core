@@ -418,7 +418,7 @@ function Expand-ZstdArchive {
     <#
     .SYNOPSIS
         Extract files from zstd archive.
-        The final extracted from zstd archive will be named same as original file, but without .zstd extension.
+        The final extracted from zstd archive will be named same as original file, but without .zst extension.
     .PARAMETER Path
         Specifies the path to the zstd archive.
     .PARAMETER DestinationPath
