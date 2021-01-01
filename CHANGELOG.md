@@ -5,8 +5,6 @@
 ### 0.6-pre1
 
 - **decompress**: Add `Expand-ZstdArchive` function for extracting standalone zstd archives
-    - URls which are simple zstd archives will be automatically extracted
-    - Could be used in manifests scripts
 - **scoop-install**: Allow modules to be installed globally
 - **scoop-install**: Prevent repeated installation of same manifest/url/local file
 - **binaries**: Support YAML typed manifests
