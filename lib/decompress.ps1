@@ -450,9 +450,10 @@ function Expand-ZstdArchive {
     )
 
     begin {
-        $argList = @('-d')
         $zstdPath = Get-HelperPath -Helper 'Zstd'
         if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' }
+
+        $argList = @('-d', '-v')
         if ($Switches) { $argList += (-split $Switches) }
         if ($Overwrite) { $argList += '-f' }
     }
@@ -466,7 +467,7 @@ function Expand-ZstdArchive {
         $_output = Join-Path $_dest $_item.BaseName
 
         $_arg = $argList
-        $_arg += '-d', '-v', """$_path""", '-o', """$_output"""
+        $_arg += """$_path""", '-o', """$_output"""
 
         $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $_arg -LogPath $_log
         if (!$status) {
