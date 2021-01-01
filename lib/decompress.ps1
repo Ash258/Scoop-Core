@@ -480,6 +480,7 @@ function Expand-ZstdArchive {
             try {
                 Expand-7zipArchive -Path $_output -DestinationPath $_dest -ExtractDir $_extractDir -Removal
             } catch {
+                # TODO?: Some meaningfull message??
                 throw $_
             }
         }
