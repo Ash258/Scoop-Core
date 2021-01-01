@@ -41,7 +41,7 @@ function is_installed($app, $global, $version) {
         $version = Select-CurrentVersion -AppName $app -Global:$global
         if (!(install_info $app $version $global)) {
             Write-UserMessage -Err -Message @(
-                "It looks like a previous installation of $app failed."
+                "It looks like a previous installation of '$app' failed."
                 "Run 'scoop uninstall $app$(gf $global)' before retrying the install."
             )
             return $true
