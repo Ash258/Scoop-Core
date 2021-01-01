@@ -415,18 +415,38 @@ function Expand-DarkArchive {
 }
 
 function Expand-ZstdArchive {
+    <#
+    .SYNOPSIS
+        Extract files from zstd archive.
+        The final extracted from zstd archive will be named same as original file, but without .zstd extension.
+    .PARAMETER Path
+        Specifies the path to the zstd archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted to.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Overwrite
+        Specifies to override files with same name.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    .PARAMETER Skip7zip
+        Specifies to not extract resulted file of zstd extraction.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
-        [String[]] $Path,
+        [String] $Path,
         [Parameter(Position = 1)]
         [Alias('ExtractTo')]
-        [String[]] $DestinationPath,
-        [String[]] $ExtractDir,
+        [String] $DestinationPath,
+        [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
         [String] $Switches,
         [Switch] $Overwrite,
-        [Switch] $Removal
+        [Switch] $Removal,
+        [Switch] $Skip7zip
     )
 
     begin {
@@ -438,28 +458,30 @@ function Expand-ZstdArchive {
     }
 
     process {
-        for ($index = 0; $index -lt $Path.Count, ++$index) {
-            $currentPath = $Path[$index]
-            $currentLogPath = Split-Path -Path $currentPath | Join-Path -ChildPath 'zstd.log'
-            $currentArgList = $argList
-            $currentDestinationPath = if ($null -eq $DestinationPath[$index]) { $DestinationPath[-1] } else { $DestinationPath[$index] }
-            $currentExtractDir = $null
-            if ($ExtractDir) {
-                $currentExtractDir = if ($null -eq $ExtractDir[$index]) { $ExtractDir[-1] } else { $ExtractDir[$index] }
-            }
-            $currentArgList += $currentPath, "-o ""$currentDestinationPath"""
+        $_path = $Path
+        $_item = Get-Item $_path
+        $_log = Join-Path $_item.Directory.FullName 'zstd.log'
+        $_extractDir = $ExtractDir
+        $_dest = $DestinationPath
+        $_output = Join-Path $_dest $_item.BaseName
 
-            $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $currentArgList -LogPath $currentLogPath
-            if (!$status) {
-                throw "Decompress error|-Failed to extract files from $currentPath.`nLog file:`n  $(friendly_path $currentLogPath)"
-            }
+        $_arg = $argList
+        $_arg += '-d', '-v', """$_path""", '-o', """$_output"""
 
-            if ($currentExtractDir) {
-                movedir (Join-Path $currentDestinationPath $currentExtractDir) $currentDestinationPath | Out-Null
-                Remove-Item $currentDestinationPath -Recurse -Force
-            }
+        $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $_arg -LogPath $_log
+        if (!$status) {
+            throw "Decompress error|-Failed to extract files from $_path.`nLog file:`n  $(friendly_path $_log)"
+        }
 
-            Remove-Item -Path $currentLogPath -ErrorAction 'SilentlyContinue' -Force
+        Remove-Item -Path $_log -ErrorAction 'SilentlyContinue' -Force
+
+        # There is no reason to consider that the output of zstd is something other then next archive, but who knows
+        if (!$Skip7zip) {
+            try {
+                Expand-7zipArchive -Path $_output -DestinationPath $_dest -ExtractDir $_extractDir -Removal
+            } catch {
+                throw $_
+            }
         }
     }
 
