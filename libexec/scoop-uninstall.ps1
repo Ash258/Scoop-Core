@@ -53,6 +53,7 @@ $problems = 0
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
         Write-UserMessage -Message $body -Err
+        debug $_.InvocationInfo
         if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Bucket $bucket -Title $title -Body $body }
 
         continue
