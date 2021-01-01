@@ -3,6 +3,7 @@
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
 - **scoop-install**: Allow modules to be installed globally
+- **scoop-install**: Prevent repeated installation of same manifest/url/local file
 - **binaries**: Support YAML typed manifests
 - General code cleanup and documentation tweaks
 
