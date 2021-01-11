@@ -275,6 +275,8 @@ function Expand-InnoArchive {
 
     process {
         if ((get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract) {
+            Write-UserMessage -Message 'Using innoextract is experimental' -Warning
+
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
             $argList = @('--extract', '--silent', '--output-dir', $DestinationPath, $Path)
             $innoPath = Get-HelperPath -Helper 'Innoextract'
