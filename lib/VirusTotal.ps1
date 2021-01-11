@@ -39,7 +39,6 @@ function Get-VirusTotalResult {
     $wc.Headers.Add('x-apikey', $VT_API_KEY)
     $result = $wc.DownloadString($apiUrl)
 
-    out-utf8file 'alfaCOSINEW.json' $result
     try {
         $stats = json_path $result '$.data..attributes.last_analysis_stats'
     } catch {
@@ -162,21 +161,31 @@ function Submit-ToVirusTotal {
             $origRedir = $newRedir
             $newRedir = Submit-RedirectedUrl $origRedir
         } while ($origRedir -ne $newRedir)
-        $requests += 1
-        $result = Invoke-WebRequest -Uri 'https://www.virustotal.com/vtapi/v2/url/scan' -Body @{ 'apikey' = $VT_API_KEY; 'url' = $newRedir } -Method 'Post' -UseBasicParsing
-        if ($result.StatusCode -eq 200) {
-            $cont = ConvertFrom-Json $result.Content
 
-            if ($cont.response_code -ne 1) {
-                Write-UserMessage -Message $cont.verbose_msg -Err
-                return
+        $requests += 1
+        $params = @{
+            'Method'  = 'Post'
+            'Headers' = @{
+                'x-apikey' = $VT_API_KEY
             }
-            $perm = $cont.permalink
+        }
+        $result = Invoke-WebRequest -Uri 'https://www.virustotal.com/api/v3/urls' @params -Body @{ 'url' = $newRedir } -UseBasicParsing
+
+        if ($result.StatusCode -eq 200) {
+            try {
+                $cont = ConvertFrom-Json $result.Content
+                $params.Method = 'Get'
+                $perm = Invoke-RestMethod -Uri "https://www.virustotal.com/api/v3/analyses/$($cont.data.id)" @params
+                $lastLine = $perm.meta.url_info.id
+                $lastLine = "In meantime you can visit: 'https://www.virustotal.com/gui/url/$lastLine/detection'"
+            } catch {
+                $lastLine = $null
+            }
 
             Write-UserMessage -Message @(
                 "${app}: not found. Submitted $Url"
                 'Wait a few minutes for VirusTotal to process the file before trying again'
-                "In meantime you can check file status at '$perm'"
+                $lastLine
             ) -Warning
             return
         }
