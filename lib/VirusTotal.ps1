@@ -2,12 +2,12 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
+$VT_API_KEY = get_config 'virustotal_api_key'
 $VT_ERR = @{
     'Unsafe'    = 2
     'Exception' = 4
     'NoInfo'    = 8
 }
-$VT_API_KEY = get_config 'virustotal_api_key'
 
 function Get-VirusTotalResult {
     <#
@@ -30,19 +30,18 @@ function Get-VirusTotalResult {
     )
 
     $Hash = $Hash.ToLower()
-    $uiUrl = "https://www.virustotal.com/ui/files/$hash"
     $apiUrl = "https://www.virustotal.com/api/v3/search?query=$hash"
     $detectionUrl = "https://www.virustotal.com/#/file/$hash/detection"
 
     $wc = New-Object System.Net.Webclient
     $wc.Headers.Add('User-Agent', (Get-UserAgent))
     $wc.Headers.Add('x-apikey', $VT_API_KEY)
-    $result = $wc.DownloadString($apiUrl)
 
     try {
+        $result = $wc.DownloadString($apiUrl)
         $stats = json_path $result '$.data..attributes.last_analysis_stats'
     } catch {
-        throw '(404) File not found'
+        throw '(404) File not found' # Always throw 404 to trigger submit
     }
     $malicious = json_path $stats '$.malicious'
     $suspicious = json_path $stats '$.suspicious'
