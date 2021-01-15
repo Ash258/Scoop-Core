@@ -176,14 +176,14 @@ function Submit-ToVirusTotal {
                 $params.Method = 'Get'
                 $perm = Invoke-RestMethod -Uri "https://www.virustotal.com/api/v3/analyses/$($cont.data.id)" @params
                 $lastLine = $perm.meta.url_info.id
-                $lastLine = "In meantime you can visit: 'https://www.virustotal.com/gui/url/$lastLine/detection'"
+                $lastLine = "    In meantime you can visit: 'https://www.virustotal.com/gui/url/$lastLine/detection'"
             } catch {
                 $lastLine = $null
             }
 
             Write-UserMessage -Message @(
                 "${App}: not found. Submitted $Url"
-                'Wait a few minutes for VirusTotal to process the file before trying again'
+                '    Wait a few minutes for VirusTotal to process the file before trying again'
                 $lastLine
             ) -Warning
             return
