@@ -163,18 +163,27 @@ function save_installed_manifest($app, $bucket, $dir, $url) {
 }
 
 function installed_manifest($app, $version, $global) {
-    # TODO: YML
-    $old = 'manifest.json'
-    $new = 'scoop-manifest.json'
     $d = versiondir $app $version $global
 
-    # Migration
-    if (Join-Path $d $old | Test-Path ) {
+    #region Migration from non-generic file name
+    $old = 'manifest.json'
+    $new = 'scoop-manifest.json'
+    if (Join-Path $d $old | Test-Path) {
         Write-UserMessage -Message "Migrating $old to $new" -Info
         Join-Path $d $old | Rename-Item -NewName $new
     }
+    $manifestPath = Join-Path $d $new
+    #endregion Migration from non-generic file name
 
-    return parse_json (Join-Path $d $new)
+    # Different extension types
+    if (!(Test-Path $manifestPath)) {
+        $installedManifests = Get-ChildItem -LiteralPath $d -Include 'scoop-manifest.*'
+        if ($installedManifests.Count -gt 0) {
+            $manifestPath = $installedManifests[0].FullName
+        }
+    }
+
+    return ConvertFrom-Manifest -Path $manifestPath
 }
 
 function save_install_info($info, $dir) {
