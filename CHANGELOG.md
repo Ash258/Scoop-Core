@@ -4,6 +4,7 @@
 
 ### 0.6-pre1
 
+- Support YAML typed manifests in some commands
 - **virustotal**: Command now works again with V3 API
     - Requires Api key for all operations
 - **decompress**: Add `Expand-ZstdArchive` function for extracting standalone zstd archives
