@@ -214,6 +214,8 @@ function Test-HelpersInstalled {
         $result = $false
     }
 
+    # TODO: Consider checking for zstd if it will be used by more vendors
+
     return $result
 }
 

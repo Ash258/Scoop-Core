@@ -1,5 +1,5 @@
 # TODO: Core import is messing up with download progress
-'Helpers' | ForEach-Object {
+'Helpers' | ForEach-Object { #, 'core' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -62,6 +62,23 @@ function Test-LessmsiRequirement {
         return $false
     }
 }
+
+function Test-ZstdRequirement {
+    [CmdletBinding(DefaultParameterSetName = 'URL')]
+    [OutputType([Boolean])]
+    param (
+        [Parameter(Mandatory, ParameterSetName = 'URL')]
+        [String[]] $URL,
+        [Parameter(Mandatory, ParameterSetName = 'File')]
+        [String] $File
+    )
+
+    if ($URL) {
+        return ($URL | Where-Object { Test-ZstdRequirement -File $_ }).Count -gt 0
+    } else {
+        return $File -match '\.zst$'
+    }
+}
 #endregion helpers
 
 function Expand-7zipArchive {
@@ -86,6 +103,7 @@ function Expand-7zipArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -172,6 +190,7 @@ function Expand-MsiArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -245,6 +264,7 @@ function Expand-InnoArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -298,6 +318,7 @@ function Expand-ZipArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Switch] $Removal
@@ -365,6 +386,7 @@ function Expand-DarkArchive {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [Parameter(ValueFromRemainingArguments = $true)]
         [String] $Switches,
@@ -389,6 +411,84 @@ function Expand-DarkArchive {
 
         # Remove original archive file
         if ($Removal) { Remove-Item $Path -Force }
+    }
+}
+
+function Expand-ZstdArchive {
+    <#
+    .SYNOPSIS
+        Extract files from zstd archive.
+        The final extracted from zstd archive will be named same as original file, but without .zst extension.
+    .PARAMETER Path
+        Specifies the path to the zstd archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted to.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Overwrite
+        Specifies to override files with same name.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    .PARAMETER Skip7zip
+        Specifies to not extract resulted file of zstd extraction.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [String] $Path,
+        [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
+        [String] $DestinationPath,
+        [String] $ExtractDir,
+        [Parameter(ValueFromRemainingArguments)]
+        [String] $Switches,
+        [Switch] $Overwrite,
+        [Switch] $Removal,
+        [Switch] $Skip7zip
+    )
+
+    begin {
+        $zstdPath = Get-HelperPath -Helper 'Zstd'
+        if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' } # TerminatingError thrown
+
+        $argList = @('-d', '-v')
+        if ($Switches) { $argList += (-split $Switches) }
+        if ($Overwrite) { $argList += '-f' }
+    }
+
+    process {
+        $_path = $Path
+        $_item = Get-Item $_path
+        $_log = Join-Path $_item.Directory.FullName 'zstd.log'
+        $_extractDir = $ExtractDir
+        $_dest = $DestinationPath
+        $_output = Join-Path $_dest $_item.BaseName
+
+        $_arg = $argList
+        $_arg += """$_path""", '-o', """$_output"""
+
+        $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $_arg -LogPath $_log
+        if (!$status) {
+            throw "Decompress error|-Failed to extract files from $_path.`nLog file:`n  $(friendly_path $_log)"
+        }
+
+        Remove-Item -Path $_log -ErrorAction 'SilentlyContinue' -Force
+
+        # There is no reason to consider that the output of zstd is something other then next archive, but who knows
+        if (!$Skip7zip) {
+            try {
+                Expand-7zipArchive -Path $_output -DestinationPath $_dest -ExtractDir $_extractDir -Removal
+            } catch {
+                # TODO?: Some meaningfull message??
+                throw $_
+            }
+        }
+    }
+
+    end {
+        if ($Removal) { Remove-Item -Path $Path -Force }
     }
 }
 

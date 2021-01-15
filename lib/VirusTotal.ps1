@@ -2,6 +2,7 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
+$VT_API_KEY = get_config 'virustotal_api_key'
 $VT_ERR = @{
     'Unsafe'    = 2
     'Exception' = 4
@@ -29,13 +30,19 @@ function Get-VirusTotalResult {
     )
 
     $Hash = $Hash.ToLower()
-    $url = "https://www.virustotal.com/ui/files/$hash"
-    $detectionUrl = $url -replace '/ui/files/', '/#/file/'
+    $apiUrl = "https://www.virustotal.com/api/v3/search?query=$hash"
+    $detectionUrl = "https://www.virustotal.com/#/file/$hash/detection"
+
     $wc = New-Object System.Net.Webclient
     $wc.Headers.Add('User-Agent', (Get-UserAgent))
-    $result = $wc.DownloadString($url)
+    $wc.Headers.Add('x-apikey', $VT_API_KEY)
 
-    $stats = json_path $result '$.data.attributes.last_analysis_stats'
+    try {
+        $result = $wc.DownloadString($apiUrl)
+        $stats = json_path $result '$.data..attributes.last_analysis_stats'
+    } catch {
+        throw '(404) File not found' # Always throw 404 to trigger submit
+    }
     $malicious = json_path $stats '$.malicious'
     $suspicious = json_path $stats '$.suspicious'
     $undetected = json_path $stats '$.undetected'
@@ -48,7 +55,7 @@ function Get-VirusTotalResult {
         default { $fg = 'Red' }
     }
 
-    Write-UserMessage -Message "${App}: $unsafe/$undetected, see '$detectionUrl" -Color $fg
+    Write-UserMessage -Message "${App}: $unsafe/$undetected, see '$detectionUrl'" -Color $fg
     $ret = if ($unsafe -gt 0) { $VT_ERR.Unsafe } else { 0 }
 
     return $ret
@@ -72,6 +79,7 @@ function Search-VirusTotal {
         [String] $Hash,
         [Parameter(Mandatory)]
         [String] $App
+        # TODO: Add -Download option to bypass unsupported hash - Download file, get hash, delete the file
     )
     $algorithm, $pureHash = $Hash -split ':'
     if (!$pureHash) {
@@ -80,7 +88,7 @@ function Search-VirusTotal {
     }
 
     if ($algorithm -notin 'md5', 'sha1', 'sha256') {
-        Write-UserMessage -Message "${app}: Unsopported hash algorithm $algorithm", 'Virustotal requires md5, sha1 or sha256' -Warning
+        Write-UserMessage -Message "${App}: Unsopported hash algorithm $algorithm", 'Virustotal requires md5, sha1 or sha256' -Warning
         return $VT_ERR.NoInfo
     }
 
@@ -102,7 +110,7 @@ function Submit-RedirectedUrl {
     param ([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
 
     process {
-        $request = [System.Net.WebRequest]::Create($url)
+        $request = [System.Net.WebRequest]::Create($URL)
         $request.AllowAutoRedirect = $false
         $response = $request.GetResponse()
 
@@ -142,31 +150,42 @@ function Submit-ToVirusTotal {
 
     # Requests counter to slow down requests submitted to VirusTotal as script execution progresses
     $requests = 0
-    $apiKey = get_config 'virustotal_api_key'
-
-    if ($DoScan -and !$apiKey) {
-        Write-UserMessage -Warning -Message @(
-            'Submitting unknown apps requires the VirusTotal API key.'
-            'You can configure it with:'
-            '  scoop config virustotal_api_key <API key>'
-        )
-
-        return
-    }
 
     try {
         # Follow redirections (for e.g. sourceforge URLs) because
         # VirusTotal analyzes only "direct" download links
-        $url = ($url -split '#/')[0]
-        $newRedir = $url
+        $Url = ($Url -split '#/')[0]
+        $newRedir = $Url
         do {
             $origRedir = $newRedir
             $newRedir = Submit-RedirectedUrl $origRedir
         } while ($origRedir -ne $newRedir)
+
         $requests += 1
-        $result = Invoke-WebRequest -Uri 'https://www.virustotal.com/vtapi/v2/url/scan' -Body @{ 'apikey' = $apiKey; 'url' = $newRedir } -Method Post -UseBasicParsing
+        $params = @{
+            'Method'  = 'Post'
+            'Headers' = @{
+                'x-apikey' = $VT_API_KEY
+            }
+        }
+        $result = Invoke-WebRequest -Uri 'https://www.virustotal.com/api/v3/urls' @params -Body @{ 'url' = $newRedir } -UseBasicParsing
+
         if ($result.StatusCode -eq 200) {
-            Write-UserMessage -Message "${app}: not found. Submitted $url" -Warning
+            try {
+                $cont = ConvertFrom-Json $result.Content
+                $params.Method = 'Get'
+                $perm = Invoke-RestMethod -Uri "https://www.virustotal.com/api/v3/analyses/$($cont.data.id)" @params
+                $lastLine = $perm.meta.url_info.id
+                $lastLine = "    In meantime you can visit: 'https://www.virustotal.com/gui/url/$lastLine/detection'"
+            } catch {
+                $lastLine = $null
+            }
+
+            Write-UserMessage -Message @(
+                "${App}: not found. Submitted $Url"
+                '    Wait a few minutes for VirusTotal to process the file before trying again'
+                $lastLine
+            ) -Warning
             return
         }
 
@@ -178,12 +197,12 @@ function Submit-ToVirusTotal {
                 $explained = $true
             }
             Start-Sleep -Seconds (60 + $requests)
-            Submit-ToVirusTotal $newRedir $app -DoScan:$DoScan -Retry
+            Submit-ToVirusTotal $newRedir $App -DoScan:$DoScan -Retry
         } else {
-            Write-UserMessage -Message "${app}: VirusTotal sumbission of $url failed.", "API returened $($result.StatusCode) after retrying" -Warning
+            Write-UserMessage -Message "${App}: VirusTotal submission of $Url failed.", "API returened $($result.StatusCode) after retrying" -Warning
         }
-    } catch [Exception] {
-        Write-UserMessage -Message "${app}: VirusTotal submission failed: $($_.Exception.Message)" -Warning
+    } catch {
+        Write-UserMessage -Message "${App}: VirusTotal submission failed: $($_.Exception.Message)" -Warning
         return
     }
 }

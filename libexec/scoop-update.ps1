@@ -14,7 +14,7 @@
 #   -s, --skip                Skip hash validation (use with caution!).
 #   -q, --quiet               Hide extraneous messages.
 
-'depends', 'Helpers', 'getopt', 'manifest', 'uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
+'depends', 'Helpers', 'getopt', 'manifest', 'Uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -87,6 +87,7 @@ if (!$apps) {
             $title, $body = $_.Exception.Message -split '\|-'
             if (!$body) { $body = $title }
             Write-UserMessage -Message $body -Err
+            debug $_.InvocationInfo
             if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $out[0] -Bucket $out[2] -Title $title -Body $body }
 
             continue
