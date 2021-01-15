@@ -199,7 +199,7 @@ function Submit-ToVirusTotal {
             Start-Sleep -Seconds (60 + $requests)
             Submit-ToVirusTotal $newRedir $app -DoScan:$DoScan -Retry
         } else {
-            Write-UserMessage -Message "${app}: VirusTotal sumbission of $Url failed.", "API returened $($result.StatusCode) after retrying" -Warning
+            Write-UserMessage -Message "${app}: VirusTotal submission of $Url failed.", "API returened $($result.StatusCode) after retrying" -Warning
         }
     } catch {
         Write-UserMessage -Message "${app}: VirusTotal submission failed: $($_.Exception.Message)" -Warning
