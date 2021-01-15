@@ -88,7 +88,7 @@ function Search-VirusTotal {
     }
 
     if ($algorithm -notin 'md5', 'sha1', 'sha256') {
-        Write-UserMessage -Message "${app}: Unsopported hash algorithm $algorithm", 'Virustotal requires md5, sha1 or sha256' -Warning
+        Write-UserMessage -Message "${App}: Unsopported hash algorithm $algorithm", 'Virustotal requires md5, sha1 or sha256' -Warning
         return $VT_ERR.NoInfo
     }
 
@@ -110,7 +110,7 @@ function Submit-RedirectedUrl {
     param ([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
 
     process {
-        $request = [System.Net.WebRequest]::Create($url)
+        $request = [System.Net.WebRequest]::Create($URL)
         $request.AllowAutoRedirect = $false
         $response = $request.GetResponse()
 
