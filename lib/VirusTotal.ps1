@@ -182,7 +182,7 @@ function Submit-ToVirusTotal {
             }
 
             Write-UserMessage -Message @(
-                "${app}: not found. Submitted $Url"
+                "${App}: not found. Submitted $Url"
                 'Wait a few minutes for VirusTotal to process the file before trying again'
                 $lastLine
             ) -Warning
@@ -197,12 +197,12 @@ function Submit-ToVirusTotal {
                 $explained = $true
             }
             Start-Sleep -Seconds (60 + $requests)
-            Submit-ToVirusTotal $newRedir $app -DoScan:$DoScan -Retry
+            Submit-ToVirusTotal $newRedir $App -DoScan:$DoScan -Retry
         } else {
-            Write-UserMessage -Message "${app}: VirusTotal submission of $Url failed.", "API returened $($result.StatusCode) after retrying" -Warning
+            Write-UserMessage -Message "${App}: VirusTotal submission of $Url failed.", "API returened $($result.StatusCode) after retrying" -Warning
         }
     } catch {
-        Write-UserMessage -Message "${app}: VirusTotal submission failed: $($_.Exception.Message)" -Warning
+        Write-UserMessage -Message "${App}: VirusTotal submission failed: $($_.Exception.Message)" -Warning
         return
     }
 }
