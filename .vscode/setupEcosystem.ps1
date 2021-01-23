@@ -12,6 +12,8 @@ $REPOSITORIES = @(
     @('Ash258/Scoop-Licenses.git', 'Licenses'),
     @('Ash258/Scoop-JetBrains.git', 'JetBrains'),
     @('Ash258/Scoop-Sysinternals.git', 'Sysinternals'),
+    @('Ash258/Scoop-Validator.git', 'Validator'),
+    @('Ash258/Scoop-Shim.git', 'Shim'),
     @('ScoopInstaller/PHP.git', 'PHP', 'Ash258/Scoop-PHP.git'),
     @('ScoopInstaller/Main.git', 'Main', 'Ash258/Scoop-Main.git'),
     @('lukesampson/scoop-extras.git', 'Extras', 'Ash258/Scoop-Extras.git'),
@@ -30,7 +32,6 @@ foreach ($repo in $REPOSITORIES) {
     $origin = $GH + $repo[0]
     $targetname = $repo[1]
     $Ash = $repo[2]
-
     $target = Join-Path $Folder $targetname
 
     if (!(Test-Path $target)) { git clone $origin $target }

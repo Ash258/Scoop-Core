@@ -5,7 +5,7 @@
 function Invoke-GitCmd {
     <#
     .SYNOPSIS
-        Git execution wrapper support -C parameter.
+        Git execution wrapper with -C parameter support.
     .PARAMETER Command
         Specifies git command to execute.
     .PARAMETER Repository

@@ -35,7 +35,7 @@ foreach ($app in $Application) {
     }
 
     if ($manifest) {
-        Write-UserMessage -Message "Showing manifest for $app" -Color Green
+        Write-UserMessage -Message "Showing manifest for $app" -Color 'Green'
 
         $manifest | ConvertToPrettyJson | Write-UserMessage -Output
     } else {

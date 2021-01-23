@@ -9,6 +9,10 @@ Use 'Write-UserMessage -Warning' to highlight the issue, and follow up with the 
 }
 
 function Test-Drive {
+    <#
+    .SYNOPSIS
+        Test disk drive requirements/configuration.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
@@ -31,11 +35,15 @@ function Test-Drive {
 }
 
 function Test-WindowsDefender {
+    <#
+    .SYNOPSIS
+        Test windows defender exclusions.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param([Switch] $Global)
 
-    $defender = Get-Service -Name WinDefend -ErrorAction SilentlyContinue
+    $defender = Get-Service -Name 'WinDefend' -ErrorAction 'SilentlyContinue'
     if (($defender -and $defender.Status) -and ($defender.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running)) {
         if (Test-CommandAvailable -Command 'Get-MpPreference') {
             $installPath = if ($Global) { $SCOOP_GLOBAL_ROOT_DIRECTORY } else { $SCOOP_ROOT_DIRECTORY }
@@ -58,12 +66,16 @@ function Test-WindowsDefender {
 }
 
 function Test-MainBucketAdded {
+    <#
+    .SYNOPSIS
+        Test if main bucket was added after migration from core repository.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
 
     if ((Get-LocalBucket) -notcontains 'main') {
-        Write-UserMessage -Message 'Main bucket is not added.' -Warning
+        Write-UserMessage -Message '''main'' bucket is not added.' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command in elevated prompt:'
             '    scoop bucket add main'
@@ -76,6 +88,10 @@ function Test-MainBucketAdded {
 }
 
 function Test-LongPathEnabled {
+    <#
+    .SYNOPSIS
+        Test if long paths option is enabled.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
@@ -86,7 +102,7 @@ function Test-LongPathEnabled {
         return $false
     }
 
-    $key = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -ErrorAction SilentlyContinue
+    $key = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -ErrorAction 'SilentlyContinue'
     if (!$key -or ($key.LongPathsEnabled -eq 0)) {
         Write-UserMessage -Message 'LongPaths support is not enabled.' -Warning
         Write-UserMessage -Message @(
@@ -101,6 +117,10 @@ function Test-LongPathEnabled {
 }
 
 function Test-EnvironmentVariable {
+    <#
+    .SYNOPSIS
+        Test if scoop's related environment variables are defined.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
@@ -108,8 +128,8 @@ function Test-EnvironmentVariable {
     $result = $true
 
     # Comspec
-    if (($null -eq $env:COMSPEC) -or (!(Test-Path $env:COMSPEC -PathType Leaf))) {
-        Write-UserMessage -Message '$env:COMSPEC is not configured' -Warning
+    if (($null -eq $env:COMSPEC) -or (!(Test-Path $env:COMSPEC -PathType 'Leaf'))) {
+        Write-UserMessage -Message '''COMSPEC'' is not configured' -Warning
         Write-UserMessage -Message @(
             '  By default the variable should points to the cmd.exe in Windows: ''%SystemRoot%\system32\cmd.exe''.'
             '  Fixable with running following command in elevated prompt:'
@@ -120,7 +140,7 @@ function Test-EnvironmentVariable {
 
     # Scoop ENV
     if (!$env:SCOOP) {
-        Write-UserMessage -Message '$env:SCOOP is not configured' -Warning
+        Write-UserMessage -Message '''SCOOP'' is not configured' -Warning
         Write-UserMessage -Message @(
             '  SCOOP environment should be set as it is widely used by users and documentation to reference scoop installation directory'
             '  Fixable with running following command:'
@@ -130,7 +150,7 @@ function Test-EnvironmentVariable {
     }
 
     if ($env:SCOOP -ne $SCOOP_ROOT_DIRECTORY) {
-        Write-UserMessage -Message 'SCOOP environment variable should be set to actual scoop installation location' -Warning
+        Write-UserMessage -Message '''SCOOP'' environment variable should be set to actual scoop installation location' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
             "    [Environment]::SetEnvironmentVariable('SCOOP', '$SCOOP_ROOT_DIRECTORY', 'User')"
@@ -142,13 +162,17 @@ function Test-EnvironmentVariable {
 }
 
 function Test-HelpersInstalled {
+    <#
+    .SYNOPSIS
+        Test if all widely used helpers are installed.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
 
     $result = $true
 
-    if (!(Test-HelperInstalled -Helper 7zip)) {
+    if (!(Test-HelperInstalled -Helper '7zip')) {
         Write-UserMessage -Message '''7-Zip'' not installed!. It is essential component for most of the manifests.' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
@@ -160,8 +184,8 @@ function Test-HelpersInstalled {
         $result = $false
     }
 
-    if (!(Test-HelperInstalled -Helper Innounp)) {
-        Write-UserMessage -Message "'innounp' is not installed! It is essential component for extraction of InnoSetup based installers." -Warning
+    if (!(Test-HelperInstalled -Helper 'Innounp')) {
+        Write-UserMessage -Message '''innounp'' is not installed! It is essential component for extraction of InnoSetup based installers.' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
             '    scoop install innounp'
@@ -169,8 +193,8 @@ function Test-HelpersInstalled {
         $result = $false
     }
 
-    if (!(Test-HelperInstalled -Helper Dark)) {
-        Write-UserMessage -Message "'dark' is not installed! It is essential component for extraction of WiX Toolset based installers." -Warning
+    if (!(Test-HelperInstalled -Helper 'Dark')) {
+        Write-UserMessage -Message '''dark'' is not installed! It is essential component for extraction of WiX Toolset based installers.' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
             '    scoop install dark'
@@ -181,8 +205,8 @@ function Test-HelpersInstalled {
         $result = $false
     }
 
-    if (!(Test-HelperInstalled -Helper LessMsi)) {
-        Write-UserMessage -Message "'lessmsi' is not installed! It is essential component for extraction of msi installers." -Warning
+    if (!(Test-HelperInstalled -Helper 'LessMsi')) {
+        Write-UserMessage -Message '''lessmsi'' is not installed! It is essential component for extraction of msi installers.' -Warning
         Write-UserMessage -Message @(
             '  Fixable with running following command:'
             '    scoop install lessmsi'
@@ -190,10 +214,16 @@ function Test-HelpersInstalled {
         $result = $false
     }
 
+    # TODO: Consider checking for zstd if it will be used by more vendors
+
     return $result
 }
 
 function Test-Config {
+    <#
+    .SYNOPSIS
+        Test if various recommended scoop configurations are set correctly.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
@@ -212,6 +242,10 @@ function Test-Config {
 }
 
 function Test-CompletionRegistered {
+    <#
+    .SYNOPSIS
+        Test if native completion is imported.
+    #>
     $module = Get-Module 'Scoop-Completion'
 
     if (($null -eq $module) -or ($module.Author -notlike 'Jakub*')) {

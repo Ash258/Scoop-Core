@@ -39,11 +39,11 @@ foreach ($bucket in (Get-LocalBucket)) {
 
     $localResults += $result
     foreach ($res in $result) {
-        Write-Host "$bucket" -NoNewline -ForegroundColor Yellow
+        Write-Host "$bucket" -ForegroundColor 'Yellow' -NoNewline
         Write-Host '/' -NoNewline
-        Write-Host $res.name -ForegroundColor Green
+        Write-Host $res.name -ForegroundColor 'Green'
         Write-Host '  Version: ' -NoNewline
-        Write-Host $res.version -ForegroundColor DarkCyan
+        Write-Host $res.version -ForegroundColor 'DarkCyan'
 
         $toPrint = @()
         if ($res.description) { $toPrint += "  Description: $($res.description)" }

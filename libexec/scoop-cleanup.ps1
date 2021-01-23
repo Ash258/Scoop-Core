@@ -38,14 +38,14 @@ function cleanup($app, $global, $verbose, $cache) {
         return
     }
 
-    Write-Host "Removing ${app}:" -ForegroundColor Yellow -NoNewline
+    Write-Host "Removing ${app}:" -ForegroundColor 'Yellow' -NoNewline
     $versions | ForEach-Object {
         $version = $_
         Write-Host " $version" -NoNewline
         $dir = versiondir $app $version $global
         # unlink all potential old link before doing recursive Remove-Item
         unlink_persist_data $dir
-        Remove-Item $dir -ErrorAction Stop -Recurse -Force
+        Remove-Item $dir -ErrorAction 'Stop' -Recurse -Force
     }
     Write-Host ''
 }
@@ -74,7 +74,7 @@ if ($apps) {
         }
     }
 
-    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction Ignore }
+    if ($cache) { Join-Path $SCOOP_CACHE_DIRECTORY '*.download' | Remove-Item -ErrorAction 'Ignore' }
     if (!$verbose) { Write-UserMessage -Message 'Everything is shiny now!' -Success }
 }
 

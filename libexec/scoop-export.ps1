@@ -17,7 +17,7 @@ $global = installed_apps $true | ForEach-Object { @{ 'name' = $_; 'global' = $tr
 $apps = @($local) + @($global)
 
 if ($apps) {
-    $apps | Sort-Object { $_.Name } | ForEach-Object {
+    $apps | Sort-Object -Property 'Name' | ForEach-Object {
         $app = $_.name
         $global = $_.global
         $ver = Select-CurrentVersion -AppName $app -Global:$global

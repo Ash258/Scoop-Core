@@ -5,7 +5,38 @@
 $ALIAS_CMD_ALIAS = 'alias'
 
 function Get-AliasesFromConfig {
+    <#
+    .SYNOPSIS
+        Get hahstable of all aliases defined in config.
+    #>
     return get_config $ALIAS_CMD_ALIAS @{ }
+}
+
+function Get-ScoopAliasPath {
+    <#
+    .SYNOPSIS
+        Get fullpath to the executable file of registered alias.
+    .PARAMETER AliasName
+        Specifies the name of the alias.
+    .OUTPUTS
+        [System.String]
+            Path to the alias executable.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('Name', 'Alias')]
+        [AllowEmptyString()]
+        [AllowNull()]
+        [String] $AliasName
+    )
+
+    begin {
+        if (($null -eq $AliasName) -or ($AliasName -eq '')) { throw [ScoopException] 'Alias name required' }
+    }
+
+    process { return shimdir $false | Join-Path -ChildPath "scoop-$AliasName.ps1" }
 }
 
 function Add-ScoopAlias {
@@ -44,7 +75,7 @@ $Command
 "@
 
     # Add alias to config
-    $aliases | Add-Member -Name $Name -Value $aliasFileName -MemberType NoteProperty
+    $aliases | Add-Member -Name $Name -Value $aliasFileName -MemberType 'NoteProperty'
 
     set_config $ALIAS_CMD_ALIAS $aliases | Out-Null
 }
@@ -78,7 +109,7 @@ function Get-ScoopAlias {
     param([Switch] $Verbose)
     $aliases = @()
 
-    $props = @((Get-AliasesFromConfig).PSObject.Properties | Where-Object -Property MemberType -EQ -Value NoteProperty)
+    $props = @((Get-AliasesFromConfig).PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty')
     if ($props.Count -eq 0) { $props = @() }
 
     $props.GetEnumerator() | ForEach-Object {
@@ -91,5 +122,5 @@ function Get-ScoopAlias {
 
     if ($aliases.Count -eq 0) { Write-UserMessage -Message 'No aliases defined' -Warning }
 
-    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
+    return $aliases.GetEnumerator() | Sort-Object Name | Format-Table -Property 'Name', 'Summary', 'Command' -AutoSize -Wrap -HideTableHeaders:(!$Verbose)
 }
