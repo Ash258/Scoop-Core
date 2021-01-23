@@ -44,6 +44,7 @@ Reset-Alias
 $opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
 if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
 if (!$apps) { Stop-ScoopExecution -Message 'Application parameter missing' -Usage (my_usage) }
+if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required' }
 
 $architecture = ensure_architecture ($opt.a + $opt.arch)
 $DoScan = $opt.scan -or $opt.s
@@ -60,19 +61,20 @@ foreach ($app in $apps) {
     $manifest, $bucket = find_manifest $app
     if (!$manifest) {
         $exitCode = $exitCode -bor $VT_ERR.NoInfo
-        Write-UserMessage "${app}: manifest not found"
+        Write-UserMessage -Message "${app}: manifest not found" -Err
         continue
     }
 
     foreach ($url in (url $manifest $architecture)) {
         $hash = hash_for_url $manifest $url $architecture
 
+        if (!$hash) {
+            Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
+            continue
+        }
+
         try {
-            if ($hash) {
-                $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
-            } else {
-                Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
-            }
+            $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
         } catch {
             $exitCode = $exitCode -bor $VT_ERR.Exception
 

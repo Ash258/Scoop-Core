@@ -396,6 +396,7 @@ function app_status($app, $global) {
     return $status
 }
 
+# TODO: YML
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 # paths
@@ -439,7 +440,7 @@ function ensure {
     param([Parameter(Mandatory, ValueFromPipeline)] [Alias('Dir', 'Path', 'LiteralPath')] $Directory)
 
     process {
-        if (!(Test-Path $Directory)) { New-Item $Directory -ItemType Directory | Out-Null }
+        if (!(Test-Path $Directory)) { New-Item $Directory -ItemType 'Directory' | Out-Null }
 
         return Resolve-Path $Directory
     }
@@ -861,6 +862,8 @@ function applist($apps, $global, $bucket = $null) {
 }
 
 function parse_app([string] $app) {
+    # TODO: YAML
+    # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
     if ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
         return $matches['app'], $matches['bucket'], $matches['version']
     }

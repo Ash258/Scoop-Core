@@ -125,8 +125,9 @@ function Find-Manifest($app, $bucket) {
         $manifest, $bucket = find_manifest $app $bucket
 
         if (!$manifest) {
-            # Couldn't find app in buckets: check if it's a local path
+            # Could not find app in buckets: check if it's a local path
             $path = $app
+            # TODO: YAML
             if (!$path.endswith('.json')) { $path += '.json' }
             if (Test-Path $path) {
                 $url = "$(Resolve-Path $path)"

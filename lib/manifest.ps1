@@ -5,6 +5,7 @@
 Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase' -Verbose:$false
 
 $ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+$ALLOWED_MANIFEST_EXTENSION_REGEX = $ALLOWED_MANIFEST_EXTENSION -join '|'
 
 function ConvertFrom-Manifest {
     <#
@@ -98,9 +99,16 @@ function ConvertTo-Manifest {
 
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
+    $buc = Find-BucketDirectory -Bucket $bucket
+    $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*"
+    $path = $null
 
-    # TODO: YAML
-    return Find-BucketDirectory $bucket | Join-Path -ChildPath "$name.json"
+    if ($file) {
+        if ($file.Count -gt 1) { $file = $file[0] }
+        $path = $file.FullName
+    }
+
+    return $path
 }
 
 function parse_json {
@@ -126,13 +134,21 @@ function url_manifest($url) {
     }
     if (!$str) { return $null }
 
+    # TODO: YAML
     return $str | ConvertFrom-Json
 }
 
 function manifest($app, $bucket, $url) {
     if ($url) { return url_manifest $url }
 
-    return parse_json (manifest_path $app $bucket)
+    $path = manifest_path $app $bucket
+    try {
+        $manifest = ConvertFrom-Manifest -Path $path
+    } catch {
+        $manifest = $null
+    }
+
+    return $manifest
 }
 
 function save_installed_manifest($app, $bucket, $dir, $url) {
@@ -148,18 +164,27 @@ function save_installed_manifest($app, $bucket, $dir, $url) {
 }
 
 function installed_manifest($app, $version, $global) {
-    # TODO: YML
-    $old = 'manifest.json'
-    $new = 'scoop-manifest.json'
     $d = versiondir $app $version $global
 
-    # Migration
-    if (Join-Path $d $old | Test-Path ) {
+    #region Migration from non-generic file name
+    $old = 'manifest.json'
+    $new = 'scoop-manifest.json'
+    if (Join-Path $d $old | Test-Path) {
         Write-UserMessage -Message "Migrating $old to $new" -Info
         Join-Path $d $old | Rename-Item -NewName $new
     }
+    $manifestPath = Join-Path $d $new
+    #endregion Migration from non-generic file name
 
-    return parse_json (Join-Path $d $new)
+    # Different extension types
+    if (!(Test-Path $manifestPath)) {
+        $installedManifests = Get-ChildItem -LiteralPath $d -Include 'scoop-manifest.*'
+        if ($installedManifests.Count -gt 0) {
+            $manifestPath = $installedManifests[0].FullName
+        }
+    }
+
+    return ConvertFrom-Manifest -Path $manifestPath
 }
 
 function save_install_info($info, $dir) {

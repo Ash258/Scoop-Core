@@ -67,7 +67,10 @@ function Get-KnownBucket {
 }
 
 function apps_in_bucket($dir) {
-    return Get-ChildItem $dir | Where-Object { $_.Name.EndsWith('.json') } | ForEach-Object { $_.Name -replace '.json$' }
+    $files = Get-ChildItem $dir -File
+    $allowed = $files | Where-Object -Property 'Extension' -Match -Value "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
+    return $allowed.BaseName
 }
 
 function find_manifest($app, $bucket) {

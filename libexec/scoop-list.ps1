@@ -41,9 +41,10 @@ if ($apps) {
         $sortSplat.Property = { $_.gci.CreationTime }
     } elseif ($orderUpdated) {
         $sortSplat.Property = {
+            # TODO: Keep only scoop-install
             $old = Join-Path $_.gci.Fullname '*\install.json' | Get-ChildItem
             $new = Join-Path $_.gci.Fullname '*\scoop-install.json' | Get-ChildItem
-            @($old, $new) | Get-ChildItem | Sort-Object -Property LastWriteTimeUtc | Select-Object -ExpandProperty LastWriteTimeUtc -Last 1
+            @($old, $new) | Get-ChildItem | Sort-Object -Property 'LastWriteTimeUtc' | Select-Object -ExpandProperty 'LastWriteTimeUtc' -Last 1
         }
     }
 
