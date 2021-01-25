@@ -251,6 +251,19 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
         Write-Host ' using ' -ForegroundColor 'DarkYellow' -NoNewline
         Write-Host "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor 'Green'
 
+        # Verify the URL is accessible
+        Write-Host 'Pinging ' -ForegroundColor 'Yellow' -NoNewline
+        Write-Host $url -ForegroundColor 'Green' -NoNewline
+        Write-Host ' to verify URL accessibility' -ForegroundColor 'Yellow'
+        $request = [System.Net.WebRequest]::Create($url)
+        $request.AllowAutoRedirect = $true
+        try {
+            $response = $request.GetResponse()
+            $response.Close()
+        } catch {
+            Write-UserMessage -Message "URL $url is not valid" -Color 'DarkRed'
+            $hash = $null
+        }
 
         return $hash
     } elseif ($hashfile_url) {
@@ -362,7 +375,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $hash = get_hash_for_app $app $json.autoupdate.hash $version $url $substitutions
             if ($null -eq $hash) {
                 $valid = $false
-                Write-UserMessage -Message 'Could not find hash!' -Color 'DarkRed'
+                Write-UserMessage -Message 'Could not find hash or download URL!' -Color 'DarkRed'
             }
         }
 
@@ -380,15 +393,15 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $architecture = $_.Name
 
             # Create new url
-            $url = Invoke-VariableSubstitution -Entity (arch_specific "url" $json.autoupdate $architecture) -Substitutes $substitutions
+            $url = Invoke-VariableSubstitution -Entity (arch_specific 'url' $json.autoupdate $architecture) -Substitutes $substitutions
             $valid = $true
 
             if ($valid) {
                 # Create hash
-                $hash = get_hash_for_app $app (arch_specific "hash" $json.autoupdate $architecture) $version $url $substitutions
+                $hash = get_hash_for_app $app (arch_specific 'hash' $json.autoupdate $architecture) $version $url $substitutions
                 if ($null -eq $hash) {
                     $valid = $false
-                    Write-UserMessage -Message 'Could not find hash!' -Color 'DarkRed'
+                    Write-UserMessage -Message 'Could not find hash or download URL!' -Color 'DarkRed'
                 }
             }
 
