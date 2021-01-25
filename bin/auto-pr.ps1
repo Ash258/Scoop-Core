@@ -161,7 +161,7 @@ if (!$SkipCheckver) {
 foreach ($changedFile in hub diff --name-only) {
     $gci = Get-Item $changedFile
     $applicationName = $gci.BaseName
-    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+    if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $changedFile" -Info
         continue
     }
