@@ -255,7 +255,7 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
         Write-Host 'Pinging ' -ForegroundColor 'Yellow' -NoNewline
         Write-Host $url -ForegroundColor 'Green' -NoNewline
         Write-Host ' to verify URL accessibility' -ForegroundColor 'Yellow'
-        $request = [System.Net.WebRequest]::Create($url) # TODO: Consider spliting #/ from URL to prevent potential response
+        $request = [System.Net.WebRequest]::Create($url) # TODO: Consider spliting #/ from URL to prevent potential faulty response
         $request.AllowAutoRedirect = $true
         try {
             $response = $request.GetResponse()
