@@ -229,7 +229,7 @@ local scoopParser = parser({
         '--additional-options',
         '-b', '--bucketdir',
         '-h', '--help'
-    ),
+    ):loop(1),
     'virustotal' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
         '-s', '--scan',
