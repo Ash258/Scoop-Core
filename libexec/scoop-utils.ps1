@@ -57,6 +57,7 @@ try {
     Stop-ScoopExecution -Message "scoop utils: $BucketFolder is not valid directory" -ExitCode 2
 }
 
+if (!$Utility) { Stop-ScoopExecution -Message 'No utility provided' -ExitCode 1 -Usage (my_usage) }
 if ($Utility -notin $VALID_UTILITIES) { Stop-ScoopExecution -Message "$Utility is not valid Scoop utility" -ExitCode 1 -Usage (my_usage) }
 $UtilityPath = (Join-Path $PSScriptRoot '..\bin' | Get-ChildItem -Filter "$Utility.ps1" -File).FullName
 #endregion Parameter validation
