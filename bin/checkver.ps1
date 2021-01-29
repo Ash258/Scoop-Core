@@ -221,7 +221,7 @@ Get-Event | ForEach-Object { Remove-Event $_.SourceIdentifier }
 
 #region Main
 foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
-    if ($ff.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+    if ($ff.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $($ff.Name)" -Info
         continue
     }
