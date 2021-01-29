@@ -16,25 +16,9 @@
 # Example usage:
 #    'scoop utils checkver $env:SCOOP\buckets\main\bucket\pwsh.json' => Check explicitly passed manfiest files
 #    'scoop utils checkver manifest*' => Check all manifests matching manifest* in ./bucket/
-#    'scoop utils auto-pr --additional-options -Upstream "user/repo:branch" -skipcheckver -push'
+#    'scoop utils checkhashes manifest*' --bucketdir ..\..\testbucket\bucket => Check all manifests matching manifest* in provided directory
+#    'scoop utils auto-pr --additional-options -Upstream "user/repo:branch" -skipcheckver -push' => Execute auto-pr with specific upstream string
 #
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 'core', 'getopt', 'Helpers', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -48,6 +32,7 @@ if ($args -contains '--additional-options') {
     $getopt = $args[0..($index - 1)]
     $AdditionalArgs = $args[($index + 1)..($args.Count - 1)]
 }
+
 
 #region Parameter validation
 $opt, $rem, $err = getopt $getopt 'b:' 'bucketdir='
@@ -77,7 +62,7 @@ $UtilityPath = (Join-Path $PSScriptRoot '..\bin' | Get-ChildItem -Filter "$Utili
 #endregion Parameter validation
 
 $exitCode = 0
-# Fullpath parameter
+# Fullpath parameter or nothing
 if (!$ManifestPath) {
     $ManifestPath = '*'
 } elseif (Test-Path -LiteralPath $ManifestPath -ErrorAction 'SilentlyContinue') {
@@ -90,17 +75,16 @@ $splatParameters = @{
     'Dir' = $BucketFolder
     'App' = $ManifestPath
 }
-
-# Automatically fill upstream
+# Automatically fill upstream in case of auto-pr and current folder is repository root
 if (($Utility -eq 'auto-pr') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
-    $splatParameters.Add('Upstream', $((git config --get remote.origin.url) -replace '^.+[:/](?<user>.*)\/(?<repo>.*)(\.git)?$', '${user}/${repo}:master'))
+    $splatParameters.Add('Upstream', ((git config --get remote.origin.url) -replace '^.+[:/](?<user>.*)\/(?<repo>.*)(\.git)?$', '${user}/${repo}:master'))
 }
 
 try {
     & $UtilityPath @splatParameters @AdditionalArgs
     # TODO: Handle $LASTEXITCODE
 } catch {
-    Write-UserMessage -Message "scoop utils: $($_.Exception.Message)" -Err
+    Write-UserMessage -Message "Utlity issue: $($_.Exception.Message)" -Err
     $exitCode = 3
 }
 
