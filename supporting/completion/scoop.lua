@@ -225,6 +225,11 @@ local scoopParser = parser({
         '-q', '--quiet',
         '-h', '--help'
     ):loop(1),
+    'utils' .. parser({'auto-pr', 'checkhashes', 'checkurl', 'checkver', 'describe', 'format', 'missing-checkver'},
+        '--additional-options',
+        '-b', '--bucketdir',
+        '-h', '--help'
+    ),
     'virustotal' .. parser({getLocallyAvailableApplicationsByScoop},
         '-a' .. architectureParser, '--arch' .. architectureParser,
         '-s', '--scan',

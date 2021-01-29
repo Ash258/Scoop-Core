@@ -28,6 +28,7 @@ $script:SCOOP_COMMANDS = @(
     'unhold'
     'uninstall'
     'update'
+    'utils'
     'virustotal'
     'which'
 )
@@ -36,6 +37,7 @@ $script:SCOOP_SUB_COMMANDS = @{
     'bucket' = 'add known list rm'
     'cache'  = 'rm show'
     'config' = 'rm show'
+    'utils'  = 'auto-pr checkhashes checkurl checkver describe format missing-checkver'
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
     'cleanup'    = 'g k'
@@ -47,6 +49,7 @@ $script:SCOOP_SHORT_PARAMETERS = @{
     'unhold'     = 'g'
     'uninstall'  = 'g p'
     'update'     = 'f g i k s q'
+    'utils'      = 'b'
     'virustotal' = 'a s n'
 }
 $script:SCOOP_LONG_PARAMETERS = @{
@@ -59,6 +62,7 @@ $script:SCOOP_LONG_PARAMETERS = @{
     'unhold'     = 'global'
     'uninstall'  = 'global purge'
     'update'     = 'force global independent no-cache skip quiet'
+    'utils'      = 'bucketdir additional-options'
     'virustotal' = 'arch scan no-depends'
 }
 # Add --help and -h to all
