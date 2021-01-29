@@ -1,12 +1,114 @@
-'core', 'Helpers', 'autoupdate', 'buckets' | ForEach-Object {
+'core', 'Helpers', 'autoupdate', 'buckets', 'json' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
+}
+
+Join-Path $PSScriptRoot '..\supporting\yaml\bin\powershell-yaml.psd1' | Import-Module -Prefix 'CloudBase' -Verbose:$false
+
+$ALLOWED_MANIFEST_EXTENSION = @('json', 'yaml', 'yml')
+$ALLOWED_MANIFEST_EXTENSION_REGEX = $ALLOWED_MANIFEST_EXTENSION -join '|'
+
+function ConvertFrom-Manifest {
+    <#
+    .SYNOPSIS
+        Parse manifest file into object.
+    .PARAMETER Path
+        Specifies the path to the file representing manifest.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCustomObject])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('LiteralPath', 'File')]
+        [System.IO.FileInfo] $Path
+    )
+
+    process {
+        if (!(Test-Path $Path -PathType 'Leaf')) { return $null }
+
+        $result = $null
+        $content = Get-Content $Path -Encoding 'UTF8' -Raw
+
+        switch ($Path.Extension) {
+            '.json' {
+                $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
+            }
+            { $_ -in '.yaml', '.yml' } {
+                # Ugly hotfix to prevent ordering of properties and PSCustomObject
+                $result = ConvertFrom-CloudBaseYaml -Yaml $content -Ordered | ConvertTo-Json -Depth 100 | ConvertFrom-Json
+            }
+            default {
+                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
+                $result = ConvertFrom-Json -InputObject $content -ErrorAction 'Stop'
+            }
+        }
+
+        return $result
+    }
+}
+
+function ConvertTo-Manifest {
+    <#
+    .SYNOPSIS
+        Convert manifest object into string.
+    .PARAMETER File
+        Specifies the path to the file where manifest will be saved.
+    .PARAMETER Manifest
+        Specifies the manifest object.
+    .PARAMETER Extension
+        Specifies the structure of resulted string (json, yaml, yml)
+        Ignored if File is provided.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [Alias('Path', 'LiteralPath')]
+        [System.IO.FileInfo] $File,
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Alias('InputObject', 'Content')]
+        $Manifest,
+        [Parameter(ValueFromPipelineByPropertyName)]
+        [String] $Extension
+    )
+
+    process {
+        $ext = if ($File) { $File.Extension.TrimStart('.') } else { $Extension }
+        $content = $null
+
+        switch ($ext) {
+            'json' {
+                $content = $Manifest | ConvertToPrettyJson
+                $content = $content -replace "`t", (' ' * 4)
+            }
+            { $_ -in 'yaml', 'yml' } {
+                $content = ConvertTo-CloudBaseYaml -Data $Manifest
+            }
+            default {
+                Write-UserMessage -Message "Not specific manifest extension ($_). Falling back to json" -Info
+                $content = $Manifest | ConvertToPrettyJson
+                $content = $content -replace "`t", (' ' * 4)
+            }
+        }
+
+        if ($File) {
+            Out-UTF8File -File $File.FullName -Content $content
+        } else {
+            return $content
+        }
+    }
 }
 
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
+    $buc = Find-BucketDirectory -Bucket $bucket
+    $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*"
+    $path = $null
 
-    # TODO: YAML
-    return Find-BucketDirectory $bucket | Join-Path -ChildPath "$name.json"
+    if ($file) {
+        if ($file.Count -gt 1) { $file = $file[0] }
+        $path = $file.FullName
+    }
+
+    return $path
 }
 
 function parse_json {
@@ -32,13 +134,21 @@ function url_manifest($url) {
     }
     if (!$str) { return $null }
 
+    # TODO: YAML
     return $str | ConvertFrom-Json
 }
 
 function manifest($app, $bucket, $url) {
     if ($url) { return url_manifest $url }
 
-    return parse_json (manifest_path $app $bucket)
+    $path = manifest_path $app $bucket
+    try {
+        $manifest = ConvertFrom-Manifest -Path $path
+    } catch {
+        $manifest = $null
+    }
+
+    return $manifest
 }
 
 function save_installed_manifest($app, $bucket, $dir, $url) {
@@ -54,18 +164,27 @@ function save_installed_manifest($app, $bucket, $dir, $url) {
 }
 
 function installed_manifest($app, $version, $global) {
-    # TODO: YML
-    $old = 'manifest.json'
-    $new = 'scoop-manifest.json'
     $d = versiondir $app $version $global
 
-    # Migration
-    if (Join-Path $d $old | Test-Path ) {
+    #region Migration from non-generic file name
+    $old = 'manifest.json'
+    $new = 'scoop-manifest.json'
+    if (Join-Path $d $old | Test-Path) {
         Write-UserMessage -Message "Migrating $old to $new" -Info
         Join-Path $d $old | Rename-Item -NewName $new
     }
+    $manifestPath = Join-Path $d $new
+    #endregion Migration from non-generic file name
 
-    return parse_json (Join-Path $d $new)
+    # Different extension types
+    if (!(Test-Path $manifestPath)) {
+        $installedManifests = Get-ChildItem -LiteralPath $d -Include 'scoop-manifest.*'
+        if ($installedManifests.Count -gt 0) {
+            $manifestPath = $installedManifests[0].FullName
+        }
+    }
+
+    return ConvertFrom-Manifest -Path $manifestPath
 }
 
 function save_install_info($info, $dir) {
@@ -137,6 +256,8 @@ function Invoke-ManifestScript {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
         [Alias('InputObject')]
         $Manifest,
         [Parameter(Mandatory)]
@@ -178,13 +299,17 @@ function generate_user_manifest($app, $bucket, $version) {
     )
 
     if (!($manifest.autoupdate)) {
-        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncouldn't find manifest for '$app@$version'" -Warning
+        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncould not find manifest for '$app@$version'" -Warning
         return $null
     }
 
     $path = usermanifestsdir | ensure
     try {
-        Invoke-Autoupdate $app "$path" $manifest $version $(@{ })
+        $newManifest = Invoke-Autoupdate $app "$path" $manifest $version $(@{ })
+        if ($null -eq $newManifest) { throw "Could not install $app@$version" }
+
+        Write-UserMessage -Message "Writing updated $app manifest" -Color 'DarkGreen'
+        ConvertTo-Manifest -Path (Join-Path $path "$app.json") -Manifest $newManifest
 
         return (usermanifest $app | Resolve-Path).Path
     } catch {

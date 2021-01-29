@@ -1,6 +1,6 @@
 ---
 name: Bug
-about: A problem which makes it impossible to use Scoop.
+about: A problem which makes it impossible to use Shovel.
 labels: bug
 ---
 

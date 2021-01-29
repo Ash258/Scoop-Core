@@ -78,6 +78,11 @@ function script_deps($script) {
     if ((($script -like '*Expand-7zipArchive *') -or ($script -like '*extract_7zip *')) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((($script -like '*Expand-MsiArchive *') -or ($script -like '*extract_msi *')) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
     if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *')) -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+    if (($script -like '*Expand-ZstdArchive *') -and !(Test-HelperInstaller -Helper 'Zstd')) {
+        # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
+        if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+        $deps += 'zstd'
+    }
 
     return $deps
 }
@@ -89,6 +94,11 @@ function install_deps($manifest, $arch) {
     if ($manifest.innosetup -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
     if ((Test-7zipRequirement -URL $urls) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((Test-LessmsiRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
+    if ((Test-ZstdRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Zstd')) {
+        # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
+        if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+        $deps += 'zstd'
+    }
 
     $pre_install = arch_specific 'pre_install' $manifest $arch
     $installer = arch_specific 'installer' $manifest $arch

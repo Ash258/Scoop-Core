@@ -60,14 +60,18 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
         Write-UserMessage -Message "By installing you accept following $(pluralize $id.Count 'license' 'licenses'): $toShow" -Warn
     }
 
-    $dir = ensure (versiondir $app $version $global)
+    # Variables
+    $dir = versiondir $app $version $global | Confirm-DirectoryExistence
+    $current_dir = current_dir $dir # Save some lines in manifests
     $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
 
+    # Download and extraction
     Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
-
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
-    pre_install $manifest $architecture
+
+    # Installers
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_install' -Architecture $architecture
     run_installer $fname $manifest $architecture $dir $global
     ensure_install_dir_not_in_path $dir $global
     $dir = link_current $dir
@@ -82,18 +86,17 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     persist_data $manifest $original_dir $persist_dir
     persist_permission $manifest $global
 
-    post_install $manifest $architecture
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'post_install' -Architecture $architecture
 
     # Save info for uninstall
     save_installed_manifest $app $bucket $dir $url
     save_install_info @{ 'architecture' = $architecture; 'url' = $url; 'bucket' = $bucket } $dir
 
-    if ($manifest.suggest) {
-        $suggested[$app] = $manifest.suggest
-    }
+    if ($manifest.suggest) { $suggested[$app] = $manifest.suggest }
 
     Write-UserMessage -Message "'$app' ($version) was installed successfully!" -Success
 
+    # Additional info to user
     show_notes $manifest $dir $original_dir $persist_dir
 
     if ($manifest.changelog) {
@@ -122,8 +125,9 @@ function Find-Manifest($app, $bucket) {
         $manifest, $bucket = find_manifest $app $bucket
 
         if (!$manifest) {
-            # Couldn't find app in buckets: check if it's a local path
+            # Could not find app in buckets: check if it's a local path
             $path = $app
+            # TODO: YAML
             if (!$path.endswith('.json')) { $path += '.json' }
             if (Test-Path $path) {
                 $url = "$(Resolve-Path $path)"
@@ -621,6 +625,9 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         } elseif (Test-7zipRequirement -File $fname) {
             # 7zip
             $extract_fn = 'Expand-7zipArchive'
+        } elseif (Test-ZstdRequirement -File $fname) {
+            # Zstd
+            $extract_fn = 'Expand-ZstdArchive'
         }
 
         if ($extract_fn) {
@@ -935,8 +942,7 @@ function rm_shims($manifest, $global, $arch) {
 # Gets the path for the 'current' directory junction for
 # the specified version directory.
 function current_dir($versiondir) {
-    $parent = Split-Path $versiondir
-    return Join-Path $parent 'current'
+    return Split-Path -LiteralPath $versiondir | Join-Path -ChildPath 'current'
 }
 
 
@@ -1067,22 +1073,6 @@ function env_rm($manifest, $global, $arch) {
             env $name $global $null
             if (Test-Path env:\$name) { Remove-Item env:\$name }
         }
-    }
-}
-
-function pre_install($manifest, $arch) {
-    $pre_install = arch_specific 'pre_install' $manifest $arch
-    if ($pre_install) {
-        Write-UserMessage -Message 'Running pre-install script...' -Output:$false
-        Invoke-Expression (@($pre_install) -join "`r`n")
-    }
-}
-
-function post_install($manifest, $arch) {
-    $post_install = arch_specific 'post_install' $manifest $arch
-    if ($post_install) {
-        Write-UserMessage -Message 'Running post-install script...' -Output:$false
-        Invoke-Expression (@($post_install) -join "`r`n")
     }
 }
 

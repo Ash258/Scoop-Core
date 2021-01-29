@@ -3,51 +3,60 @@
 }
 
 $SCOOP_MODULE_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'modules'
+$SCOOP_GLOBAL_MODULE_DIRECTORY = Join-Path $SCOOP_GLOBAL_ROOT_DIRECTORY 'modules'
 $modulesdir = $SCOOP_MODULE_DIRECTORY
 
 function install_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    if ($global) { throw [ScoopException] 'Installing PowerShell modules globally is not implemented!' } # TerminatingError thrown
+    $moduleName = $psmodule.name
+    if (!$moduleName) { throw [ScoopException] "Invalid manifest|-The 'name' property is missing from 'psmodule'" } # TerminatingError thrown
 
-    $modulesdir = ensure $modulesdir
-    ensure_in_psmodulepath $modulesdir $global
+    $modules = if ($global) { $SCOOP_GLOBAL_MODULE_DIRECTORY } else { $SCOOP_MODULE_DIRECTORY }
+    $modules = Confirm-DirectoryExistence -Path $modules
 
-    $module_name = $psmodule.name
-    if (!$module_name) { throw [ScoopException] "Invalid manifest|-The 'name' property is missing from 'psmodule'" } # TerminatingError thrown
+    # Add both global and local
+    # TODO: Test properly all side effects and consider adding just the one needed
+    ensure_in_psmodulepath $SCOOP_GLOBAL_MODULE_DIRECTORY $true
+    ensure_in_psmodulepath $SCOOP_MODULE_DIRECTORY $false
 
-    $linkfrom = Join-Path $modulesdir $module_name
-    Write-UserMessage -Message "Installing PowerShell module '$module_name'"
-    Write-UserMessage -Message "Linking $(friendly_path $linkfrom) => $(friendly_path $dir)"
+    $linkFrom = Join-Path $modules $moduleName
+    Write-UserMessage -Message "Installing PowerShell module '$moduleName'", "Linking $(friendly_path $linkFrom) => $(friendly_path $dir)"
 
-    if (Test-Path $linkfrom) {
-        Write-UserMessage -Message "$(friendly_path $linkfrom) already exists. It will be replaced." -Warning
-        $linkfrom = Resolve-Path $linkfrom
-        & "$env:COMSPEC" /c "rmdir `"$linkfrom`""
+    if (Test-Path $linkFrom) {
+        Write-UserMessage -Message "$(friendly_path $linkFrom) already exists. It will be replaced." -Warning
+        $linkFrom = Resolve-Path $linkFrom
+        # TODO: Drop comspec
+        & "$env:COMSPEC" /c "rmdir `"$linkFrom`""
     }
 
-    & "$env:COMSPEC" /c "mklink /j `"$linkfrom`" `"$dir`"" | Out-Null
+    # TODO: Drop comspec
+    & "$env:COMSPEC" /c "mklink /j `"$linkFrom`" `"$dir`"" | Out-Null
 }
 
 function uninstall_psmodule($manifest, $dir, $global) {
     $psmodule = $manifest.psmodule
     if (!$psmodule) { return }
 
-    $module_name = $psmodule.name
-    Write-UserMessage -Message "Uninstalling PowerShell module '$module_name'."
+    $moduleName = $psmodule.name
+    Write-UserMessage -Message "Uninstalling PowerShell module '$moduleName'."
 
-    $linkfrom = Join-Path $modulesdir $module_name
-    if (Test-Path $linkfrom) {
-        Write-UserMessage -Message "Removing $(friendly_path $linkfrom)"
-        $linkfrom = Resolve-Path $linkfrom
-        & "$env:COMSPEC" /c "rmdir `"$linkfrom`""
+    $from = if ($global) { $SCOOP_GLOBAL_MODULE_DIRECTORY } else { $SCOOP_MODULE_DIRECTORY }
+    $linkFrom = Join-Path $from $moduleName
+
+    if (Test-Path $linkFrom) {
+        Write-UserMessage -Message "Removing $(friendly_path $linkFrom)"
+        $linkfrom = Resolve-Path $linkFrom
+        # TODO: Drop comspec
+        & "$env:COMSPEC" /c "rmdir `"$linkFrom`""
     }
 }
 
 function ensure_in_psmodulepath($dir, $global) {
     $path = env 'psmodulepath' $global
     if (!$global -and ($null -eq $path)) {
+        # Add "default" psmodule path
         $path = Join-Path $env:USERPROFILE 'Documents\WindowsPowerShell\Modules'
     }
 

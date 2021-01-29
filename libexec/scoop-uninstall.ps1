@@ -7,7 +7,7 @@
 #   -g, --global   Uninstall a globally installed app.
 #   -p, --purge    Remove all persistent data.
 
-'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'uninstall' | ForEach-Object {
+'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'Uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -53,6 +53,7 @@ $problems = 0
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
         Write-UserMessage -Message $body -Err
+        debug $_.InvocationInfo
         if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Bucket $bucket -Title $title -Body $body }
 
         continue

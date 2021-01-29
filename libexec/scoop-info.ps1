@@ -136,7 +136,7 @@ if ($env_set -or $env_add_path) {
 }
 
 if ($env_set) {
-    $env_set | Get-Member -MemberType NoteProperty | ForEach-Object {
+    $env_set | Get-Member -MemberType 'NoteProperty' | ForEach-Object {
         $value = env $_.name $global
         if (!$value) {
             $value = format $env_set.$($_.name) @{ 'dir' = $dir }
