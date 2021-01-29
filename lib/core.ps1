@@ -39,7 +39,7 @@ function Optimize-SecurityProtocol {
     }
 }
 
-function Get-UserAgent() {
+function Get-UserAgent {
     return "Scoop/1.0 (+http://scoop.sh/) PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor); $(if($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'){'Win64; x64; '})$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})$PSEdition)"
 }
 
@@ -48,22 +48,21 @@ function Show-DeprecatedWarning {
     .SYNOPSIS
         Print deprecated warning for functions, which will be deleted in near future.
     .PARAMETER Invocation
-        Invocation to identify location of line.
-        Just pass $MyInvocation.
+        $MyInvocation
     .PARAMETER New
         Specifies new command name.
     #>
     param($Invocation, [String] $New)
 
     Write-UserMessage -Message ('"{0}" will be deprecated. Please change your code/manifest to use "{1}"' -f $Invocation.MyCommand.Name, $New) -Warning
-    Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color DarkGray
+    Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color 'DarkGray'
 }
 
 function load_cfg($file) {
     if (!(Test-Path $file)) { return $null }
 
     try {
-        return (Get-Content $file -Raw | ConvertFrom-Json -ErrorAction Stop)
+        return (Get-Content $file -Raw | ConvertFrom-Json -ErrorAction 'Stop')
     } catch {
         Write-UserMessage -Message "loading ${file}: $($_.Exception.Message)" -Err
     }
@@ -79,13 +78,13 @@ function set_config($name, $value) {
     if ($null -eq $SCOOP_CONFIGURATION -or $SCOOP_CONFIGURATION.Count -eq 0) {
         Split-Path -Path $SCOOP_CONFIGURATION_FILE | ensure | Out-Null
         $SCOOP_CONFIGURATION = New-Object PSObject
-        $SCOOP_CONFIGURATION | Add-Member -MemberType NoteProperty -Name $name -Value $value
+        $SCOOP_CONFIGURATION | Add-Member -MemberType 'NoteProperty' -Name $name -Value $value
     } else {
         if ($value -eq [bool]::TrueString -or $value -eq [bool]::FalseString) {
             $value = [System.Convert]::ToBoolean($value)
         }
         if ($null -eq $SCOOP_CONFIGURATION.$name) {
-            $SCOOP_CONFIGURATION | Add-Member -MemberType NoteProperty -Name $name -Value $value
+            $SCOOP_CONFIGURATION | Add-Member -MemberType 'NoteProperty' -Name $name -Value $value
         } else {
             $SCOOP_CONFIGURATION.$name = $value
         }
@@ -143,12 +142,16 @@ function is_admin {
 
 # messages
 function abort($msg, [int] $exit_code = 3) { Write-UserMessage -Message $msg -Err; exit $exit_code }
-function error($msg) { Write-Host "ERROR $msg" -ForegroundColor DarkRed }
-function warn($msg) { Write-Host "WARN  $msg" -ForegroundColor DarkYellow }
-function info($msg) { Write-Host "INFO  $msg" -ForegroundColor DarkGray }
+function error($msg) { Write-Host "ERROR $msg" -ForegroundColor 'DarkRed' }
+function warn($msg) { Write-Host "WARN  $msg" -ForegroundColor 'DarkYellow' }
+function info($msg) { Write-Host "INFO  $msg" -ForegroundColor 'DarkGray' }
 function message($msg) { Write-Host "$msg" }
 
 function Test-ScoopDebugEnabled {
+    <#
+    .SYNOPSIS
+        Load debug information from $env:SCOOP_DEBUG or from config file.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()
@@ -161,6 +164,12 @@ function Test-ScoopDebugEnabled {
 }
 
 function debug($obj) {
+    <#
+    .SYNOPSIS
+        Output objects in specific format to help identifying problems.
+    .PARAMETER obj
+        Specifies object/variable to be shown.
+    #>
     if (!(Test-ScoopDebugEnabled)) { return }
 
     $prefix = "DEBUG[$(Get-Date -UFormat %s)]"
@@ -168,26 +177,26 @@ function debug($obj) {
     $msg = $obj | Out-String -Stream
 
     if ($null -eq $obj -or $null -eq $msg) {
-        Write-Host "$prefix $param = " -f DarkCyan -NoNewline
-        Write-Host '$null' -f DarkYellow -NoNewline
-        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
+        Write-Host "$prefix $param = " -ForegroundColor 'DarkCyan' -NoNewline
+        Write-Host '$null' -ForegroundColor 'DarkYellow' -NoNewline
+        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
         return
     }
 
     if ($msg.GetType() -eq [System.Object[]]) {
-        Write-Host "$prefix $param ($($obj.GetType()))" -ForegroundColor DarkCyan -NoNewline
-        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor DarkGray
+        Write-Host "$prefix $param ($($obj.GetType()))" -ForegroundColor 'DarkCyan' -NoNewline
+        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
         $msg | Where-Object { ![String]::IsNullOrWhiteSpace($_) } |
             Select-Object -Skip 2 | # Skip headers
-            ForEach-Object {
-                Write-Host "$prefix $param.$($_)" -ForegroundColor DarkCyan
-            }
+                ForEach-Object {
+                    Write-Host "$prefix $param.$($_)" -ForegroundColor 'DarkCyan'
+                }
     } else {
-        Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor DarkCyan -NoNewline
-        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -f DarkGray
+        Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor 'DarkCyan' -NoNewline
+        Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
     }
 }
-function success($msg) { Write-Host $msg -ForegroundColor DarkGreen }
+function success($msg) { Write-Host $msg -ForegroundColor 'DarkGreen' }
 
 function filesize($length) {
     $gb = [System.Math]::Pow(2, 30)
@@ -232,45 +241,66 @@ function installed($app, $global = $null) {
 }
 function installed_apps($global) {
     $dir = appsdir $global
-    if (Test-Path $dir) { Get-ChildItem $dir -Exclude 'scoop' -Directory | Select-Object -ExpandProperty Name }
+    if (Test-Path $dir) { Get-ChildItem $dir -Exclude 'scoop' -Directory | Select-Object -ExpandProperty 'Name' }
 }
 
 function Get-AppFilePath {
+    <#
+    .SYNOPSIS
+        Get full path to the specific executable under specific application installed via scoop.
+    .PARAMETER App
+        Specifies the scoop's application name.
+    .PARAMETER File
+        Specifies the executable name.
+    #>
     [CmdletBinding()]
     [OutputType([String])]
     param(
-        [Parameter(Mandatory, Position = 0)]
+        [Parameter(Mandatory)]
         [String] $App,
-        [Parameter(Mandatory, Position = 1)]
+        [Parameter(Mandatory)]
         [String] $File
     )
 
+    # TODO: Support NO_JUNCTION
     # Normal path to file
-    $Path = versiondir $App 'current' $false | Join-Path -ChildPath $File
-    if (Test-Path $Path) { return $Path }
+    $path = versiondir $App 'current' $false | Join-Path -ChildPath $File
+    if (Test-Path $path) { return $path }
 
     # Global path to file
-    $Path = versiondir $App 'current' $true | Join-Path -ChildPath $File
-    if (Test-Path $Path) { return $Path }
+    $path = versiondir $App 'current' $true | Join-Path -ChildPath $File
+    if (Test-Path $path) { return $path }
 
     # Not found
     return $null
 }
 
 function Test-CommandAvailable {
+    <#
+    .SYNOPSIS
+        Test if command is available in PATH.
+    .PARAMETER Name
+        Specifies the command name.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param ([Parameter(Mandatory, ValueFromPipeline)] [Alias('Command')] [String] $Name)
 
-    process { return [bool] (Get-Command $Name -ErrorAction Ignore) }
+    process { return [bool] (Get-Command $Name -ErrorAction 'Ignore') }
 }
 
 function Get-HelperPath {
+    <#
+    .SYNOPSIS
+        Get full path to the often used application's executables.
+    .PARAMETER Helper
+        Specifies the name of helper application.
+    #>
     [CmdletBinding()]
     [OutputType([String])]
     param(
-        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2')]
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
         [String] $Helper
     )
 
@@ -280,6 +310,7 @@ function Get-HelperPath {
             'Aria2' { $helperPath = Get-AppFilePath 'aria2' 'aria2c.exe' }
             'Innounp' { $helperPath = Get-AppFilePath 'innounp' 'innounp.exe' }
             'Lessmsi' { $helperPath = Get-AppFilePath 'lessmsi' 'lessmsi.exe' }
+            'Zstd' { $HelperPath = Get-AppFilePath 'zstd' 'zstd.exe' }
             '7zip' {
                 $helperPath = Get-AppFilePath '7zip' '7z.exe'
                 if ([String]::IsNullOrEmpty($helperPath)) {
@@ -299,11 +330,17 @@ function Get-HelperPath {
 }
 
 function Test-HelperInstalled {
+    <#
+    .SYNOPSIS
+        Test if specified widely used application is installed.
+    .PARAMETER Helper
+        Specifies the name of application.
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param(
-        [Parameter(Mandatory = $true, Position = 0, ValueFromPipeline = $true)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2')]
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
         [String] $Helper
     )
 
@@ -311,7 +348,15 @@ function Test-HelperInstalled {
 }
 
 function Test-Aria2Enabled {
-    return (Test-HelperInstalled -Helper Aria2) -and (get_config 'aria2-enabled' $true)
+    <#
+    .SYNOPSIS
+        Test if aria2 application is installed and enabled.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process { return (Test-HelperInstalled -Helper 'Aria2') -and (get_config 'aria2-enabled' $true) }
 }
 
 function app_status($app, $global) {
@@ -350,6 +395,7 @@ function app_status($app, $global) {
     return $status
 }
 
+# TODO: YML
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 # paths
@@ -393,7 +439,7 @@ function ensure {
     param([Parameter(Mandatory, ValueFromPipeline)] [Alias('Dir', 'Path', 'LiteralPath')] $Directory)
 
     process {
-        if (! (Test-Path $Directory)) { New-Item $Directory -ItemType Directory | Out-Null }
+        if (!(Test-Path $Directory)) { New-Item $Directory -ItemType 'Directory' | Out-Null }
 
         return Resolve-Path $Directory
     }
@@ -423,6 +469,22 @@ function is_local($path) { return ($path -notmatch '^https?://') -and (Test-Path
 # operations
 
 function Invoke-ExternalCommand {
+    <#
+    .SYNOPSIS
+        Run command using System.Diagnostics.Process with support for logs.
+    .PARAMETER FilePath
+        Specifies the path to the executable.
+    .PARAMETER ArgumentList
+        Specifies the array of arguments to be passed to the executable.
+    .PARAMETER RunAs
+        Specifies to use 'runas' to use elevated privileges.
+    .PARAMETER Activity
+        Specifies to use verbose output to user.
+    .PARAMETER ContinueExitCodes
+        Specifies key/value pair of allowed non-zero exit codes and description for them.
+    .PARAMETER LogPath
+        Specifies the path where log file should be saved.
+    #>
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     [OutputType([bool])]
     param (
@@ -449,6 +511,7 @@ function Invoke-ExternalCommand {
     $Process.StartInfo.FileName = $FilePath
     $Process.StartInfo.Arguments = ($ArgumentList | Select-Object -Unique) -join ' '
     $Process.StartInfo.UseShellExecute = $false
+
     if ($LogPath) {
         if ($FilePath -match '(^|\W)msiexec($|\W)') {
             $Process.StartInfo.Arguments += " /lwe `"$LogPath`""
@@ -457,35 +520,40 @@ function Invoke-ExternalCommand {
             $Process.StartInfo.RedirectStandardError = $true
         }
     }
+
     if ($RunAs) {
         $Process.StartInfo.UseShellExecute = $true
         $Process.StartInfo.Verb = 'RunAs'
     }
+
     try {
         $Process.Start() | Out-Null
     } catch {
-        if ($Activity) { Write-UserMessage -Message 'error.' -Color DarkRed }
+        if ($Activity) { Write-UserMessage -Message 'error.' -Color 'DarkRed' }
         Write-UserMessage -Message $_.Exception.Message -Err
         return $false
     }
+
     if ($LogPath -and ($FilePath -notmatch '(^|\W)msiexec($|\W)')) {
-        Out-File -FilePath $LogPath -Encoding ASCII -Append -InputObject $Process.StandardOutput.ReadToEnd()
+        Out-File -InputObject $Process.StandardOutput.ReadToEnd() -FilePath $LogPath -Encoding 'ASCII' -Append
     }
+
     $Process.WaitForExit()
+
     if ($Process.ExitCode -ne 0) {
         if ($ContinueExitCodes -and ($ContinueExitCodes.ContainsKey($Process.ExitCode))) {
             if ($Activity) {
-                Write-Host 'done.' -ForegroundColor DarkYellow
+                Write-Host 'done.' -ForegroundColor 'DarkYellow'
             }
             Write-UserMessage -Message $ContinueExitCodes[$Process.ExitCode] -Warning
             return $true
         } else {
-            if ($Activity) { Write-UserMessage -Message 'error.' -Color DarkRed }
+            if ($Activity) { Write-UserMessage -Message 'error.' -Color 'DarkRed' }
             Write-UserMessage -Message "Exit code was $($Process.ExitCode)!" -Err
             return $false
         }
     }
-    if ($Activity) { Write-Host 'done.' -ForegroundColor Green }
+    if ($Activity) { Write-Host 'done.' -ForegroundColor 'Green' }
 
     return $true
 }
@@ -545,8 +613,7 @@ function movedir {
 
     if ($proc.ExitCode -ge 8) {
         debug $out
-        # TODO: Consider different title
-        Set-TerminatingError -Title "Decompress Error|-Could not find '$(fname $from) in $parent'! (error $($proc.ExitCode))"
+        throw [ScoopException] "Decompress Error|-Could not find '$(fname $from) in $parent'! (error $($proc.ExitCode))" # TerminatingError thrown
     }
 
     # Wait for robocopy to terminate its threads
@@ -583,7 +650,7 @@ function warn_on_overwrite($shim_ps1, $path) {
 }
 
 function shim($path, $global, $name, $arg) {
-    if (!(Test-Path $path)) { Set-TerminatingError -Title "Shim creation fail|-Cannot shim '$(fname $path)': could not find '$path'" }
+    if (!(Test-Path $path)) { throw [ScoopException] "Shim creation fail|-Cannot shim '$(fname $path)': could not find '$path'" } # TerminatingError thrown
 
     $abs_shimdir = shimdir $global | ensure
     if (!$name) { $name = strip_ext (fname $path) }
@@ -613,9 +680,9 @@ function shim($path, $global, $name, $arg) {
     if ($path -match '\.jar$') {
         "if(`$MyInvocation.ExpectingInput) { `$input | & java -jar `$path $arg @args } else { & java -jar `$path $arg @args }" | Out-File "$shim.ps1" -Encoding utf8 -Append
     } else {
-        "if(`$MyInvocation.ExpectingInput) { `$input | & `$path $arg @args } else { & `$path $arg @args }" | Out-File "$shim.ps1" -Encoding utf8 -Append
+        "if(`$MyInvocation.ExpectingInput) { `$input | & `$path $arg @args } else { & `$path $arg @args }" | Out-File "$shim.ps1" -Encoding 'utf8' -Append
     }
-    Add-Content "$shim.ps1" 'exit $LASTEXITCODE' -Encoding utf8
+    Add-Content "$shim.ps1" 'exit $LASTEXITCODE' -Encoding 'utf8'
     #endregion PS1 shim
 
     if ($path -match '\.(exe|com)$') {
@@ -641,19 +708,19 @@ set args=%args:(=``(%
 set args=%args:)=``)%
 set invalid=`"='
 if !args! == !invalid! ( set args= )
-powershell -noprofile -ex unrestricted `"& '$resolved_path' $arg %args%;exit `$LASTEXITCODE`"" | Out-File "$shim.cmd" -Encoding Ascii
+powershell -noprofile -ex unrestricted `"& '$resolved_path' $arg %args%;exit `$LASTEXITCODE`"" | Out-File "$shim.cmd" -Encoding 'Ascii'
 
-        "#!/bin/sh`npowershell.exe -noprofile -ex unrestricted `"& '$resolved_path'`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
+        "#!/bin/sh`npowershell.exe -noprofile -ex unrestricted `"& '$resolved_path'`" $arg `"$@`"" | Out-File $shim -Encoding 'Ascii'
     } elseif ($path -match '\.jar$') {
-        "@java -jar `"$resolved_path`" $arg %*" | Out-File "$shim.cmd" -Encoding Ascii
-        "#!/bin/sh`njava -jar `"$resolved_path`" $arg `"$@`"" | Out-File $shim -Encoding Ascii
+        "@java -jar `"$resolved_path`" $arg %*" | Out-File "$shim.cmd" -Encoding 'Ascii'
+        "#!/bin/sh`njava -jar `"$resolved_path`" $arg `"$@`"" | Out-File $shim -Encoding 'Ascii'
     }
 }
 
 function search_in_path($target) {
     $path = (env 'PATH' $false) + ';' + (env 'PATH' $true)
     foreach ($dir in $path.Split(';')) {
-        if (Test-Path "$dir\$target" -PathType Leaf) {
+        if (Test-Path "$dir\$target" -PathType 'Leaf') {
             return Join-Path $dir $target
         }
     }
@@ -682,6 +749,15 @@ function ensure_architecture($architecture_opt) {
 }
 
 function Confirm-InstallationStatus {
+    <#
+    .SYNOPSIS
+        Get status of specific applications.
+        Returns array of 3 item arrays (appliation name, globally installed, bucket name)
+    .PARAMETER Apps
+        Specifies the array of applications to be evalueated.
+    .PARAMETER Global
+        Specifies to check globally installed applications.
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -689,32 +765,33 @@ function Confirm-InstallationStatus {
         [Switch] $Global
     )
     $Global | Out-Null # PowerShell/PSScriptAnalyzer#1472
-    $Installed = @()
-    $Apps | Select-Object -Unique | Where-Object { $_.Name -ne 'scoop' } | ForEach-Object {
-        $App, $null, $null = parse_app $_
-        $buc = (app_status $App $Global).bucket
+    $installed = @()
+
+    $Apps | Select-Object -Unique | Where-Object -Property 'Name' -NE -Value 'scoop' | ForEach-Object {
+        $app, $null, $null = parse_app $_
+        $buc = (app_status $app $Global).bucket
         if ($Global) {
-            if (installed $App $true) {
-                $Installed += , @($App, $true, $buc)
-            } elseif (installed $App $false) {
-                Write-UserMessage -Message "'$App' isn't installed globally, but it is installed for your account." -Err
+            if (installed $app $true) {
+                $installed += , @($app, $true, $buc)
+            } elseif (installed $app $false) {
+                Write-UserMessage -Message "'$app' isn't installed globally, but it is installed for your account." -Err
                 Write-UserMessage -Message 'Try again without the --global (or -g) flag instead.' -Warning
             } else {
-                Write-UserMessage -Message "'$App' isn't installed." -Err
+                Write-UserMessage -Message "'$app' isn't installed." -Err
             }
         } else {
-            if (installed $App $false) {
-                $Installed += , @($App, $false, $buc)
-            } elseif (installed $App $true) {
-                Write-UserMessage -Message "'$App' isn't installed for your account, but it is installed globally." -Err
+            if (installed $app $false) {
+                $installed += , @($app, $false, $buc)
+            } elseif (installed $app $true) {
+                Write-UserMessage -Message "'$app' isn't installed for your account, but it is installed globally." -Err
                 Write-UserMessage -Message 'Try again with the --global (or -g) flag instead.' -Warning
             } else {
-                Write-UserMessage -Message "'$App' isn't installed." -Err
+                Write-UserMessage -Message "'$app' isn't installed." -Err
             }
         }
     }
 
-    return , $Installed
+    return , $installed
 }
 
 function strip_path($orig_path, $dir) {
@@ -784,6 +861,8 @@ function applist($apps, $global, $bucket = $null) {
 }
 
 function parse_app([string] $app) {
+    # TODO: YAML
+    # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
     if ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
         return $matches['app'], $matches['bucket'], $matches['version']
     }
@@ -826,23 +905,79 @@ function is_scoop_outdated() {
     return $res
 }
 
-function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
-    if ($entity -is [Array]) {
-        return $entity | ForEach-Object { substitute $_ $params $regexEscape }
-    } elseif ($entity -is [String]) {
-        $params.GetEnumerator() | ForEach-Object {
-            $value = if (($regexEscape -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
-            $curly = '${' + $_.Name.TrimStart('$') + '}'
+function Invoke-VariableSubstitution {
+    <#
+    .SYNOPSIS
+        Substitute (find and replace) provided parameters in provided entity.
+    .PARAMETER Entity
+        Specifies the entity to be substituted (searched in).
+    .PARAMETER Substitutes
+        Specifies the hashtable providing name and value pairs for "find and replace".
+        Hashtable keys should start with $ (dollar sign). Curly bracket variable syntax will be substituted automatically.
+    .PARAMETER EscapeRegularExpression
+        Specifies to escape regular expressions before replacing values.
+    #>
+    [CmdletBinding()]
+    param(
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        $Entity,
+        [Parameter(Mandatory)]
+        [Alias('Parameters')]
+        [HashTable] $Substitutes,
+        [Switch] $EscapeRegularExpression
+    )
 
-            $entity = $entity.Replace($curly, $value)
-            $entity = $entity.Replace($_.Name, $value)
+    process {
+        $EscapeRegularExpression | Out-Null # PowerShell/PSScriptAnalyzer#1472
+        $newEntity = $Entity
+
+        if ($null -ne $newEntity) {
+            switch ($newEntity.GetType().Name) {
+                'String' {
+                    $Substitutes.GetEnumerator() | ForEach-Object {
+                        $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
+                        $curly = '${' + $_.Name.TrimStart('$') + '}'
+
+                        $newEntity = $newEntity.Replace($curly, $value)
+                        $newEntity = $newEntity.Replace($_.Name, $value)
+                    }
+                }
+                'Object[]' {
+                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                'PSCustomObject' {
+                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                default {
+                    # This is not needed, but to cover all possible use cases explicitly
+                    $newEntity = $newEntity
+                }
+            }
         }
 
-        return $entity
+        return $newEntity
     }
 }
 
+# TODO: Deprecate
+function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
+    return Invoke-VariableSubstitution -Entity $entity -Substitutes $params -EscapeRegularExpression:$regexEscape
+}
+
 function format_hash([String] $hash) {
+    # Convert base64 encoded hash values
+    if ($hash -match '^(?:[A-Za-z\d+\/]{4})*(?:[A-Za-z\d+\/]{2}==|[A-Za-z\d+\/]{3}=|[A-Za-z\d+\/]{4})$') {
+        $base64 = $Matches[0]
+        if (!($hash -match '^[a-fA-F\d]+$') -and $hash.Length -notin @(32, 40, 64, 128)) {
+            try {
+                $hash = ([System.Convert]::FromBase64String($base64) | ForEach-Object { $_.ToString('x2') }) -join ''
+            } catch {
+                $hash = $hash
+            }
+        }
+    }
+
     $hash = $hash.toLower()
 
     switch ($hash.Length) {

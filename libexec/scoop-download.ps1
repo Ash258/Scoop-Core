@@ -77,7 +77,7 @@ foreach ($app in $application) {
         $checkHash = $false
     }
 
-    Write-UserMessage "Starting download for $app" -Color Green
+    Write-UserMessage "Starting download for $app" -Color 'Green'
 
     $registered = $false
     # TODO: Rework with proper wrappers after #3149
@@ -96,6 +96,7 @@ foreach ($app in $application) {
                     $title, $body = $_.Exception.Message -split '\|-'
                     if (!$body) { $body = $title }
                     Write-UserMessage -Message $body -Err
+                    debug $_.InvocationInfo
                     if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $appName -Bucket $bucket -Title $title -Body $body }
 
                     continue
@@ -120,7 +121,7 @@ foreach ($app in $application) {
                                     Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Warning
                                 }
 
-                                Set-TerminatingError -Title "Hash check failed|-$err"
+                                throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
                             }
                         }
                     } catch {
@@ -133,6 +134,7 @@ foreach ($app in $application) {
                         $title, $body = $_.Exception.Message -split '\|-'
                         if (!$body) { $body = $title }
                         Write-UserMessage -Message $body -Err
+                        debug $_.InvocationInfo
                         if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $appName -Bucket $bucket -Title $title -Body $body }
 
                         continue

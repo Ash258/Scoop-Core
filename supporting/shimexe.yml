@@ -1,0 +1,14 @@
+version: 1.0.2
+description: Scoop shim
+homepage: https://github.com/Ash258/Scoop-Shim
+license:
+  identifier: GPL-3.0-only
+  url: https://github.com/Ash258/Scoop-Shim/blob/main/LICENSE
+url: https://github.com/Ash258/Scoop-Shim/releases/download/1.0.2/shim.exe
+hash: 9726c3a429009a5b22bd92cb8ab96724c670e164e7240e83f27b7c8b7bd1ca39
+checkver: github
+autoupdate:
+  url: https://github.com/Ash258/Scoop-Shim/releases/download/$version/shim.exe
+  hash:
+    url: $url.sha256
+

@@ -1,10 +1,18 @@
 # TODO: Core import is messing up with download progress
-'Helpers' | ForEach-Object {
+'Helpers' | ForEach-Object { #, 'core' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
 #region helpers
 function Test-7zipRequirement {
+    <#
+    .SYNOPSIS
+        Test if file or url requires 7zip to be installed.
+    .PARAMETER URL
+        Specifies the string representing URL.
+    .PARAMETER File
+        Specifies the filename.
+    #>
     [CmdletBinding(DefaultParameterSetName = 'URL')]
     [OutputType([Boolean])]
     param (
@@ -16,7 +24,6 @@ function Test-7zipRequirement {
     )
 
     if (!$File -and ($null -eq $URL)) { return $false }
-
 
     if ($URL) {
         # For dependencies resolving
@@ -31,6 +38,14 @@ function Test-7zipRequirement {
 }
 
 function Test-LessmsiRequirement {
+    <#
+    .SYNOPSIS
+        Test if file or url requires lessmsi to be installed.
+    .PARAMETER URL
+        Specifies the string representing URL.
+    .PARAMETER File
+        Specifies the filename.
+    #>
     [CmdletBinding()]
     [OutputType([Boolean])]
     param (
@@ -47,14 +62,48 @@ function Test-LessmsiRequirement {
         return $false
     }
 }
+
+function Test-ZstdRequirement {
+    [CmdletBinding(DefaultParameterSetName = 'URL')]
+    [OutputType([Boolean])]
+    param (
+        [Parameter(Mandatory, ParameterSetName = 'URL')]
+        [String[]] $URL,
+        [Parameter(Mandatory, ParameterSetName = 'File')]
+        [String] $File
+    )
+
+    if ($URL) {
+        return ($URL | Where-Object { Test-ZstdRequirement -File $_ }).Count -gt 0
+    } else {
+        return $File -match '\.zst$'
+    }
+}
 #endregion helpers
 
 function Expand-7zipArchive {
+    <#
+    .SYNOPSIS
+        Extract files from 7zip archive.
+    .PARAMETER Path
+        Specifies the path to the archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Overwrite
+        Specifies how files with same names inside archive are handled.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -67,9 +116,9 @@ function Expand-7zipArchive {
     begin {
         if (get_config '7ZIPEXTRACT_USE_EXTERNAL' $false) {
             try {
-                $7zPath = (Get-Command '7z' -CommandType Application | Select-Object -First 1).Source
+                $7zPath = (Get-Command '7z' -CommandType 'Application' | Select-Object -First 1).Source
             } catch [System.Management.Automation.CommandNotFoundException] {
-                Set-TerminatingError -Title "Ignore|-Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7-Zip manually and try again."
+                throw [ScoopException] "Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7zip manually and try again." # TerminatingError thrown
             }
         } else {
             $7zPath = Get-HelperPath -Helper '7zip'
@@ -93,11 +142,11 @@ function Expand-7zipArchive {
         try {
             $status = Invoke-ExternalCommand $7zPath $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
-            Set-TerminatingError -Title 'Ignore|-''7zip'' is not installed or cannot be used'
+            throw [ScoopException] '''7zip'' is not installed or cannot be used' # TerminatingError thrown
         }
 
         if (!$status) {
-            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)"
+            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)" # TerminatingError thrown
         }
         if (!$isTar -and $ExtractDir) {
             movedir (Join-Path $DestinationPath $ExtractDir) $DestinationPath | Out-Null
@@ -112,7 +161,7 @@ function Expand-7zipArchive {
                 $tarFile = (Get-Content -Path $logPath)[-4] -replace '.{53}(.*)', '$1'
                 Expand-7zipArchive -Path (Join-Path $DestinationPath $tarFile) -DestinationPath $DestinationPath -ExtractDir $ExtractDir -Removal
             } else {
-                Set-TerminatingError -Title "Decompress error|-Failed to list files in $Path.`nNot a 7-Zip supported archive file."
+                throw [ScoopException] "Decompress error|-Failed to list files in $Path.`nNot a 7zip supported archive file." # TerminatingError thrown
             }
         }
 
@@ -122,11 +171,26 @@ function Expand-7zipArchive {
 }
 
 function Expand-MsiArchive {
+    <#
+    .SYNOPSIS
+        Extract files from msi files.
+    .PARAMETER Path
+        Specifies the path to the file.
+    .PARAMETER DestinationPath
+        Specifies the location, where file should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside file.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the file after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -155,7 +219,7 @@ function Expand-MsiArchive {
         $status = Invoke-ExternalCommand $msiPath $argList -LogPath $logPath
 
         if (!$status) {
-            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)" # TerminatingError thrown
         }
 
         $sourceDir = Join-Path $DestinationPath 'SourceDir'
@@ -181,11 +245,26 @@ function Expand-MsiArchive {
 }
 
 function Expand-InnoArchive {
+    <#
+    .SYNOPSIS
+        Extract files from innosetup file.
+    .PARAMETER Path
+        Specifies the path to the file.
+    .PARAMETER DestinationPath
+        Specifies the location, where file should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside file.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the file after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
@@ -209,10 +288,10 @@ function Expand-InnoArchive {
             # When there is no specified directory in archive innounp will just exit with 0 and version of file
             $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Innounp') $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
-            Set-TerminatingError -Title 'Ignore|-''innounp'' is not installed or cannot be used'
+            throw [ScoopException] '''innounp'' is not installed or cannot be used' # TerminatingError thrown
         }
         if (!$status) {
-            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n $(friendly_path $logPath)" # TerminatingError thrown
         }
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
@@ -222,11 +301,24 @@ function Expand-InnoArchive {
 }
 
 function Expand-ZipArchive {
+    <#
+    .SYNOPSIS
+        Extract files from zip archive.
+    .PARAMETER Path
+        Specifies the path to the archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [String] $ExtractDir,
         [Switch] $Removal
@@ -249,17 +341,17 @@ function Expand-ZipArchive {
                     Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
                     return
                 } else {
-                    Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle long paths in this zip file.`nRun 'scoop install 7zip' and try again."
+                    throw [ScoopException] "Unzip failed: Windows cannot handle long paths in this zip file.`nInstall 7zip and try again." # TerminatingError thrown
                 }
             } catch [System.IO.IOException] {
                 if (Test-HelperInstalled -Helper '7zip') {
                     Expand-7zipArchive $Path $DestinationPath -Removal:$Removal
                     return
                 } else {
-                    Set-TerminatingError -Title "Ignore|-Unzip failed: Windows cannot handle the file names in this zip file.`nRun 'scoop install 7zip' and try again."
+                    throw [ScoopException] "Unzip failed: Windows cannot handle the file names in this zip file.`nInstall 7zip and try again." # TerminatingError thrown
                 }
             } catch {
-                Set-TerminatingError -Title "Decompress error|-Unzip failed: $_"
+                throw [ScoopException] "Decompress error|-Unzip failed: $_" # TerminatingError thrown
             }
         } else {
             # Use Expand-Archive to unzip in PowerShell 5+
@@ -277,11 +369,24 @@ function Expand-ZipArchive {
 }
 
 function Expand-DarkArchive {
+    <#
+    .SYNOPSIS
+        Extract files from dark installers.
+    .PARAMETER Path
+        Specifies the path to the dark installer.
+    .PARAMETER DestinationPath
+        Specifies the location, where installer should be extracted.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Removal
+        Specifies to remove the installer after extraction is done.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [String] $Path,
         [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
         [String] $DestinationPath = (Split-Path $Path),
         [Parameter(ValueFromRemainingArguments = $true)]
         [String] $Switches,
@@ -296,16 +401,94 @@ function Expand-DarkArchive {
         try {
             $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Dark') $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
-            Set-TerminatingError -Title 'Ignore|-''dark'' is not installed or cannot be used'
+            throw [ScoopException] '''dark'' is not installed or cannot be used' # TerminatingError thrown
         }
 
         if (!$status) {
-            Set-TerminatingError -Title "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)"
+            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)" # TerminatingError thrown
         }
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
         # Remove original archive file
         if ($Removal) { Remove-Item $Path -Force }
+    }
+}
+
+function Expand-ZstdArchive {
+    <#
+    .SYNOPSIS
+        Extract files from zstd archive.
+        The final extracted from zstd archive will be named same as original file, but without .zst extension.
+    .PARAMETER Path
+        Specifies the path to the zstd archive.
+    .PARAMETER DestinationPath
+        Specifies the location, where archive should be extracted to.
+    .PARAMETER ExtractDir
+        Specifies to extract only nested directory inside archive.
+    .PARAMETER Switches
+        Specifies additional parameters passed to the extraction.
+    .PARAMETER Overwrite
+        Specifies to override files with same name.
+    .PARAMETER Removal
+        Specifies to remove the archive after extraction is done.
+    .PARAMETER Skip7zip
+        Specifies to not extract resulted file of zstd extraction.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
+        [String] $Path,
+        [Parameter(Position = 1)]
+        [Alias('ExtractTo')]
+        [String] $DestinationPath,
+        [String] $ExtractDir,
+        [Parameter(ValueFromRemainingArguments)]
+        [String] $Switches,
+        [Switch] $Overwrite,
+        [Switch] $Removal,
+        [Switch] $Skip7zip
+    )
+
+    begin {
+        $zstdPath = Get-HelperPath -Helper 'Zstd'
+        if ($null -eq $zstdPath) { throw 'Ignore|-''zstd'' is not installed or cannot be used' } # TerminatingError thrown
+
+        $argList = @('-d', '-v')
+        if ($Switches) { $argList += (-split $Switches) }
+        if ($Overwrite) { $argList += '-f' }
+    }
+
+    process {
+        $_path = $Path
+        $_item = Get-Item $_path
+        $_log = Join-Path $_item.Directory.FullName 'zstd.log'
+        $_extractDir = $ExtractDir
+        $_dest = $DestinationPath
+        $_output = Join-Path $_dest $_item.BaseName
+
+        $_arg = $argList
+        $_arg += """$_path""", '-o', """$_output"""
+
+        $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $_arg -LogPath $_log
+        if (!$status) {
+            throw "Decompress error|-Failed to extract files from $_path.`nLog file:`n  $(friendly_path $_log)"
+        }
+
+        Remove-Item -Path $_log -ErrorAction 'SilentlyContinue' -Force
+
+        # There is no reason to consider that the output of zstd is something other then next archive, but who knows
+        if (!$Skip7zip) {
+            try {
+                Expand-7zipArchive -Path $_output -DestinationPath $_dest -ExtractDir $_extractDir -Removal
+            } catch {
+                # TODO?: Some meaningfull message??
+                throw $_
+            }
+        }
+    }
+
+    end {
+        if ($Removal) { Remove-Item -Path $Path -Force }
     }
 }
 

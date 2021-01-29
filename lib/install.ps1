@@ -1,4 +1,4 @@
-'Helpers', 'autoupdate', 'buckets', 'decompress' | ForEach-Object {
+'Helpers', 'autoupdate', 'buckets', 'decompress', 'manifest', 'ManifestHelpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -16,13 +16,13 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     $app, $manifest, $bucket, $url = Find-Manifest $app $bucket
 
     if (!$manifest) {
-        Set-TerminatingError -Title "Ignore|-Could not find manifest for '$app'$(if($url){ " at the URL $url" })."
+        throw [ScoopException] "Could not find manifest for '$app'$(if($url){ " at the URL $url" })." # TerminatingError thrown
     }
 
     $version = $manifest.version
-    if (!$version) { Set-TerminatingError -Title "Version property missing|-Manifest '$app' does not specify a version." }
+    if (!$version) { throw [ScoopException] "Invalid manifest|-Manifest '$app' does not specify a version." } # TerminatingError thrown
     if ($version -match '[^\w\.\-\+_]') {
-        Set-TerminatingError -Title "Unsupported version|-Manifest version has unsupported character '$($matches[0])'."
+        throw [ScoopException] "Invalid manifest|-Manifest version has unsupported character '$($matches[0])'." # TerminatingError thrown
     }
 
     $is_nightly = $version -eq 'nightly'
@@ -32,7 +32,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     }
 
     if (!(supports_architecture $manifest $architecture)) {
-        throw "'$app' does not support $architecture architecture"
+        throw [ScoopException] "'$app' does not support $architecture architecture" # TerminatingError thrown
     }
 
     $buc = if ($bucket) { " [$bucket]" } else { '' }
@@ -60,12 +60,18 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
         Write-UserMessage -Message "By installing you accept following $(pluralize $id.Count 'license' 'licenses'): $toShow" -Warn
     }
 
-    $dir = ensure (versiondir $app $version $global)
+    # Variables
+    $dir = versiondir $app $version $global | Confirm-DirectoryExistence
+    $current_dir = current_dir $dir # Save some lines in manifests
     $original_dir = $dir # Keep reference to real (not linked) directory
     $persist_dir = persistdir $app $global
 
+    # Download and extraction
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_download' -Architecture $architecture
     $fname = dl_urls $app $version $manifest $bucket $architecture $dir $use_cache $check_hash
-    pre_install $manifest $architecture
+
+    # Installers
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_install' -Architecture $architecture
     run_installer $fname $manifest $architecture $dir $global
     ensure_install_dir_not_in_path $dir $global
     $dir = link_current $dir
@@ -80,19 +86,25 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     persist_data $manifest $original_dir $persist_dir
     persist_permission $manifest $global
 
-    post_install $manifest $architecture
+    Invoke-ManifestScript -Manifest $manifest -ScriptName 'post_install' -Architecture $architecture
 
     # Save info for uninstall
     save_installed_manifest $app $bucket $dir $url
     save_install_info @{ 'architecture' = $architecture; 'url' = $url; 'bucket' = $bucket } $dir
 
-    if ($manifest.suggest) {
-        $suggested[$app] = $manifest.suggest
-    }
+    if ($manifest.suggest) { $suggested[$app] = $manifest.suggest }
 
     Write-UserMessage -Message "'$app' ($version) was installed successfully!" -Success
 
+    # Additional info to user
     show_notes $manifest $dir $original_dir $persist_dir
+
+    if ($manifest.changelog) {
+        $changelog = $manifest.changelog
+        if (!$changelog.StartsWith('http')) { $changelog = friendly_path (Join-Path $dir $changelog) }
+
+        Write-UserMessage -Message "New changes in this release: '$changelog'" -Success
+    }
 }
 
 function locate($app, $bucket) {
@@ -113,8 +125,9 @@ function Find-Manifest($app, $bucket) {
         $manifest, $bucket = find_manifest $app $bucket
 
         if (!$manifest) {
-            # Couldn't find app in buckets: check if it's a local path
+            # Could not find app in buckets: check if it's a local path
             $path = $app
+            # TODO: YAML
             if (!$path.endswith('.json')) { $path += '.json' }
             if (Test-Path $path) {
                 $url = "$(Resolve-Path $path)"
@@ -148,7 +161,7 @@ function do_dl($url, $to, $cookies) {
     } catch {
         $e = $_.Exception
         if ($e.InnerException) { Write-UserMessage -Message $e.InnerException -Err }
-        Set-TerminatingError -Title "Download failed|-$($e.Message)" -ForceThrow
+        throw [ScoopException] "Download failed|-$($e.Message)" # TerminatingError thrown
     }
 }
 
@@ -340,7 +353,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                 $aria2
             )
 
-            Set-TerminatingError -Title "Download via aria2 failed|-$mes"
+            throw [ScoopException] "Download via aria2 failed|-$mes" # TerminatingError thrown
         }
 
         # Remove aria2 input file when done
@@ -364,12 +377,12 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
                     Write-UserMessage -Message 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.' -Color Yellow
                 }
 
-                Set-TerminatingError -Title "Hash check failed|-$err"
+                throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
             }
         }
 
         # Copy or move file to target location
-        if (!(Test-Path $data.$url.source) ) { Set-TerminatingError -Title 'Ignore|-Cached file not found' }
+        if (!(Test-Path $data.$url.source) ) { throw [ScoopException] 'Cached file not found' } # TerminatingError thrown
 
         if ($dir -ne $SCOOP_CACHE_DIRECTORY) {
             if ($use_cache) {
@@ -579,7 +592,7 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
                     if ($url.Contains('sourceforge.net')) {
                         Write-Host -f yellow 'SourceForge.net is known for causing hash validation fails. Please try again before opening a ticket.'
                     }
-                    Set-TerminatingError "Hash check failed|-$err"
+                    throw [ScoopException] "Hash check failed|-$err" # TerminatingError thrown
                 }
             }
         }
@@ -612,6 +625,9 @@ function dl_urls($app, $version, $manifest, $bucket, $architecture, $dir, $use_c
         } elseif (Test-7zipRequirement -File $fname) {
             # 7zip
             $extract_fn = 'Expand-7zipArchive'
+        } elseif (Test-ZstdRequirement -File $fname) {
+            # Zstd
+            $extract_fn = 'Expand-ZstdArchive'
         }
 
         if ($extract_fn) {
@@ -656,9 +672,9 @@ function hash_for_url($manifest, $url, $arch) {
     $urls = @(url $manifest $arch)
 
     $index = [array]::IndexOf($urls, $url)
-    if ($index -eq -1) { Set-TerminatingError -Title "Invalid manifest|-Could not find hash in manifest for '$url'." }
+    if ($index -eq -1) { throw [ScoopException] "Invalid manifest|-Could not find hash in manifest for '$url'." } # TerminatingError thrown
 
-    @($hashes)[$index]
+    return @($hashes)[$index]
 }
 
 # returns (ok, err)
@@ -728,16 +744,28 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
     # MSI or other installer
     $msi = msi $manifest $architecture
     $installer = installer $manifest $architecture
-    if ($installer.script) {
-        Write-UserMessage -Message 'Running installer script...' -Output:$false
-        Invoke-Expression (@($installer.script) -join "`r`n")
-        return
+    $script = $installer.script
+
+    if ($script) {
+        # Skip installer if installer property specifies only 1 property == script
+        # If there is file or args next to the script, both should be called, script first
+        $props = @($installer.PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty' | Select-Object -ExpandProperty 'Name')
+        if ($props -and ($props.Count -eq 1) -and ($props -contains 'script')) {
+            $skipInstaller = $true
+        }
     }
 
     if ($msi) {
         install_msi $fname $dir $msi
-    } elseif ($installer) {
+    } elseif ($installer -and !$skipInstaller) {
         install_prog $fname $dir $installer $global
+    }
+
+    # Run installer.script after installer.file
+    # This allow to modify files after installer was executed and before binaries/shortcuts are created/linked
+    if ($script) {
+        Write-UserMessage -Message 'Running installer script...' -Output:$false
+        Invoke-Expression (@($script) -join "`r`n")
     }
 }
 
@@ -745,9 +773,9 @@ function run_installer($fname, $manifest, $architecture, $dir, $global) {
 function install_msi($fname, $dir, $msi) {
     $msifile = Join-Path $dir (coalesce $msi.File "$fname")
 
-    if (!(is_in_dir $dir $msifile)) { Set-TerminatingError -Title "Invalid manifest|-MSI file '$msifile' is outside the app directory." }
-    if (!($msi.code)) { Set-TerminatingError -Title 'Invalid manifest|-Could not find MSI code.' }
-    if (msi_installed $msi.code) { Set-TerminatingError -Title 'Ignore|-The MSI package is already installed on this system.' }
+    if (!(is_in_dir $dir $msifile)) { throw [ScoopException] "Invalid manifest|-MSI file '$msifile' is outside the app directory." } # TerminatingError thrown
+    if (!($msi.code)) { throw [ScoopException] 'Invalid manifest|-Could not find MSI code.' } # TerminatingError thrown
+    if (msi_installed $msi.code) { throw [ScoopException] 'The MSI package is already installed on this system.' } # TerminatingError thrown
 
     $logfile = Join-Path $dir 'install.log'
 
@@ -760,7 +788,7 @@ function install_msi($fname, $dir, $msi) {
 
     $installed = Invoke-ExternalCommand 'msiexec' $arg -Activity 'Running installer...' -ContinueExitCodes $continue_exit_codes
     if (!$installed) {
-        Set-TerminatingError -Title "Ignore|-Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
+        throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
     }
     Remove-Item $logfile
     Remove-Item $msifile
@@ -783,22 +811,25 @@ function msi_installed($code) {
 function install_prog($fname, $dir, $installer, $global) {
     $prog = Join-Path $dir (coalesce $installer.file "$fname")
     if (!(is_in_dir $dir $prog)) {
-        Set-TerminatingError -Title "Invalid manifest|-Error in manifest: Installer '$prog' is outside the app directory."
+        throw [ScoopException] "Invalid manifest|-Installer '$prog' is outside the app directory." # TerminatingError thrown
     }
     $arg = @(args $installer.args $dir $global)
 
     if ($prog.EndsWith('.ps1')) {
+        Write-UserMessage -Message "Running installer file '$prog'" -Output:$false
         & $prog @arg
-        # TODO: Handle $LASTEXITCODE
+        if ($LASTEXITCODE -ne 0) {
+            throw [ScoopException] "Installation failed with exit code $LASTEXITCODE" # TerminatingError thrown
+        }
     } else {
         $installed = Invoke-ExternalCommand $prog $arg -Activity 'Running installer...'
         if (!$installed) {
-            Set-TerminatingError -Title "Ignore|-Installation aborted. You might need to run 'scoop uninstall $app' before trying again."
+            throw [ScoopException] "Installation aborted. You might need to run 'scoop uninstall $app' before trying again." # TerminatingError thrown
         }
-
-        # Don't remove installer if "keep" flag is set to true
-        if ($installer.keep -ne 'true') { Remove-Item $prog }
     }
+
+    # Do not remove installer if "keep" flag is set to true
+    if ($installer.keep -ne 'true') { Remove-Item $prog }
 }
 
 function run_uninstaller($manifest, $architecture, $dir) {
@@ -846,7 +877,7 @@ function run_uninstaller($manifest, $architecture, $dir) {
                 & $exe @arg
             } else {
                 $uninstalled = Invoke-ExternalCommand $exe $arg -Activity 'Running uninstaller...' -ContinueExitCodes $continue_exit_codes
-                if (!$uninstalled) { Set-TerminatingError -Title 'Ignore|-Uninstallation aborted.' }
+                if (!$uninstalled) { throw [ScoopException] 'Uninstallation aborted.' } # TerminatingError thrown
             }
         }
     }
@@ -873,9 +904,9 @@ function create_shims($manifest, $dir, $global, $arch) {
             $bin = search_in_path $target
         }
 
-        if (!$bin) { Set-TerminatingError -Title "Shim creation fail|-Cannot shim '$target': File does not exist" }
+        if (!$bin) { throw [ScoopException] "Shim creation fail|-Cannot shim '$target': File does not exist" } # TerminatingError thrown
 
-        shim $bin $global $name (substitute $arg @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
+        shim $bin $global $name (Invoke-VariableSubstitution -Entity $arg -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir })
     }
 }
 
@@ -911,8 +942,7 @@ function rm_shims($manifest, $global, $arch) {
 # Gets the path for the 'current' directory junction for
 # the specified version directory.
 function current_dir($versiondir) {
-    $parent = Split-Path $versiondir
-    return Join-Path $parent 'current'
+    return Split-Path -LiteralPath $versiondir | Join-Path -ChildPath 'current'
 }
 
 
@@ -929,7 +959,7 @@ function link_current($versiondir) {
     Write-UserMessage -Message "Linking $(friendly_path $currentdir) => $(friendly_path $versiondir)" -Output:$false
 
     if ($currentdir -eq $versiondir) {
-        Set-TerminatingError -Title "Ignore|-Version 'current' is not allowed!"
+        throw [ScoopException] "Version 'current' is not allowed!" # TerminatingError thrown
     }
 
     if (Test-Path $currentdir) {
@@ -1008,8 +1038,7 @@ function env_add_path($manifest, $dir, $global, $arch) {
         $env_add_path | Where-Object { $_ } | ForEach-Object {
             $path_dir = Join-Path $dir $_
             if (!(is_in_dir $dir $path_dir)) {
-                # TODO: Consider, just throw
-                Set-TerminatingError -Title "Invalid manifest|-env_add_path '$_' is outside the app directory."
+                throw [ScoopException] "Invalid manifest|-env_add_path '$_' is outside the app directory." # TerminatingError thrown
             }
             add_first_in_path $path_dir $global
         }
@@ -1047,28 +1076,12 @@ function env_rm($manifest, $global, $arch) {
     }
 }
 
-function pre_install($manifest, $arch) {
-    $pre_install = arch_specific 'pre_install' $manifest $arch
-    if ($pre_install) {
-        Write-UserMessage -Message 'Running pre-install script...' -Output:$false
-        Invoke-Expression (@($pre_install) -join "`r`n")
-    }
-}
-
-function post_install($manifest, $arch) {
-    $post_install = arch_specific 'post_install' $manifest $arch
-    if ($post_install) {
-        Write-UserMessage -Message 'Running post-install script...' -Output:$false
-        Invoke-Expression (@($post_install) -join "`r`n")
-    }
-}
-
 function show_notes($manifest, $dir, $original_dir, $persist_dir) {
     if ($manifest.notes) {
         Write-UserMessage -Output:$false -Message @(
             'Notes'
             '-----'
-            (wraptext (substitute $manifest.notes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
+            (wraptext (Invoke-VariableSubstitution -Entity $manifest.notes -Substitutes @{ '$dir' = $dir; '$original_dir' = $original_dir; '$persist_dir' = $persist_dir }))
         )
     }
 }
@@ -1170,8 +1183,7 @@ function persist_data($manifest, $original_dir, $persist_dir) {
 
             $source = $source.TrimEnd('/').TrimEnd('\\')
 
-            # TODO: $dir???!!!!
-            $source = Join-Path $dir $source
+            $source = Join-Path $original_dir $source
             $target = Join-Path $persist_dir $target
 
             # if we have had persist data in the store, just create link and go
@@ -1188,11 +1200,15 @@ function persist_data($manifest, $original_dir, $persist_dir) {
                 # we don't have neither source nor target data! we need to crate an empty target,
                 # but we can't make a judgement that the data should be a file or directory...
                 # so we create a directory by default. to avoid this, use pre_install
-                # to create the source file before persisting (DON'T use post_install)
+                # to create the source file before persisting (DO NOT use post_install)
             } else {
                 $target = New-Object System.IO.DirectoryInfo($target)
                 ensure $target | Out-Null
             }
+
+            # Mklink throw 'The system cannot find the path specified.' if the full path of the link does not exist.
+            $splitted = Split-Path $source -Parent
+            if ($splitted -ne $original_dir) { ensure $splitted | Out-Null }
 
             # create link
             if (is_directory $target) {

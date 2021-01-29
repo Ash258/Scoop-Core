@@ -2,19 +2,19 @@
 .SYNOPSIS
     Search for application description on homepage.
 .PARAMETER App
-    Manifest name to search.
+    Specifies the manifest name.
     Wildcards are supported.
 .PARAMETER Dir
-    Where to search for manifest(s).
+    Specifies the location of manifests.
 #>
 param(
     [SupportsWildcards()]
     [String] $App = '*',
     [Parameter(Mandatory)]
     [ValidateScript( {
-        if (!(Test-Path $_ -Type Container)) { throw "$_ is not a directory!" }
-        $true
-    })]
+            if (!(Test-Path $_ -Type 'Container')) { throw "$_ is not a directory!" }
+            $true
+        })]
     [String] $Dir
 )
 
@@ -25,18 +25,23 @@ param(
 $Dir = Resolve-Path $Dir
 $Queue = @()
 
-Get-ChildItem $Dir "$App.*" -File | ForEach-Object {
-    $manifest = parse_json $_.FullName
-    $Queue += , @($_.BaseName, $manifest)
+foreach ($m in Get-ChildItem $Dir "$App.*" -File) {
+    try {
+        $manifest = ConvertFrom-Manifest -Path $m.FullName
+    } catch {
+        Write-UserMessage -Message "Invalid manifest: $($m.Name)" -Err
+        continue
+    }
+    $Queue += , @($m.BaseName, $manifest)
 }
 
-$Queue | ForEach-Object {
-    $name, $manifest = $_
+foreach ($qq in $Queue) {
+    $name, $manifest = $qq
     Write-Host "${name}: " -NoNewline
 
     if (!$manifest.homepage) {
         Write-UserMessage -Message "`nNo homepage set." -Err
-        return
+        continue
     }
     # get description from homepage
     try {
@@ -45,17 +50,17 @@ $Queue | ForEach-Object {
         $home_html = $wc.DownloadString($manifest.homepage)
     } catch {
         Write-UserMessage -Message "`n$($_.Exception.Message)" -Err
-        return
+        continue
     }
 
     $description, $descr_method = find_description $manifest.homepage $home_html
     if (!$description) {
-        Write-UserMessage -Message "`nDescription not found ($($manifest.homepage))" -Color Red
-        return
+        Write-UserMessage -Message "`nDescription not found ($($manifest.homepage))" -Color 'Red'
+        continue
     }
 
     $description = clean_description $description
 
     Write-UserMessage -Message "(found by $descr_method)"
-    Write-UserMessage -Message "  ""$description""" -Color Green
+    Write-UserMessage -Message "  ""$description""" -Color 'Green'
 }
