@@ -11,7 +11,7 @@ function find_hash_in_rdf([String] $url, [String] $basename) {
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $data = $wc.DownloadString($url)
     } catch [System.Net.WebException] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color 'DarkRed'
 
         return $null
     }
@@ -42,7 +42,7 @@ function find_hash_in_textfile([String] $url, [Hashtable] $substitutions, [Strin
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $hashfile = $wc.DownloadString($url)
     } catch [System.Net.WebException] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color 'DarkRed'
         return
     }
     if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-txt.html' | Out-UTF8Content -Content $hashfile }
@@ -81,7 +81,7 @@ function find_hash_in_json([String] $url, [Hashtable] $substitutions, [String] $
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $json = $wc.DownloadString($url)
     } catch [System.Net.WebException] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color 'DarkRed'
         return
     }
     if (Test-ScoopDebugEnabled) { Join-Path $PWD 'checkver-hash-json.html' | Out-UTF8Content -Content $json }
@@ -103,7 +103,7 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
         $xml = $wc.DownloadString($url)
     } catch [System.Net.WebException] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color 'DarkRed'
         return
     }
 
@@ -146,7 +146,7 @@ function find_hash_in_headers([String] $url) {
         }
         $res.Close()
     } catch [System.Net.WebException] {
-        Write-UserMessage -Message $_, "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message $_, "URL $url is not valid" -Color 'DarkRed'
         return
     }
 
@@ -173,10 +173,10 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
     debug $hashfile_url
 
     if ($hashfile_url) {
-        Write-Host 'Searching hash for ' -ForegroundColor DarkYellow -NoNewline
-        Write-Host $basename -ForegroundColor Green -NoNewline
-        Write-Host ' in ' -ForegroundColor DarkYellow -NoNewline
-        Write-Host $hashfile_url -ForegroundColor Green
+        Write-Host 'Searching hash for ' -ForegroundColor 'DarkYellow' -NoNewline
+        Write-Host $basename -ForegroundColor 'Green' -NoNewline
+        Write-Host ' in ' -ForegroundColor 'DarkYellow' -NoNewline
+        Write-Host $hashfile_url -ForegroundColor 'Green'
     }
 
     if ($hashmode.Length -eq 0 -and $config.url.Length -ne 0) {
@@ -246,30 +246,44 @@ function get_hash_for_app([String] $app, $config, [String] $version, [String] $u
     }
 
     if ($hash) {
-        Write-Host 'Found: ' -ForegroundColor DarkYellow -NoNewline
-        Write-Host $hash -ForegroundColor Green -NoNewline
-        Write-Host ' using ' -ForegroundColor DarkYellow -NoNewline
-        Write-Host "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor Green
+        Write-Host 'Found: ' -ForegroundColor 'DarkYellow' -NoNewline
+        Write-Host $hash -ForegroundColor 'Green' -NoNewline
+        Write-Host ' using ' -ForegroundColor 'DarkYellow' -NoNewline
+        Write-Host "$((Get-Culture).TextInfo.ToTitleCase($hashmode)) Mode" -ForegroundColor 'Green'
+
+        # Verify the URL is accessible
+        Write-Host 'Pinging ' -ForegroundColor 'Yellow' -NoNewline
+        Write-Host $url -ForegroundColor 'Green' -NoNewline
+        Write-Host ' to verify URL accessibility' -ForegroundColor 'Yellow'
+        $request = [System.Net.WebRequest]::Create($url) # TODO: Consider spliting #/ from URL to prevent potential faulty response
+        $request.AllowAutoRedirect = $true
+        try {
+            $response = $request.GetResponse()
+            $response.Close()
+        } catch {
+            Write-UserMessage -Message "URL $url is not valid" -Color 'DarkRed'
+            $hash = $null
+        }
 
         return $hash
     } elseif ($hashfile_url) {
-        Write-UserMessage -Message "Could not find hash in $hashfile_url" -Color DarkYellow
+        Write-UserMessage -Message "Could not find hash in $hashfile_url" -Color 'DarkYellow'
     }
 
-    Write-Host 'Downloading ' -ForegroundColor DarkYellow -NoNewline
-    Write-Host $basename -ForegroundColor Green -NoNewline
-    Write-Host ' to compute hashes!' -ForegroundColor DarkYellow
+    Write-Host 'Downloading ' -ForegroundColor 'DarkYellow' -NoNewline
+    Write-Host $basename -ForegroundColor 'Green' -NoNewline
+    Write-Host ' to compute hashes!' -ForegroundColor 'DarkYellow'
 
     try {
         dl_with_cache $app $version $url $null $null $true
     } catch {
-        Write-UserMessage -Message "URL $url is not valid" -Color DarkRed
+        Write-UserMessage -Message "URL $url is not valid" -Color 'DarkRed'
         return $null
     }
     $file = cache_path $app $version $url
     $hash = compute_hash $file 'sha256'
-    Write-Host 'Computed hash: ' -ForegroundColor DarkYellow -NoNewline
-    Write-Host $hash -ForegroundColor Green
+    Write-Host 'Computed hash: ' -ForegroundColor 'DarkYellow' -NoNewline
+    Write-Host $hash -ForegroundColor 'Green'
 
     return $hash
 }
@@ -345,7 +359,7 @@ function Get-VersionSubstitution ([String] $Version, [Hashtable] $CustomMatches 
 }
 
 function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable) {
-    Write-UserMessage -Message "Autoupdating $app" -Color DarkCyan
+    Write-UserMessage -Message "Autoupdating $app" -Color 'DarkCyan'
     $has_changes = $false
     $has_errors = $false
     [bool] $valid = $true
@@ -361,7 +375,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $hash = get_hash_for_app $app $json.autoupdate.hash $version $url $substitutions
             if ($null -eq $hash) {
                 $valid = $false
-                Write-UserMessage -Message 'Could not find hash!' -Color DarkRed
+                Write-UserMessage -Message 'Could not find hash or download URL!' -Color 'DarkRed'
             }
         }
 
@@ -379,15 +393,15 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $architecture = $_.Name
 
             # Create new url
-            $url = Invoke-VariableSubstitution -Entity (arch_specific "url" $json.autoupdate $architecture) -Substitutes $substitutions
+            $url = Invoke-VariableSubstitution -Entity (arch_specific 'url' $json.autoupdate $architecture) -Substitutes $substitutions
             $valid = $true
 
             if ($valid) {
                 # Create hash
-                $hash = get_hash_for_app $app (arch_specific "hash" $json.autoupdate $architecture) $version $url $substitutions
+                $hash = get_hash_for_app $app (arch_specific 'hash' $json.autoupdate $architecture) $version $url $substitutions
                 if ($null -eq $hash) {
                     $valid = $false
-                    Write-UserMessage -Message 'Could not find hash!' -Color DarkRed
+                    Write-UserMessage -Message 'Could not find hash or download URL!' -Color 'DarkRed'
                 }
             }
 

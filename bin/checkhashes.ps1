@@ -54,7 +54,7 @@ function err ([String] $name, [String[]] $message) {
 $MANIFESTS = @()
 # Gather all required manifests
 foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
-    if ($gci.Extension -notmatch ("\.($($ALLOWED_MANIFEST_EXTENSION -join '|'))")) {
+    if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $($gci.Name)" -Info
         continue
     }
