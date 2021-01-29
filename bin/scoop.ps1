@@ -67,7 +67,7 @@ if ($version) {
     $newArgs = ($args -notlike '--help') -notlike '-h'
 
     if ($cmd -eq 'utils') {
-        & "$PSScriptRoot/../libexec/scoop-utils.ps1" @args
+        & "$PSScriptRoot\..\libexec\scoop-utils.ps1" @args
         $exitCode = $LASTEXITCODE
     } else {
         Invoke-ScoopCommand $cmd $newArgs
