@@ -83,7 +83,7 @@ if (($Utility -eq 'auto-pr') -and (Join-Path $PWD '.git' | Test-Path -PathType C
     } catch {
         Stop-ScoopExecution -Message 'Cannot automatically determine upstream parameter. Use ''--additional-options -upstream <upstream>'''
     }
-    $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
+    $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*?)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
 }
 
 try {
