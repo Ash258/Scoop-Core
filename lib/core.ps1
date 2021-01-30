@@ -87,6 +87,9 @@ function Invoke-SystemCommand {
             $parameters = @('-c', $Unix)
         }
 
+        $debugShell = "& ""$shell"" $($parameters -join ' ')"
+        debug $debugShell
+
         & "$shell" @parameters
     }
 }
