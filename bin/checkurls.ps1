@@ -138,3 +138,5 @@ foreach ($man in $Queue) {
         Write-Host "       > $_" -ForegroundColor 'DarkRed'
     }
 }
+
+exit 0

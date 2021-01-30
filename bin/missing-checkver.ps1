@@ -37,6 +37,8 @@ Write-Host 'A' -ForegroundColor 'Cyan' -NoNewline
 Write-Host ']utoupdate'
 Write-Host ' |  |'
 
+$exitCode = 0
+$problems = 0
 foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $($gci.Name)" -Info
@@ -47,6 +49,7 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $json = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage -Message "Invalid manifest: $($gci.Name)" -Err
+        ++$problems
         continue
     }
 
@@ -61,3 +64,6 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     Write-Host '] ' -NoNewline
     Write-Host $gci.BaseName
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode

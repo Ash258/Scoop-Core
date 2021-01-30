@@ -184,3 +184,5 @@ foreach ($current in $MANIFESTS) {
         ConvertTo-Manifest -Path $current.gci.FullName -Manifest $current.manifest
     }
 }
+
+exit 0

@@ -24,7 +24,13 @@ function Invoke-GitCmd {
         [String[]] $Argument
     )
 
-    begin { $preAction = if ($Repository) { '-C', """$Repository""" } else { @() } }
+    begin {
+        $preAction = @()
+        if ($Repository) {
+            $Repository = $Repository.TrimEnd('\').TrimEnd('/')
+            $preAction = @('-C', """$Repository""")
+        }
+    }
 
     process {
         switch ($Command) {

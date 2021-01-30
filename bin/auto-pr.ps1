@@ -79,6 +79,10 @@ if (!(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyC
     Stop-ScoopExecution -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.'
 }
 
+# TODO: Remove after linux ttest
+Write-Host $Upstream -f darkred
+exit 258
+
 function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd

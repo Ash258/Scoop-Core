@@ -20,7 +20,7 @@
 #    'scoop utils auto-pr --additional-options -Upstream "user/repo:branch" -skipcheckver -push' => Execute auto-pr with specific upstream string
 #
 
-'core', 'getopt', 'Helpers', 'help' | ForEach-Object {
+'core', 'getopt', 'Git', 'Helpers', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -68,7 +68,7 @@ if (!$ManifestPath) {
     $ManifestPath = '*'
 } elseif (Test-Path -LiteralPath $ManifestPath -ErrorAction 'SilentlyContinue') {
     $item = Get-Item $ManifestPath
-    $bucketFolder = $item.Directory.FullName
+    $BucketFolder = $item.Directory.FullName
     $ManifestPath = $item.BaseName
 }
 
@@ -76,16 +76,17 @@ $splatParameters = @{
     'Dir' = $BucketFolder
     'App' = $ManifestPath
 }
-# Automatically fill upstream in case of auto-pr and current folder is repository root
+# Automatically fill upstream in case of auto-pr and current folder is git repository root
 if (($Utility -eq 'auto-pr') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
-    $splatParameters.Add('Upstream', ((git config --get remote.origin.url) -replace '^.+[:/](?<user>.*)\/(?<repo>.*)(\.git)?$', '${user}/${repo}:master'))
+    $remoteUrl = Invoke-GitCmd -Command 'config' -Repository $BucketFolder -Argument @('--get', 'remote.origin.url')
+    $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
 }
 
 try {
     & $UtilityPath @splatParameters @AdditionalArgs
-    # TODO: Handle $LASTEXITCODE
+    $exitCode = $LASTEXITCODE
 } catch {
-    Write-UserMessage -Message "Utlity issue: $($_.Exception.Message)" -Err
+    Write-UserMessage -Message "Utility issue: $($_.Exception.Message)" -Err
     $exitCode = 3
 }
 

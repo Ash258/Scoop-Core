@@ -64,3 +64,5 @@ foreach ($qq in $Queue) {
     Write-UserMessage -Message "(found by $descr_method)"
     Write-UserMessage -Message "  ""$description""" -Color 'Green'
 }
+
+exit 0

@@ -318,3 +318,5 @@ while ($inProgress -lt $Queue.Length) {
     }
 }
 #endregion Main
+
+exit 0
