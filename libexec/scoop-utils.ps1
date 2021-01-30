@@ -78,7 +78,11 @@ $splatParameters = @{
 }
 # Automatically fill upstream in case of auto-pr and current folder is git repository root
 if (($Utility -eq 'auto-pr') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
-    $remoteUrl = Invoke-GitCmd -Command 'config' -Repository $BucketFolder -Argument @('--get', 'remote.origin.url')
+    try {
+        $remoteUrl = Invoke-GitCmd -Command 'config' -Repository $BucketFolder -Argument @('--get', 'remote.origin.url')
+    } catch {
+        Stop-ScoopExecution -Message 'Cannot automatically determine upstream parameter. Use ''--additional-options -upstream <upstream>'''
+    }
     $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
 }
 
