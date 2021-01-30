@@ -193,7 +193,7 @@ foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Objec
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
 
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
-            execute "hub $repoContext commit -m '${applicationName}: Update to version $version'"
+            execute "hub $repoContext commit --message '${applicationName}: Update to version $version'"
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
