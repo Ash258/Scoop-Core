@@ -5,6 +5,7 @@
 ### 0.6-pre2
 
 - New command `utils` added
+- **scoop-alias**: First alias addition is correctly registered and created
 
 ### 0.6-pre1
 
