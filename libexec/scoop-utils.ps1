@@ -77,7 +77,7 @@ $splatParameters = @{
     'App' = $ManifestPath
 }
 # Automatically fill upstream in case of auto-pr and current folder is git repository root
-if (($Utility -eq 'auto-pr') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
+if (($Utility -eq 'auto-pr') -and ($AdditionalArgs -notcontains '-upstream') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
     try {
         $remoteUrl = Invoke-GitCmd -Command 'config' -Repository $BucketFolder -Argument @('--get', 'remote.origin.url')
     } catch {
