@@ -67,7 +67,7 @@ function Invoke-GitCmd {
             }
         }
 
-        Invoke-SystemCommand -Windows $commandToRunWindows -Unix $commandToRunNix
+        Invoke-SystemComSpecCommand -Windows $commandToRunWindows -Unix $commandToRunNix
     }
 }
 

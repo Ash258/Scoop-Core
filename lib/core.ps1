@@ -72,7 +72,7 @@ function Test-IsUnix {
     process { return !(($null -eq $isWindows) -or ($isWindows -eq $true)) }
 }
 
-function Invoke-SystemCommand {
+function Invoke-SystemComSpecCommand {
     <#
     .SYNOPSIS
         Short description
