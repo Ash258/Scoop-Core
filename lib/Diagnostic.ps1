@@ -98,7 +98,7 @@ function Test-DiagLongPathEnabled {
     [OutputType([bool])]
     param()
 
-    if (Test-IxUnix) { return $true }
+    if (Test-IsUnix) { return $true }
 
     # Verify supported windows version
     if ([System.Environment]::OSVersion.Version.Major -lt 10 -or [System.Environment]::OSVersion.Version.Build -lt 1607) {
