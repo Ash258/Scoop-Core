@@ -63,7 +63,7 @@ function Test-IsUnix {
     .SYNOPSIS
         Custom check to identify non-windows hosts.
     .DESCRIPTION
-        $isWindows is not defind in PW5, thus null and boolean check is needed.
+        $isWindows is not defind in PW5, thus null and boolean checks are needed.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
@@ -75,9 +75,7 @@ function Test-IsUnix {
 function Invoke-SystemComSpecCommand {
     <#
     .SYNOPSIS
-        Short description
-    .DESCRIPTION
-        Long description
+        Wrapper around $env:ComSpec/$env:SHELL calls.
     .PARAMETER Windows
         Specifies the command to be executed on Windows using $env:ComSpec.
     .PARAMETER Unix
