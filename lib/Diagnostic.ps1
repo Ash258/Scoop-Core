@@ -8,7 +8,7 @@ Use 'Write-UserMessage -Warning' to highlight the issue, and follow up with the 
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-function Test-Drive {
+function Test-DiagDrive {
     <#
     .SYNOPSIS
         Test disk drive requirements/configuration.
@@ -34,7 +34,7 @@ function Test-Drive {
     return $result
 }
 
-function Test-WindowsDefender {
+function Test-DiagWindowsDefender {
     <#
     .SYNOPSIS
         Test windows defender exclusions.
@@ -42,6 +42,8 @@ function Test-WindowsDefender {
     [CmdletBinding()]
     [OutputType([bool])]
     param([Switch] $Global)
+
+    if (Test-IsUnix) { return $true }
 
     $defender = Get-Service -Name 'WinDefend' -ErrorAction 'SilentlyContinue'
     if (($defender -and $defender.Status) -and ($defender.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running)) {
@@ -65,7 +67,7 @@ function Test-WindowsDefender {
     return $true
 }
 
-function Test-MainBucketAdded {
+function Test-DiagMainBucketAdded {
     <#
     .SYNOPSIS
         Test if main bucket was added after migration from core repository.
@@ -87,7 +89,7 @@ function Test-MainBucketAdded {
     return $true
 }
 
-function Test-LongPathEnabled {
+function Test-DiagLongPathEnabled {
     <#
     .SYNOPSIS
         Test if long paths option is enabled.
@@ -116,7 +118,7 @@ function Test-LongPathEnabled {
     return $true
 }
 
-function Test-EnvironmentVariable {
+function Test-DiagEnvironmentVariable {
     <#
     .SYNOPSIS
         Test if scoop's related environment variables are defined.
@@ -139,7 +141,7 @@ function Test-EnvironmentVariable {
     }
 
     # Unix "comspec"
-    if (($isWindows -eq $false) -and (!(Test-Path $env:SHELL -PathType 'Leaf'))) {
+    if ((Test-IsUnix) -and (!(Test-Path $env:SHELL -PathType 'Leaf'))) {
         Write-UserMessage -Message '''SHELL'' environment variable is not configured' -Warning
         $result = $false
     }
@@ -167,7 +169,7 @@ function Test-EnvironmentVariable {
     return $result
 }
 
-function Test-HelpersInstalled {
+function Test-DiagHelpersInstalled {
     <#
     .SYNOPSIS
         Test if all widely used helpers are installed.
@@ -225,7 +227,7 @@ function Test-HelpersInstalled {
     return $result
 }
 
-function Test-Config {
+function Test-DiagConfig {
     <#
     .SYNOPSIS
         Test if various recommended scoop configurations are set correctly.
@@ -247,7 +249,7 @@ function Test-Config {
     return $result
 }
 
-function Test-CompletionRegistered {
+function Test-DiagCompletionRegistered {
     <#
     .SYNOPSIS
         Test if native completion is imported.
@@ -272,7 +274,7 @@ function Test-CompletionRegistered {
     return $true
 }
 
-function Test-ShovelAdoption {
+function Test-DiagShovelAdoption {
     <#
     .SYNOPSIS
         Test if shovel implementation was fully adopted by user.

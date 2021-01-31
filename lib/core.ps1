@@ -58,6 +58,20 @@ function Show-DeprecatedWarning {
     Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color 'DarkGray'
 }
 
+function Test-IsUnix {
+    <#
+    .SYNOPSIS
+        Custom check to identify non-windows hosts.
+    .DESCRIPTION
+        $isWindows is not defind in PW5, thus null and boolean check is needed.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process { return !(($null -eq $isWindows) -or ($isWindows -eq $true)) }
+}
+
 function Invoke-SystemCommand {
     <#
     .SYNOPSIS
@@ -79,12 +93,12 @@ function Invoke-SystemCommand {
 
     process {
         # $isWindows is not defined in PW5
-        if (($null -eq $isWindows) -or ($isWindows -eq $true)) {
-            $shell = $env:ComSpec
-            $parameters = @('/d', '/c', $Windows)
-        } else {
+        if (Test-IsUnix) {
             $shell = $env:SHELL
             $parameters = @('-c', $Unix)
+        } else {
+            $shell = $env:ComSpec
+            $parameters = @('/d', '/c', $Windows)
         }
 
         $debugShell = "& ""$shell"" $($parameters -join ' ')"
