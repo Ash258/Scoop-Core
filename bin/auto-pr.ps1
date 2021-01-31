@@ -57,6 +57,8 @@ param(
 
 $Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
+$exitCode = 0
+$problems = 0
 $RepositoryRoot = Get-Item $Dir
 if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
     $RepositoryRoot = $RepositoryRoot.Parent.FullName
@@ -106,6 +108,7 @@ function pull_requests($json, [String] $app, [String] $upstream, [String] $manif
 
     if ($LASTEXITCODE -eq 0) {
         Write-UserMessage "Skipping update $app ($version) ..." -ForegroundColor 'Yellow'
+        ++$problems
         return
     }
 
@@ -119,6 +122,7 @@ function pull_requests($json, [String] $app, [String] $upstream, [String] $manif
     if ($LASTEXITCODE -gt 0) {
         Write-UserMessage -Message "Push failed! (hub push origin $branch)" -Err
         execute "hub $repoContext reset"
+        ++$problems
         return
     }
 
@@ -175,12 +179,14 @@ foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Objec
         $manifestObject = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage "Invalid manifest: $changedFile" -Err
+        ++$problems
         continue
     }
     $version = $manifestObject.version
 
     if (!$version) {
         Write-UserMessage -Message "Invalid manifest: $changedFile ..." -Err
+        ++$problems
         continue
     }
 
@@ -212,4 +218,5 @@ if ($Push) {
 
 execute "hub $repoContext reset --hard"
 
-exit 0
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode
