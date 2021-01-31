@@ -146,7 +146,7 @@ function Test-EnvironmentVariable {
 
     # Scoop ENV
     if (!$env:SCOOP) {
-        Write-UserMessage -Message '''SCOOP'' is not configured' -Warning
+        Write-UserMessage -Message '''SCOOP'' environment variable is not configured' -Warning
         Write-UserMessage -Message @(
             '  SCOOP environment should be set as it is widely used by users and documentation to reference scoop installation directory'
             '  Fixable with running following command:'
