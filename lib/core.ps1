@@ -90,7 +90,6 @@ function Invoke-SystemComSpecCommand {
     )
 
     process {
-        # $isWindows is not defined in PW5
         if (Test-IsUnix) {
             $shell = $env:SHELL
             $parameters = @('-c', $Unix)
