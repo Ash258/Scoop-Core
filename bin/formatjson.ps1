@@ -159,3 +159,5 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
 
     ConvertTo-Manifest -Path $gci.FullName -Manifest $manifest
 }
+
+exit 0
