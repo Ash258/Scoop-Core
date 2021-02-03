@@ -65,7 +65,7 @@ if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.
 } else {
     $RepositoryRoot = $RepositoryRoot.FullName
 }
-$RepositoryRoot.TrimEnd('/').TrimEnd('\')
+$RepositoryRoot = $RepositoryRoot.TrimEnd('/').TrimEnd('\') # Just in case
 $repoContext = "-C ""$RepositoryRoot"""
 
 if ($Help -or (!$Push -and !$Request)) {
