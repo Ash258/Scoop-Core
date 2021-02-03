@@ -179,7 +179,6 @@ if (!$SkipCheckver) {
 }
 
 foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-only' | Where-Object { $_ -like 'bucket/*' }) {
-    # foreach ($changedFile in Invoke-GitCmd @splat -Command 'diff' -Argument '--name-only' | Where-Object { $_ -like 'bucket/*' }) {
     $gci = Get-Item "$RepositoryRoot\$changedFile"
     $applicationName = $gci.BaseName
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
