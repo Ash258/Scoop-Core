@@ -203,15 +203,15 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
 
     if ($Push) {
         Write-UserMessage "Creating update $applicationName ($version) ..." -ForegroundColor 'DarkCyan'
-        continue
 
-        execute "hub $repoContext add $changedFile"
+        _gitWrapper @splat -Command 'add' -Argument $changedFile
+
         # Detect if file was staged, because it's not when only LF or CRLF have changed
-        $status = execute "hub $repoContext status --porcelain -uno"
+        $status = _gitWrapper @splat -Command 'status' -Argument '--porcelain', '--untracked-files=no'
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
 
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
-            execute "hub $repoContext commit --message '${applicationName}: Update to version $version'"
+            _gitWrapper @splat -Command 'commit' -Argument "--message '${applicationName}: Update to version $version'"
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
@@ -220,14 +220,12 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
     }
 }
 
-exit 258
-
 if ($Push) {
     Write-UserMessage 'Pushing updates ...' -ForegroundColor 'DarkCyan'
-    execute "hub $repoContext push origin master"
+    _gitWrapper @splat -Command 'push' -Argument 'origin', 'master'
 } else {
     Write-UserMessage 'Returning to master branch and removing unstaged files ...' -ForegroundColor 'DarkCyan'
-    execute "hub $repoContext checkout --force master"
+    _gitWrapper @splat -Command 'checkout' -Argument '--force', 'master'
 }
 
 _gitWrapper @splat -Command 'reset' -Argument '--hard'
