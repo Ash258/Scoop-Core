@@ -222,10 +222,10 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
 
 if ($Push) {
     Write-UserMessage 'Pushing updates ...' -ForegroundColor 'DarkCyan'
-    _gitWrapper @splat -Command 'push' -Argument 'origin', 'master'
+    _gitWrapper @splat -Command 'push' -Argument 'origin', 'master' -Proxy
 } else {
     Write-UserMessage 'Returning to master branch and removing unstaged files ...' -ForegroundColor 'DarkCyan'
-    _gitWrapper @splat -Command 'checkout' -Argument '--force', 'master'
+    _gitWrapper @splat -Command 'checkout' -Argument '--force', 'master' -Proxy
 }
 
 _gitWrapper @splat -Command 'reset' -Argument '--hard'
