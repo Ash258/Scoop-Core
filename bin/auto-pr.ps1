@@ -204,7 +204,7 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
     if ($Push) {
         Write-UserMessage "Creating update $applicationName ($version) ..." -ForegroundColor 'DarkCyan'
 
-        _gitWrapper @splat -Command 'add' -Argument $changedFile
+        _gitWrapper @splat -Command 'add' -Argument """$changedFile"""
 
         # Detect if file was staged, because it's not when only LF or CRLF have changed
         $status = _gitWrapper @splat -Command 'status' -Argument '--porcelain', '--untracked-files=no'
