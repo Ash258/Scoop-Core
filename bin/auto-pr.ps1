@@ -211,7 +211,8 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
 
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
-            _gitWrapper @splat -Command 'commit' -Argument "--message", "'${applicationName}: Update to version $version'"
+            $delim = if (Test-IsUnix) { '""' } else { '"' }
+            _gitWrapper @splat -Command 'commit' -Argument '--message', "$delim${applicationName}: Update to version $version$delim"
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
