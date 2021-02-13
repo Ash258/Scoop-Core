@@ -76,35 +76,3 @@ function Invoke-GitCmd {
         Invoke-SystemComSpecCommand -Windows $commandToRunWindows -Unix $commandToRunNix
     }
 }
-
-#region Deprecated
-function git_proxy_cmd {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command @args -Proxy
-}
-
-function git_clone {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command 'Clone' -Argument $args -Proxy
-}
-
-function git_ls_remote {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command 'ls-remote' -Argument $args -Proxy
-}
-
-function git_pull {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command 'Update' -Argument $args -Proxy
-}
-
-function git_fetch {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command 'fetch' -Argument $args -Proxy
-}
-
-function git_checkout {
-    Show-DeprecatedWarning $MyInvocation 'Invoke-GitCmd'
-    Invoke-GitCmd -Command 'checkout' -Argument $args -Proxy
-}
-#endregion Deprecated
