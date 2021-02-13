@@ -6,6 +6,7 @@
 
 - **auto-pr**
     - Refactor all git/hub calls to use -C option
+- **scoop-checkup**: Test full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created
 
 ### 0.6-pre1

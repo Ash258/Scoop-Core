@@ -246,6 +246,10 @@ function Test-CompletionRegistered {
     .SYNOPSIS
         Test if native completion is imported.
     #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
     $module = Get-Module 'Scoop-Completion'
 
     if (($null -eq $module) -or ($module.Author -notlike 'Jakub*')) {
@@ -254,6 +258,30 @@ function Test-CompletionRegistered {
         Write-UserMessage -Message @(
             '  Consider importing native module for automatic commands/parameters completion:'
             "    Add-Content `$PROFILE 'Import-Module ''$path'' -ErrorAction SilentlyContinue'"
+        )
+
+        return $false
+    }
+
+    return $true
+}
+
+function Test-ShovelAdoption {
+    <#
+    .SYNOPSIS
+        Test if shovel implementation was fully adopted by user.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $shimDirectory = shimdir $false
+    $shovels = Get-ChildItem $shimDirectory -Filter 'shovel.*'
+    if ($shovels.Count -le 2) {
+        Write-UserMessage -Message 'Shovel executables are not registered' -Warning
+        Write-UserMessage -Message @(
+            '  Fixable with running following command:'
+            "    Get-ChildItem '$shimDirectory' -Filter 'scoop.*' | Copy-Item -Destination { Join-Path `$_.Directory.FullName ((`$_.BaseName -replace 'scoop', 'shovel') + `$_.Extension) }"
         )
 
         return $false
