@@ -15,5 +15,5 @@
             "    . (Join-Path \\$PSScriptRoot \"..\\lib\\\\\\$_.ps1\")",
             "}",
         ],
-    }
+    },
 }

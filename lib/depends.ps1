@@ -75,9 +75,9 @@ function script_deps($script) {
     if ([String]::IsNullOrEmpty($script)) { return $deps }
 
     if (($script -like '*Expand-DarkArchive *') -and !(Test-HelperInstalled -Helper 'Dark')) { $deps += 'dark' }
-    if ((($script -like '*Expand-7zipArchive *') -or ($script -like '*extract_7zip *')) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
-    if ((($script -like '*Expand-MsiArchive *') -or ($script -like '*extract_msi *')) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
-    if ((($script -like '*Expand-InnoArchive *') -or ($script -like '*unpack_inno *')) -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+    if (($script -like '*Expand-7zipArchive *') -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
+    if (($script -like '*Expand-MsiArchive *') -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
+    if (($script -like '*Expand-InnoArchive *') -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
     if (($script -like '*Expand-ZstdArchive *') -and !(Test-HelperInstaller -Helper 'Zstd')) {
         # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
         if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }

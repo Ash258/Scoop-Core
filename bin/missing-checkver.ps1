@@ -26,8 +26,9 @@ param(
 }
 
 $SkipSupported | Out-Null # PowerShell/PSScriptAnalyzer#1472
-
 $Dir = Resolve-Path $Dir
+$exitCode = 0
+$problems = 0
 
 Write-Host '[' -NoNewline
 Write-Host 'C' -ForegroundColor 'Green' -NoNewline
