@@ -5,7 +5,7 @@
 ### 0.6-pre2
 
 - **schema**
-    - Remove depreacted short properties
+    - Remove deprecated short properties
     - Cleanup descriptions
 - Remove deprecated functions from code-base
 - **binaries**: Indicate binary execution errors with exit codes
