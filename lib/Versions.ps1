@@ -214,44 +214,9 @@ function Split-Version {
 }
 
 #region Deprecated
-function qsort($ary, $fn) {
-    Write-UserMessage -Message '"qsort" is deprecated. Please avoid using it anymore.' -Warning
-
-    if ($null -eq $ary) { return @() }
-    if (!($ary -is [array])) { return @($ary) }
-
-    $pivot = $ary[0]
-    $rem = $ary[1..($ary.length - 1)]
-
-    $lesser = qsort ($rem | Where-Object { (& $fn $pivot $_) -lt 0 }) $fn
-
-    $greater = qsort ($rem | Where-Object { (& $fn $pivot $_) -ge 0 }) $fn
-
-    return @() + $lesser + @($pivot) + $greater
-}
-
-function sort_versions($versions) {
-    Write-UserMessage -Message '"sort_versions" is deprecated. Please avoid using it anymore.' -Warning
-    return qsort $versions Compare-Version
-}
-
-function compare_versions($a, $b) {
-    Show-DeprecatedWarning $MyInvocation 'Compare-Version'
-    return Compare-Version -ReferenceVersion $b -DifferenceVersion $a
-}
-
-function latest_version($app, $bucket, $url) {
-    Show-DeprecatedWarning $MyInvocation 'Get-LatestVersion'
-    return Get-LatestVersion -AppName $app -Bucket $bucket -Uri $url
-}
-
+# This has to stay for mro manifest
 function current_version($app, $global) {
     Show-DeprecatedWarning $MyInvocation 'Select-CurrentVersion'
     return Select-CurrentVersion -AppName $app -Global:$global
-}
-
-function versions($app, $global) {
-    Show-DeprecatedWarning $MyInvocation 'Get-InstalledVersion'
-    return Get-InstalledVersion -AppName $app -Global:$global
 }
 #endregion Deprecated

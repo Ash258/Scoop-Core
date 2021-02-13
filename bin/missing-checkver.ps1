@@ -26,8 +26,9 @@ param(
 }
 
 $SkipSupported | Out-Null # PowerShell/PSScriptAnalyzer#1472
-
 $Dir = Resolve-Path $Dir
+$exitCode = 0
+$problems = 0
 
 Write-Host '[' -NoNewline
 Write-Host 'C' -ForegroundColor 'Green' -NoNewline
@@ -47,6 +48,7 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $json = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage -Message "Invalid manifest: $($gci.Name)" -Err
+        ++$problems
         continue
     }
 
@@ -61,3 +63,6 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     Write-Host '] ' -NoNewline
     Write-Host $gci.BaseName
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode

@@ -56,8 +56,16 @@ param(
 }
 
 $Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
-
 $Dir = Resolve-Path $Dir
+$exitCode = 0
+$problems = 0
+$RepositoryRoot = Get-Item $Dir
+if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
+    $RepositoryRoot = $RepositoryRoot.Parent.FullName
+} else {
+    $RepositoryRoot = $RepositoryRoot.FullName
+}
+$repoContext = "-C ""$RepositoryRoot"""
 
 if ($Help -or (!$Push -and !$Request)) {
     Write-UserMessage @'
@@ -72,7 +80,7 @@ Optional options:
                             Only used if -r is set (default: lukesampson/scoop:master)
   -h,  -help
 '@
-    exit 0
+    exit 3
 }
 
 if (!(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyContinue')) {
@@ -102,25 +110,27 @@ function pull_requests($json, [String] $app, [String] $upstream, [String] $manif
     $branch = "manifest/$app-$version"
 
     $master = _selectMasterBranch
-    execute "hub checkout $master"
+    execute "hub $repoContext checkout $master"
     Write-UserMessage "hub rev-parse --verify $branch" -ForegroundColor 'Green'
-    hub rev-parse --verify $branch
+    hub -C "$RepositoryRoot" rev-parse --verify $branch
 
     if ($LASTEXITCODE -eq 0) {
         Write-UserMessage "Skipping update $app ($version) ..." -ForegroundColor 'Yellow'
+        ++$problems
         return
     }
 
     Write-UserMessage "Creating update $app ($version) ..." -ForegroundColor 'DarkCyan'
-    execute "hub checkout -b $branch"
-    execute "hub add $manifestFile"
-    execute "hub commit -m '${app}: Update to version $version'"
+    execute "hub $repoContext checkout -b $branch"
+    execute "hub $repoContext add $manifestFile"
+    execute "hub $repoContext commit -m '${app}: Update to version $version'"
     Write-UserMessage "Pushing update $app ($version) ..." -ForegroundColor 'DarkCyan'
-    execute "hub push origin $branch"
+    execute "hub $repoContext push origin $branch"
 
     if ($LASTEXITCODE -gt 0) {
         Write-UserMessage -Message "Push failed! (hub push origin $branch)" -Err
-        execute 'hub reset'
+        execute "hub $repoContext reset"
+        ++$problems
         return
     }
 
@@ -139,9 +149,9 @@ a new version of [$app]($homepage) is available.
 | New version | $version        |
 "@
 
-    hub pull-request -m "$msg" -b '$upstream' -h '$branch'
+    hub -C "$RepositoryRoot" pull-request -m "$msg" -b '$upstream' -h '$branch'
     if ($LASTEXITCODE -gt 0) {
-        execute 'hub reset'
+        execute "hub $repoContext reset"
         Stop-ScoopExecution -Message "Pull Request failed! (hub pull-request -m '${app}: Update to version $version' -b '$upstream' -h '$branch')"
     }
 }
@@ -149,11 +159,11 @@ a new version of [$app]($homepage) is available.
 Write-UserMessage 'Updating ...' -ForegroundColor 'DarkCyan'
 $master = _selectMasterBranch
 if ($Push) {
-    execute "hub pull origin $master"
-    execute "hub checkout $master"
+    execute "hub $repoContext pull origin $master"
+    execute "hub $repoContext checkout $master"
 } else {
-    execute "hub pull upstream $master"
-    execute "hub push origin $master"
+    execute "hub $repoContext pull upstream $master"
+    execute "hub $repoContext push origin $master"
 }
 
 if (!$SkipCheckver) {
@@ -166,8 +176,7 @@ if (!$SkipCheckver) {
     }
 }
 
-# TODO: Limit just /bucket??
-foreach ($changedFile in hub diff --name-only) {
+foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Object { $_ -like 'bucket/*' }) {
     $gci = Get-Item $changedFile
     $applicationName = $gci.BaseName
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
@@ -179,25 +188,27 @@ foreach ($changedFile in hub diff --name-only) {
         $manifestObject = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage "Invalid manifest: $changedFile" -Err
+        ++$problems
         continue
     }
     $version = $manifestObject.version
 
     if (!$version) {
         Write-UserMessage -Message "Invalid manifest: $changedFile ..." -Err
+        ++$problems
         continue
     }
 
     if ($Push) {
         Write-UserMessage "Creating update $applicationName ($version) ..." -ForegroundColor 'DarkCyan'
 
-        execute "hub add $changedFile"
+        execute "hub $repoContext add $changedFile"
         # Detect if file was staged, because it's not when only LF or CRLF have changed
-        $status = execute 'hub status --porcelain -uno'
+        $status = execute "hub $repoContext status --porcelain -uno"
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
 
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
-            execute "hub commit -m '${applicationName}: Update to version $version'"
+            execute "hub $repoContext commit --message '${applicationName}: Update to version $version'"
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
@@ -208,10 +219,13 @@ foreach ($changedFile in hub diff --name-only) {
 
 if ($Push) {
     Write-UserMessage 'Pushing updates ...' -ForegroundColor 'DarkCyan'
-    execute "hub push origin $master"
+    execute "hub $repoContext push origin $master"
 } else {
     Write-UserMessage "Returning to $master branch and removing unstaged files ..." -ForegroundColor 'DarkCyan'
-    execute "hub checkout -f $master"
+    execute "hub $repoContext checkout -f $master"
 }
 
-execute 'hub reset --hard'
+execute "hub $repoContext reset --hard"
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode

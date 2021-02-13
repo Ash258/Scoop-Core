@@ -71,3 +71,5 @@ remove_from_path (shimdir $false)
 if ($global) { remove_from_path (shimdir $true) }
 
 Write-UserMessage -Message 'Scoop has been uninstalled.' -Success
+
+exit 0
