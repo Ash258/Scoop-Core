@@ -2,6 +2,12 @@
 
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
+### 0.6-pre2
+
+- **auto-pr**
+    - Refactor all git/hub calls to use -C option
+- **scoop-alias**: First alias addition is correctly registered and created
+
 ### 0.6-pre1
 
 - Support YAML typed manifests in some commands
