@@ -48,7 +48,7 @@ Describe -Tag 'Manifests' 'manifest-validation' {
     Context 'manifest validates against the schema' {
         BeforeAll {
             if ($null -eq $bucketdir) { $bucketdir = "$PSScriptRoot\..\bucket\" }
-            if (!(Test-Path $bucketdir)) { return }
+            if (!(Test-Path $bucketdir)) { New-Item $bucketdir -ItemType 'Directory' -Force }
             $changed_manifests = @()
             if ($env:CI -eq $true) {
                 $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
