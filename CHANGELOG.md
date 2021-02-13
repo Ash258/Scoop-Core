@@ -4,6 +4,9 @@
 
 ### 0.6-pre2
 
+- **schema**
+    - Remove depreacted short properties
+    - Cleanup descriptions
 - **binaries**: Indicate binary execution errors with exit codes
 - Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**
