@@ -4,6 +4,8 @@
 
 ### 0.6-pre2
 
+- **binaries**: Indicate binary execution errors with exit codes
+- Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**
     - Refactor all git/hub calls to use -C option
 - **scoop-checkup**: Test full shovel adoption

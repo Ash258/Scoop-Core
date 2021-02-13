@@ -29,6 +29,8 @@ param(
 }
 
 $Dir = Resolve-Path $Dir
+$exitCode = 0
+$problems = 0
 
 function _infoMes ($name, $mes) { Write-UserMessage -Message "${name}: $mes" -Info }
 
@@ -43,6 +45,8 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $manifest = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         Write-UserMessage -Message "Invalid manifest: $($gci.Name)" -Err
+        ++$problems
+
         continue
     }
 
@@ -124,6 +128,7 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
 
         $newArch = [PSCustomObject] @{ }
 
+        # TODO: Mulitple architectures
         '64bit', '32bit' | ForEach-Object {
             if ($arch.$_) { $newArch | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $arch.$_ }
         }
@@ -159,3 +164,6 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
 
     ConvertTo-Manifest -Path $gci.FullName -Manifest $manifest
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode

@@ -44,6 +44,8 @@ param(
 
 $Dir = Resolve-Path $Dir
 if ($ForceUpdate) { $Update = $true }
+$exitCode = 0
+$problems = 0
 # Cleanup
 if (!$UseCache) { Join-Path $SCOOP_CACHE_DIRECTORY '*HASH_CHECK*' | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse }
 
@@ -64,6 +66,7 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $manifest = ConvertFrom-Manifest -Path $gci.FullName
     } catch {
         err $name 'Invalid manifest'
+        ++$problems
         continue
     }
 
@@ -78,18 +81,21 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $manifest.hash | ForEach-Object { $hashes += $_ }
     } elseif ($manifest.architecture) {
         # First handle 64bit
+        # TODO: Multiple architectures
         url $manifest '64bit' | ForEach-Object { $urls += $_ }
         hash $manifest '64bit' | ForEach-Object { $hashes += $_ }
         url $manifest '32bit' | ForEach-Object { $urls += $_ }
         hash $manifest '32bit' | ForEach-Object { $hashes += $_ }
     } else {
         err $name 'Manifest does not contain URL property.'
+        ++$problems
         continue
     }
 
     # Number of URLS and Hashes is different
     if ($urls.Length -ne $hashes.Length) {
         err $name 'URLS and hashes count mismatch.'
+        ++$problems
         continue
     }
 
@@ -136,6 +142,7 @@ foreach ($current in $MANIFESTS) {
 
     if ($break) {
         err $current.app 'Download failed'
+        ++$problems
         continue
     }
 
@@ -149,6 +156,7 @@ foreach ($current in $MANIFESTS) {
         Write-Host 'Mismatch found ' -ForegroundColor 'Red'
         $mismatched | ForEach-Object {
             $file = cache_path $current.app $version $current.urls[$_]
+            # TODO: Wrap into function
             Write-UserMessage -Message "`tURL:`t`t$($current.urls[$_])"
             if (Test-Path $file) {
                 Write-UserMessage -Message "`tFirst bytes:`t$(Get-MagicByte -File $file -Pretty)"
@@ -163,6 +171,7 @@ foreach ($current in $MANIFESTS) {
             $current.manifest.hash = $actuals
         } else {
             $platforms = ($current.manifest.architecture | Get-Member -MemberType 'NoteProperty').Name
+            # TODO: Multiple architectures
             # Defaults to zero, don't know, which architecture is available
             $64bit_count = 0
             $32bit_count = 0
@@ -182,5 +191,11 @@ foreach ($current in $MANIFESTS) {
         Write-UserMessage -Message "Writing updated $($current.app) manifest" -Color 'DarkGreen'
 
         ConvertTo-Manifest -Path $current.gci.FullName -Manifest $current.manifest
+    } else {
+        # Consider error only if manifest was not updated
+        if ($mismatched.Count -gt 0) { ++$problems }
     }
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode
