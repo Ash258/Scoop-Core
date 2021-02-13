@@ -212,3 +212,11 @@ function Split-Version {
         return ($Version -split [Regex]::Escape($Delimiter) -ne '' | ForEach-Object { if ($_ -match '^\d+$') { [Long] $_ } else { $_ } })
     }
 }
+
+#region Deprecated
+# This has to stay for mro manifest
+function current_version($app, $global) {
+    Show-DeprecatedWarning $MyInvocation 'Select-CurrentVersion'
+    return Select-CurrentVersion -AppName $app -Global:$global
+}
+#endregion Deprecated
