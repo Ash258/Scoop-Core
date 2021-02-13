@@ -1108,16 +1108,6 @@ function run($exe, $arg, $msg, $continue_exit_codes) {
     Invoke-ExternalCommand -FilePath $exe -ArgumentList $arg -Activity $msg -ContinueExitCodes $continue_exit_codes
 }
 
-function get_magic_bytes($file) {
-    Show-DeprecatedWarning $MyInvocation 'Get-MagicByte'
-    return Get-MagicByte -File $file
-}
-
-function get_magic_bytes_pretty($file, $glue = ' ') {
-    Show-DeprecatedWarning $MyInvocation 'Get-MagicByte'
-    return Get-MagicByte -File $file -Glue $glue -Pretty
-}
-
 function fullpath($path) {
     Show-DeprecatedWarning $MyInvocation 'Get-AbsolutePath'
     return Get-AbsolutePath -Path $path
