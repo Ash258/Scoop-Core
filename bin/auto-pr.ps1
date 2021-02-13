@@ -177,7 +177,7 @@ if (!$SkipCheckver) {
 }
 
 foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Object { $_ -like 'bucket/*' }) {
-    $gci = Get-Item $changedFile
+    $gci = Get-Item "$RepositoryRoot\$changedFile"
     $applicationName = $gci.BaseName
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $changedFile" -Info
@@ -222,7 +222,7 @@ if ($Push) {
     execute "hub $repoContext push origin $master"
 } else {
     Write-UserMessage "Returning to $master branch and removing unstaged files ..." -ForegroundColor 'DarkCyan'
-    execute "hub $repoContext checkout -f $master"
+    execute "hub $repoContext checkout --force $master"
 }
 
 execute "hub $repoContext reset --hard"
