@@ -7,6 +7,7 @@
 - **schema**
     - Remove depreacted short properties
     - Cleanup descriptions
+- Remove deprecated functions from code-base
 - **binaries**: Indicate binary execution errors with exit codes
 - Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**

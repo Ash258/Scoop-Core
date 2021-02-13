@@ -491,25 +491,3 @@ function Expand-ZstdArchive {
         if ($Removal) { Remove-Item -Path $Path -Force }
     }
 }
-
-#region Deprecated
-function extract_7zip($path, $to, $removal) {
-    Show-DeprecatedWarning $MyInvocation 'Expand-7zipArchive'
-    Expand-7zipArchive -Path $path -DestinationPath $to -Removal:$removal @args
-}
-
-function extract_msi($path, $to, $removal) {
-    Show-DeprecatedWarning $MyInvocation 'Expand-MsiArchive'
-    Expand-MsiArchive -Path $path -DestinationPath $to -Removal:$removal @args
-}
-
-function unpack_inno($path, $to, $removal) {
-    Show-DeprecatedWarning $MyInvocation 'Expand-InnoArchive'
-    Expand-InnoArchive -Path $path -DestinationPath $to -Removal:$removal @args
-}
-
-function extract_zip($path, $to, $removal) {
-    Show-DeprecatedWarning $MyInvocation 'Expand-ZipArchive'
-    Expand-ZipArchive -Path $path -DestinationPath $to -Removal:$removal
-}
-#endregion Deprecated
