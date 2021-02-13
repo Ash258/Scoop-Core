@@ -29,9 +29,10 @@ param(
 }
 
 $Timeout | Out-Null # PowerShell/PSScriptAnalyzer#1472
-
 $Dir = Resolve-Path $Dir
 $Queue = @()
+$exitCode = 0
+$problems = 0
 
 foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
@@ -91,14 +92,15 @@ function test_dl([String] $url, $cookies) {
 
 foreach ($man in $Queue) {
     $name, $manifest = $man
+    $errors = @()
     $urls = @()
     $ok = 0
     $failed = 0
-    $errors = @()
 
     if ($manifest.url) {
         $manifest.url | ForEach-Object { $urls += $_ }
     } else {
+        # TODO: Multiple architectures
         url $manifest '64bit' | ForEach-Object { $urls += $_ }
         url $manifest '32bit' | ForEach-Object { $urls += $_ }
     }
@@ -137,4 +139,9 @@ foreach ($man in $Queue) {
     $errors | ForEach-Object {
         Write-Host "       > $_" -ForegroundColor 'DarkRed'
     }
+
+    if ($failed.Count -gt 0) { ++$problems }
 }
+
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode

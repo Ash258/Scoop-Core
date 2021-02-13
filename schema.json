@@ -39,17 +39,17 @@
             ]
         },
         "jsonPathExpression": {
-            "description": "Validates JSON path expression.",
+            "description": "JSON path expression validator",
             "type": "string",
             "pattern": "^\\$[.\\[].*$"
         },
         "hashPattern": {
-            "description": "Validates all supported format of hash property",
+            "description": "Hash property validator",
             "type": "string",
             "pattern": "^([a-fA-F\\d]{64}|(sha1|sha256|sha512|md5):([a-fA-F\\d]{32}|[a-fA-F\\d]{40}|[a-fA-F\\d]{64}|[a-fA-F\\d]{128}))$"
         },
         "hash": {
-            "description": "File hash used for verification of downloaded file.",
+            "description": "Hash of downloaded file, used for integrity verification",
             "anyOf": [
                 {
                     "$ref": "#/definitions/hashPattern"
@@ -65,25 +65,27 @@
             ]
         },
         "hashExtraction": {
-            "description": "Specify how the hashes are extracted while autoupdating.",
+            "description": "Specifies how the hashes are extracted while running autoupdate.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "regex": {
-                    "description": "Regular expression which will be used for searching inside defined URL",
+                    "description": "Specifies the regular expression which will be used.",
                     "type": "string",
                     "format": "regex"
                 },
                 "jsonpath": {
-                    "description": "JSON query language used in case the URL points to JSON file.",
+                    "description": "Specifies the JSON query language used in case the URL points to JSON file.",
                     "$ref": "#/definitions/jsonPathExpression"
                 },
                 "xpath": {
-                    "description": "XML query language used in case the URL points to XML file.",
+                    "description": "Specifies XML query language used in case the URL points to XML file.",
                     "type": "string"
                 },
                 "mode": {
-                    "description": "Specify how the hashes should be calculated.",
+                    "description": "Specifies the method used for extraction of hash for file.",
+                    "type": "string",
+                    "default": "download",
                     "enum": [
                         "download",
                         "extract",
@@ -93,43 +95,24 @@
                         "metalink",
                         "fosshub",
                         "sourceforge"
-                    ],
-                    "default": "download"
-                },
-                "type": {
-                    "description": "Deprecated, hash type is determined automatically",
-                    "enum": [
-                        "md5",
-                        "sha1",
-                        "sha256",
-                        "sha512"
                     ]
                 },
                 "url": {
-                    "description": "URL of webpage/file which contains information about file integrity.",
+                    "description": "Specifies the URL of webpage/file which contains information about file integrity.",
                     "anyOf": [
                         {
-                            "format": "uri",
-                            "type": "string"
+                            "type": "string",
+                            "format": "uri"
                         },
                         {
-                            "pattern": "^(\\$url|\\$baseurl).[\\w\\d]+$",
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^(\\$url|\\$baseurl).[\\w\\d]+$"
                         },
                         {
-                            "pattern": "^.*(\\$url|\\$baseurl).*$",
-                            "type": "string"
+                            "type": "string",
+                            "pattern": "^.*(\\$url|\\$baseurl).*$"
                         }
                     ]
-                },
-                "find": {
-                    "description": "Deprecated. Use 'regex' instead",
-                    "type": "string",
-                    "format": "regex"
-                },
-                "jp": {
-                    "description": "Deprecated. Use 'jsonpath' instead",
-                    "$ref": "#/definitions/jsonPathExpression"
                 }
             }
         },
@@ -139,67 +122,67 @@
             "additionalProperties": false,
             "properties": {
                 "pre_download": {
-                    "description": "Specify PowerShell commands to be executed before download process is executed.",
+                    "description": "Specifies PowerShell commands to be executed before download process is executed.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "url": {
-                    "description": "Specify URLs of files, which needs to be downloaded to install application.",
+                    "description": "Specifies URLs of files, which needs to be downloaded.",
                     "$ref": "#/definitions/uriOrArrayOfUris"
                 },
                 "hash": {
-                    "description": "Specify the hash of downloaded files to be used to verify integrity.",
+                    "description": "Specifies the hash of downloaded files to be used to verify integrity.",
                     "$ref": "#/definitions/hash"
                 },
                 "extract_dir": {
-                    "description": "Specify the directory to be extracted from downloaded archive.",
+                    "description": "Specifies the name of directory to be extracted from downloaded archive.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "pre_install": {
-                    "description": "Specify PowerShell commands to be executed before 'installer' is invoked.",
+                    "description": "Specifies PowerShell commands to be executed before 'installer' is invoked.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "installer": {
-                    "description": "Specify process of application installation.",
+                    "description": "Specifies the process of application installation.",
                     "$ref": "#/definitions/installer"
                 },
                 "msi": {
-                    "description": "Deprecated",
+                    "description": "Deprecated. Specifies to use msiexec and install the msi as seen in 'normal' instalaltions.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "post_install": {
-                    "description": "PowerShell commands to be executed after 'installer' is invoked and after persist/binaries and shortcuts creation.",
+                    "description": "Specifies PowerShell commands to be executed after 'installer' is invoked. (after persist, environment, binaries and shortcuts are created)",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "pre_uninstall": {
-                    "description": "PowerShell commands to be executed before 'uninstaller' is invoked.",
+                    "description": "Specifies PowerShell commands to be executed before 'uninstaller' is invoked.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "uninstaller": {
-                    "description": "Specify the process of application uninstallation.",
+                    "description": "Specifies the process of application uninstallation.",
                     "$ref": "#/definitions/uninstaller"
                 },
                 "post_uninstall": {
-                    "description": "PowerShell commands to be executed after 'uninstaller' is invoked.",
+                    "description": "Specifies the PowerShell commands to be executed after 'uninstaller' is invoked.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "bin": {
-                    "description": "Specify executables to be available in PATH.",
+                    "description": "Specifies executables to be available in PATH.",
                     "$ref": "#/definitions/stringOrArrayOfStringsOrAnArrayOfArrayOfStrings"
                 },
                 "shortcuts": {
-                    "description": "Specify Start menu shortcuts to be created after installation.",
+                    "description": "Specifies Start menu shortcuts to be created after installation.",
                     "$ref": "#/definitions/shortcutsArray"
                 },
                 "env_add_path": {
-                    "description": "Specify directories to be added into PATH.",
+                    "description": "Specifies directories to be added into PATH.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "env_set": {
-                    "description": "Specify environment variables for the user (or machine if --global is used)",
+                    "description": "Specifies environment variables to be set for the user (machine in case --global is used)",
                     "type": "object"
                 },
                 "checkver": {
-                    "description": "Specify how the latest version of application is determined.",
+                    "description": "Specifies the process of gathering the latest available version of application.",
                     "$ref": "#/definitions/checkver"
                 }
             }
@@ -207,14 +190,14 @@
         "arrayOfArrayOfStrings": {
             "description": "Array containing Array containing Strings",
             "type": "array",
+            "minItems": 1,
             "items": {
                 "type": "array",
+                "minItems": 1,
                 "items": {
                     "type": "string"
-                },
-                "minItems": 1
-            },
-            "minItems": 1
+                }
+            }
         },
         "stringOrArrayOfStrings": {
             "description": "String or Array of Strings",
@@ -224,10 +207,10 @@
                 },
                 {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "type": "string"
-                    },
-                    "minItems": 1
+                    }
                 }
             ]
         },
@@ -239,10 +222,10 @@
                 },
                 {
                     "type": "array",
+                    "minItems": 1,
                     "items": {
                         "$ref": "#/definitions/stringOrArrayOfStrings"
-                    },
-                    "minItems": 1
+                    }
                 }
             ]
         },
@@ -258,33 +241,33 @@
                 },
                 {
                     "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
                     "items": {
                         "type": "string",
                         "format": "uri",
                         "not": {
                             "pattern": "(\\$)"
                         }
-                    },
-                    "minItems": 1,
-                    "uniqueItems": true
+                    }
                 }
             ]
         },
         "shortcutsArray": {
             "description": "Array containing Array with 2 to 4 Strings",
             "type": "array",
+            "minItems": 1,
             "items": {
                 "type": "array",
+                "minItems": 2,
+                "maxItems": 4,
                 "items": {
                     "type": "string"
-                },
-                "minItems": 2,
-                "maxItems": 4
-            },
-            "minItems": 1
+                }
+            }
         },
         "checkver": {
-            "description": "Specify how the latest version of application is determined.",
+            "description": "Specifies the process of gathering the latest available version of application.",
             "anyOf": [
                 {
                     "type": "string",
@@ -294,72 +277,63 @@
                     "additionalProperties": false,
                     "properties": {
                         "github": {
-                            "description": "Automatic github release page flow. Same as URL property with releases/latest value.",
+                            "description": "Specifies to automatically append provided repository URL with /releases/latest as URL property.",
                             "type": "string",
                             "format": "uri"
                         },
                         "url": {
-                            "description": "Specify URL where to look for version of application.",
+                            "description": "Specifies the URL of file/webpage where to check for latest version.",
                             "type": "string",
                             "format": "uri"
                         },
                         "regex": {
-                            "description": "Regular expression which will be used for searching inside defined URL",
+                            "description": "Specifies the regular expression which will be used for searching inside defined URL",
                             "type": "string",
                             "format": "regex"
                         },
                         "jsonpath": {
-                            "description": "JSON query language used in case the URL points to JSON file.",
+                            "description": "Specifies the JSON query language used in case the URL points to JSON file.",
                             "$ref": "#/definitions/jsonPathExpression"
                         },
                         "xpath": {
-                            "description": "XML query language used in case the URL points to XML file.",
+                            "description": "Specifies the XML query language used in case the URL points to XML file.",
                             "type": "string"
                         },
                         "reverse": {
-                            "description": "Reverses the order of regex matches.",
+                            "description": "Specifies to reverse the order of regex matches.",
                             "type": "boolean"
                         },
                         "replace": {
-                            "description": "Allows rearrange the regexp matches",
+                            "description": "Specifies to rearrange the regexp capture groups.",
                             "type": "string"
                         },
                         "useragent": {
-                            "description": "Specify custom UserAgent while accessing the URL.",
+                            "description": "Specifies the custom UserAgent while accessing the URL.",
                             "type": "string"
                         },
                         "script": {
-                            "description": "Custom PowerShell script to retrieve application version using more complex approach.",
+                            "description": "Specifies custom PowerShell commands to retrieve latest version.",
                             "$ref": "#/definitions/stringOrArrayOfStrings"
-                        },
-                        "jp": {
-                            "description": "Deprecated. Use 'jsonpath' instead",
-                            "$ref": "#/definitions/jsonPathExpression"
-                        },
-                        "re": {
-                            "description": "Deprecated. Use 'regex' instead",
-                            "type": "string",
-                            "format": "regex"
                         }
                     }
                 }
             ]
         },
         "installer": {
-            "description": "Installer",
+            "description": "Specifies the process/steps required for application to be installed.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "file": {
-                    "description": "Specify the executable to be executed on installation. Default to $fname",
+                    "description": "Specifies the executable to be executed. Default to $fname (file name of latest downloaded URL)",
                     "type": "string"
                 },
                 "args": {
-                    "description": "Specify arguments to be passed to installer file.",
+                    "description": "Specifies arguments to be passed to installer file.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "keep": {
-                    "description": "Specify the installer file should be kept for future use.",
+                    "description": "Specifies to keep the installer file for future use.",
                     "type": "boolean"
                 },
                 "script": {
@@ -369,19 +343,19 @@
             }
         },
         "uninstaller": {
-            "description": "Uninstaller",
+            "description": "Specifies the process how the application is uninstalled.",
             "type": "object",
             "properties": {
                 "file": {
-                    "description": "Specify executable to be executed on uninstallation.",
+                    "description": "Specifies the executable to be executed on uninstallation.",
                     "type": "string"
                 },
                 "args": {
-                    "description": "Specify arguments to be passed to uninstaller file.",
+                    "description": "Specifies arguments to be passed to uninstaller file.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "script": {
-                    "description": "Specify PowerShell commands required for application uninstallation.",
+                    "description": "Specifies PowerShell commands required for application uninstallation.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 }
             },
@@ -403,101 +377,102 @@
             "additionalProperties": false,
             "properties": {
                 "url": {
-                    "description": "Specify URLs to be updated.",
+                    "description": "Specifies URLs to be updated.",
                     "type": "string",
                     "format": "uri"
                 },
                 "hash": {
-                    "description": "Specify how hashes are calculated on update.",
+                    "description": "Specifies how hashes are extracted.",
                     "$ref": "#/definitions/hashExtraction"
                 },
                 "extract_dir": {
-                    "description": "Specify extract directory to be updated.",
+                    "description": "Specifies extract directory to be updated.",
                     "type": "string"
                 }
             }
         },
         "autoupdate": {
-            "description": "Specifies how the manifest is updated.",
+            "description": "Specifies how the manifest is updated with different version.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "note": {
-                    "description": "Specify message printed to user after autoupdate.",
+                    "description": "Specifies message printed to user after autoupdate.",
                     "$ref": "#/definitions/stringOrArrayOfStrings"
                 },
                 "changelog": {
+                    "description": "Specifies the URL or file containing version history.",
                     "type": "string"
                 },
                 "architecture": {
+                    "description": "Specifies to update properties specific to some architecture.",
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                        "32bit": {
+                        "64bit": {
+                            "description": "Specifies to update properties for amd64 architecture.",
                             "$ref": "#/definitions/autoupdateArchitecture"
                         },
-                        "64bit": {
+                        "32bit": {
+                            "description": "Specifies to update properties for i386 architecture.",
                             "$ref": "#/definitions/autoupdateArchitecture"
                         }
                     }
                 },
                 "url": {
-                    "description": "Specify the URL to be updated.",
+                    "description": "Specifies the URL to be updated",
                     "type": "string",
                     "format": "uri"
                 },
                 "hash": {
-                    "description": "Specify the hash extraction process for URLs.",
+                    "description": "Specifies how the hashes are extracted",
                     "$ref": "#/definitions/hashExtraction"
                 },
                 "extract_dir": {
-                    "description": "Specify the 'extract_dir' property has to be updated.",
+                    "description": "Specifies to update 'extract_dir' property.",
                     "type": "string"
                 }
             }
         }
     },
     "properties": {
-        "_comment": {
-            "description": "Deprecated. Use '##' instead.",
-            "$ref": "#/definitions/stringOrArrayOfStrings"
-        },
         "##": {
-            "description": "A comment for other contributors.",
+            "description": "Specifies a comment/additional information for other contributors.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "version": {
-            "description": "Specify application's version.",
+            "description": "Specifies the verison of the application.",
             "type": "string",
             "pattern": "^[\\w.\\-+_]+$"
         },
         "description": {
-            "description": "Specify the brief description of application.",
+            "description": "Specifies the brief description of application.",
             "type": "string"
         },
         "homepage": {
-            "description": "Specify the URL of homepage for application.",
+            "description": "Specifies the URL of homepage of the application.",
             "type": "string",
             "format": "uri"
         },
         "license": {
-            "description": "Specify application's license information.",
+            "description": "Specifies the license information fo application.",
             "anyOf": [
                 {
+                    "description": "Specifies the valid SPDX license identifier.",
                     "$ref": "#/definitions/licenseIdentifiers"
                 },
                 {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
+                        "identifier": {
+                            "description": "Specifies the text represnting license identifier.",
+                            "$ref": "#/definitions/licenseIdentifiers"
+                        },
                         "url": {
-                            "description": "Specify URL with license terms/agreement.",
+                            "description": "Specifies the URL with license terms/agreement.",
                             "type": "string",
                             "format": "uri"
-                        },
-                        "identifier": {
-                            "description": "Specify license identifier.",
-                            "$ref": "#/definitions/licenseIdentifiers"
                         }
                     },
                     "required": [
@@ -507,19 +482,19 @@
             ]
         },
         "notes": {
-            "description": "Specify information to be displayed to user after installation.",
+            "description": "Specifies information to be displayed to user after the application is successfully installed.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "changelog": {
-            "description": "Specify file/url pointing to release notes. File reference should be relative to application directory.",
+            "description": "Specifies the file/url pointing to release notes. File reference should be relative to application directory.",
             "type": "string"
         },
         "depends": {
-            "description": "Specify manifest(s) required to be installed before the application is installed.",
+            "description": "Specifies manifest(s) required to be installed before the application is installed.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "suggest": {
-            "description": "Specify manifest(s) with complementary features to be installed.",
+            "description": "Specifies manifest(s) with complementary features to be installed.",
             "type": "object",
             "additionalProperties": false,
             "patternProperties": {
@@ -529,111 +504,113 @@
             }
         },
         "pre_download": {
-            "description": "Specify PowerShell commands to be executed before download process is executed.",
+            "description": "Specifies PowerShell commands to be executed before download process is executed.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "cookie": {
-            "description": "Specify the cookies required to download applicaiton.",
+            "description": "Specifies the cookies required to download applicaiton.",
             "type": "object"
         },
         "architecture": {
-            "description": "Specify the different properties for specific architecture.",
+            "description": "Specifies the different properties for specific architecture.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "64bit": {
+                    "description": "Specifies properties required for installation on amd64 architecture.",
                     "$ref": "#/definitions/architecture"
                 },
                 "32bit": {
+                    "description": "Specifies properties required for installation on i386 architecture.",
                     "$ref": "#/definitions/architecture"
                 }
             }
         },
         "url": {
-            "description": "Specify URLs of files, which needs to be downloaded to install application.",
+            "description": "Specifies URLs of files, which needs to be downloaded to install application.",
             "$ref": "#/definitions/uriOrArrayOfUris"
         },
         "hash": {
-            "description": "Specify the hash of downloaded files to be used to verify integrity.",
+            "description": "Specifies the hash of downloaded files to be used to verify integrity.",
             "$ref": "#/definitions/hash"
         },
         "extract_dir": {
-            "description": "Specify the directory to be extracted from downloaded archive.",
+            "description": "Specifies the directory to be extracted from downloaded archive.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "extract_to": {
-            "description": "Specify the destination directory of downloaded archive.",
+            "description": "Specifies the destination directory of downloaded archive.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "innosetup": {
-            "description": "Specify the installer is InnoSetup based.",
+            "description": "Specifies the installer is InnoSetup based.",
             "type": "boolean"
         },
         "pre_install": {
-            "description": "PowerShell commands to be executed before 'installer' is invoked.",
+            "description": "Specifeis PowerShell commands to be executed before 'installer' is invoked.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "msi": {
-            "description": "Deprecated",
+            "description": "Deprecated. Specifies to use msiexec and install the msi as seen in 'normal' instalaltions.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "installer": {
-            "description": "Specify process of application installation.",
+            "description": "Specifies the process of application installation.",
             "$ref": "#/definitions/installer"
         },
         "post_install": {
-            "description": "PowerShell commands to be executed after 'installer' is invoked and after persist/binaries and shortcuts creation.",
+            "description": "Specifies PowerShell commands to be executed after 'installer' is invoked. (after persist, environment, binaries and shortcuts are created)",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "pre_uninstall": {
-            "description": "PowerShell commands to be executed before 'uninstaller' is invoked.",
+            "description": "Specifeis PowerShell commands to be executed before 'uninstaller' is invoked.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "uninstaller": {
-            "description": "Specify the process of application uninstallation.",
+            "description": "Specifies the process of application uninstallation.",
             "$ref": "#/definitions/uninstaller"
         },
         "post_uninstall": {
-            "description": "PowerShell commands to be executed after 'uninstaller' is invoked.",
+            "description": "Specifies PowerShell commands to be executed after 'uninstaller' is invoked.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "psmodule": {
-            "description": "Specify PowerShell module installation",
+            "description": "Specifies to treat this manifest as installation of powershell module instead of normal application.",
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "description": "The name of the module, which should match at least one file in the extracted directory for PowerShell to recognize this as a module.",
+                    "description": "Specifies the name of the module, which should match at least one file in the extracted directory for PowerShell to recognize this as a module.",
                     "type": "string"
                 }
             }
         },
         "bin": {
-            "description": "Specify executables to be available in PATH.",
+            "description": "Specifies executables to be available in PATH.",
             "$ref": "#/definitions/stringOrArrayOfStringsOrAnArrayOfArrayOfStrings"
         },
         "shortcuts": {
-            "description": "Specify Start menu shortcuts to be created after installation.",
+            "description": "Specifies Start menu shortcuts to be created.",
             "$ref": "#/definitions/shortcutsArray"
         },
         "env_add_path": {
-            "description": "Specify directories to be added into PATH.",
+            "description": "Specifies directories to be added into PATH.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
         },
         "env_set": {
-            "description": "Specify environment variables for the user (or machine if --global is used)",
+            "description": "Specifies environment variables to be set for the user (machine in case --global is used)",
             "type": "object"
         },
         "persist": {
-            "description": "Specify folders and files to be preserved across updates.",
+            "description": "Specifies folders and files to be preserved across updates.",
             "$ref": "#/definitions/stringOrArrayOfStringsOrAnArrayOfArrayOfStrings"
         },
         "checkver": {
-            "description": "Specify how the latest version of application is determined.",
+            "description": "Specifies the process of gathering the latest available version of application.",
             "$ref": "#/definitions/checkver"
         },
         "autoupdate": {
-            "description": "Specifies the process of manifest updating to latest available version.",
+            "description": "Specifies how the manifest is updated with different version.",
             "$ref": "#/definitions/autoupdate"
         }
     }

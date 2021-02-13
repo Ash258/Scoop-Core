@@ -9,7 +9,7 @@ function Get-AliasesFromConfig {
     .SYNOPSIS
         Get hahstable of all aliases defined in config.
     #>
-    return get_config $ALIAS_CMD_ALIAS @{ }
+    return get_config $ALIAS_CMD_ALIAS ([PsCustomObject] @{ })
 }
 
 function Get-ScoopAliasPath {

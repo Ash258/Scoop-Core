@@ -10,15 +10,16 @@
 }
 
 $issues = 0
-$issues += !(Test-WindowsDefender)
-$issues += !(Test-WindowsDefender -Global)
-$issues += !(Test-MainBucketAdded)
-$issues += !(Test-LongPathEnabled)
-$issues += !(Test-EnvironmentVariable)
-$issues += !(Test-HelpersInstalled)
-$issues += !(Test-Drive)
-$issues += !(Test-Config)
-$issues += !(Test-CompletionRegistered)
+$issues += !(Test-DiagWindowsDefender)
+$issues += !(Test-DiagWindowsDefender -Global)
+$issues += !(Test-DiagMainBucketAdded)
+$issues += !(Test-DiagLongPathEnabled)
+$issues += !(Test-DiagEnvironmentVariable)
+$issues += !(Test-DiagHelpersInstalled)
+$issues += !(Test-DiagDrive)
+$issues += !(Test-DiagConfig)
+$issues += !(Test-DiagCompletionRegistered)
+$issues += !(Test-DiagShovelAdoption)
 
 if ($issues -gt 0) {
     Write-UserMessage -Message '', "Found $issues potential $(pluralize $issues 'problem' 'problems')." -Warning

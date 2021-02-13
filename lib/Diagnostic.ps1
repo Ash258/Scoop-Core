@@ -8,7 +8,7 @@ Use 'Write-UserMessage -Warning' to highlight the issue, and follow up with the 
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-function Test-Drive {
+function Test-DiagDrive {
     <#
     .SYNOPSIS
         Test disk drive requirements/configuration.
@@ -34,7 +34,7 @@ function Test-Drive {
     return $result
 }
 
-function Test-WindowsDefender {
+function Test-DiagWindowsDefender {
     <#
     .SYNOPSIS
         Test windows defender exclusions.
@@ -42,6 +42,8 @@ function Test-WindowsDefender {
     [CmdletBinding()]
     [OutputType([bool])]
     param([Switch] $Global)
+
+    if (Test-IsUnix) { return $true }
 
     $defender = Get-Service -Name 'WinDefend' -ErrorAction 'SilentlyContinue'
     if (($defender -and $defender.Status) -and ($defender.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running)) {
@@ -65,7 +67,7 @@ function Test-WindowsDefender {
     return $true
 }
 
-function Test-MainBucketAdded {
+function Test-DiagMainBucketAdded {
     <#
     .SYNOPSIS
         Test if main bucket was added after migration from core repository.
@@ -87,7 +89,7 @@ function Test-MainBucketAdded {
     return $true
 }
 
-function Test-LongPathEnabled {
+function Test-DiagLongPathEnabled {
     <#
     .SYNOPSIS
         Test if long paths option is enabled.
@@ -95,6 +97,8 @@ function Test-LongPathEnabled {
     [CmdletBinding()]
     [OutputType([bool])]
     param()
+
+    if (Test-IsUnix) { return $true }
 
     # Verify supported windows version
     if ([System.Environment]::OSVersion.Version.Major -lt 10 -or [System.Environment]::OSVersion.Version.Build -lt 1607) {
@@ -116,7 +120,7 @@ function Test-LongPathEnabled {
     return $true
 }
 
-function Test-EnvironmentVariable {
+function Test-DiagEnvironmentVariable {
     <#
     .SYNOPSIS
         Test if scoop's related environment variables are defined.
@@ -127,20 +131,28 @@ function Test-EnvironmentVariable {
 
     $result = $true
 
-    # Comspec
-    if (($null -eq $env:COMSPEC) -or (!(Test-Path $env:COMSPEC -PathType 'Leaf'))) {
-        Write-UserMessage -Message '''COMSPEC'' is not configured' -Warning
-        Write-UserMessage -Message @(
-            '  By default the variable should points to the cmd.exe in Windows: ''%SystemRoot%\system32\cmd.exe''.'
-            '  Fixable with running following command in elevated prompt:'
-            '    [Environment]::SetEnvironmentVariable(''COMSPEC'', "$env:SystemRoot\system32\cmd.exe", ''Machine'')'
-        )
-        $result = $false
+    if (Test-IsUnix) {
+        # Unix "comspec"
+        if (!(Test-Path $env:SHELL -PathType 'Leaf')) {
+            Write-UserMessage -Message '''SHELL'' environment variable is not configured' -Warning
+            $result = $false
+        }
+    } else {
+        # Windows Comspec
+        if (($null -eq $env:COMSPEC) -or (!(Test-Path $env:COMSPEC -PathType 'Leaf'))) {
+            Write-UserMessage -Message '''COMSPEC'' environment variable is not configured' -Warning
+            Write-UserMessage -Message @(
+                '  By default the variable should points to the cmd.exe in Windows: ''%SystemRoot%\system32\cmd.exe''.'
+                '  Fixable with running following command in elevated prompt:'
+                '    [Environment]::SetEnvironmentVariable(''COMSPEC'', "$env:SystemRoot\system32\cmd.exe", ''Machine'')'
+            )
+            $result = $false
+        }
     }
 
     # Scoop ENV
     if (!$env:SCOOP) {
-        Write-UserMessage -Message '''SCOOP'' is not configured' -Warning
+        Write-UserMessage -Message '''SCOOP'' environment variable is not configured' -Warning
         Write-UserMessage -Message @(
             '  SCOOP environment should be set as it is widely used by users and documentation to reference scoop installation directory'
             '  Fixable with running following command:'
@@ -161,7 +173,7 @@ function Test-EnvironmentVariable {
     return $result
 }
 
-function Test-HelpersInstalled {
+function Test-DiagHelpersInstalled {
     <#
     .SYNOPSIS
         Test if all widely used helpers are installed.
@@ -219,7 +231,7 @@ function Test-HelpersInstalled {
     return $result
 }
 
-function Test-Config {
+function Test-DiagConfig {
     <#
     .SYNOPSIS
         Test if various recommended scoop configurations are set correctly.
@@ -241,11 +253,15 @@ function Test-Config {
     return $result
 }
 
-function Test-CompletionRegistered {
+function Test-DiagCompletionRegistered {
     <#
     .SYNOPSIS
         Test if native completion is imported.
     #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
     $module = Get-Module 'Scoop-Completion'
 
     if (($null -eq $module) -or ($module.Author -notlike 'Jakub*')) {
@@ -254,6 +270,30 @@ function Test-CompletionRegistered {
         Write-UserMessage -Message @(
             '  Consider importing native module for automatic commands/parameters completion:'
             "    Add-Content `$PROFILE 'Import-Module ''$path'' -ErrorAction SilentlyContinue'"
+        )
+
+        return $false
+    }
+
+    return $true
+}
+
+function Test-DiagShovelAdoption {
+    <#
+    .SYNOPSIS
+        Test if shovel implementation was fully adopted by user.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $shimDirectory = shimdir $false
+    $shovels = Get-ChildItem $shimDirectory -Filter 'shovel.*'
+    if ($shovels.Count -le 2) {
+        Write-UserMessage -Message 'Shovel executables are not registered' -Warning
+        Write-UserMessage -Message @(
+            '  Fixable with running following command:'
+            "    Get-ChildItem '$shimDirectory' -Filter 'scoop.*' | Copy-Item -Destination { Join-Path `$_.Directory.FullName ((`$_.BaseName -replace 'scoop', 'shovel') + `$_.Extension) }"
         )
 
         return $false

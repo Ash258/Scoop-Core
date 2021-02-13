@@ -7,4 +7,13 @@
             "$1",
         ],
     },
+    "\"Modules\" import": {
+        "prefix": "importLib",
+        "scope": "powershell",
+        "body": [
+            "'$1', '$2' | ForEach-Object {",
+            "    . (Join-Path \\$PSScriptRoot \"..\\lib\\\\\\$_.ps1\")",
+            "}",
+        ],
+    },
 }
