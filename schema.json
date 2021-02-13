@@ -84,8 +84,8 @@
                 },
                 "mode": {
                     "description": "Specifies the method used for extraction of hash for file.",
-                    "default": "download",
                     "type": "string",
+                    "default": "download",
                     "enum": [
                         "download",
                         "extract",
