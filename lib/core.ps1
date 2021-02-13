@@ -58,6 +58,53 @@ function Show-DeprecatedWarning {
     Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color 'DarkGray'
 }
 
+function Test-IsUnix {
+    <#
+    .SYNOPSIS
+        Custom check to identify non-windows hosts.
+    .DESCRIPTION
+        $isWindows is not defind in PW5, thus null and boolean checks are needed.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process { return !(($null -eq $isWindows) -or ($isWindows -eq $true)) }
+}
+
+function Invoke-SystemComSpecCommand {
+    <#
+    .SYNOPSIS
+        Wrapper around $env:ComSpec/$env:SHELL calls.
+    .PARAMETER Windows
+        Specifies the command to be executed on Windows using $env:ComSpec.
+    .PARAMETER Unix
+        Specifies the command to be executed on *Nix like systems using $env:SHELL.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [String] $Windows,
+        [Parameter(Mandatory)]
+        [String] $Unix
+    )
+
+    process {
+        if (Test-IsUnix) {
+            $shell = $env:SHELL
+            $parameters = @('-c', $Unix)
+        } else {
+            $shell = $env:ComSpec
+            $parameters = @('/d', '/c', $Windows)
+        }
+
+        $debugShell = "& ""$shell"" $($parameters -join ' ')"
+        debug $debugShell
+
+        & "$shell" @parameters
+    }
+}
+
 function load_cfg($file) {
     if (!(Test-Path $file)) { return $null }
 

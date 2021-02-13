@@ -56,19 +56,18 @@ function Invoke-GitCmd {
             default { $action = $Command }
         }
 
-        $commandToRun = 'git', ($preAction -join ' '), $action, ($Argument -join ' ') -join ' '
+        $commandToRun = $commandToRunNix = $commandToRunWindows = ('git', ($preAction -join ' '), $action, ($Argument -join ' ')) -join ' '
 
         if ($Proxy) {
             $prox = get_config 'proxy' 'none'
 
-            # TODO: Drop comspec
-            if ($prox -and ($prox -ne 'none')) { $commandToRun = "SET HTTPS_PROXY=$prox && SET HTTP_PROXY=$prox && $commandToRun" }
+            if ($prox -and ($prox -ne 'none')) {
+                $keyword = if (Test-IsUnix) { 'export' } else { 'SET' }
+                $commandToRunWindows = $commandToRunNix = "$keyword HTTPS_PROXY=$prox && $keyword HTTP_PROXY=$prox && $commandToRun"
+            }
         }
 
-        debug $commandToRun
-
-        # TODO: Drop comspec
-        & "$env:ComSpec" /d /c $commandToRun
+        Invoke-SystemComSpecCommand -Windows $commandToRunWindows -Unix $commandToRunNix
     }
 }
 
