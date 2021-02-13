@@ -38,8 +38,6 @@ Write-Host 'A' -ForegroundColor 'Cyan' -NoNewline
 Write-Host ']utoupdate'
 Write-Host ' |  |'
 
-$exitCode = 0
-$problems = 0
 foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
         Write-UserMessage "Skipping $($gci.Name)" -Info
