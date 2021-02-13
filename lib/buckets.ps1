@@ -150,28 +150,4 @@ function bucketdir($name) {
 
     return Find-BucketDirectory $name
 }
-
-function buckets {
-    Show-DeprecatedWarning $MyInvocation 'Get-LocalBucket'
-
-    return Get-LocalBucket
-}
-
-function known_buckets {
-    Show-DeprecatedWarning $MyInvocation 'Get-KnownBucket'
-
-    return Get-KnownBucket
-}
-
-function rm_bucket($name) {
-    Show-DeprecatedWarning $MyInvocation 'Remove-Bucket'
-
-    Remove-Bucket -Name $name
-}
-
-function add_bucket($name, $repo) {
-    Show-DeprecatedWarning $MyInvocation 'Add-Bucket'
-
-    Add-Bucket -Name $name -RepositoryUrl $repo
-}
 #endregion Deprecated

@@ -107,11 +107,6 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     }
 }
 
-function locate($app, $bucket) {
-    Show-DeprecatedWarning $MyInvocation 'Find-Manifest'
-    return Find-Manifest $app $bucket
-}
-
 function Find-Manifest($app, $bucket) {
     $manifest, $url = $null, $null
 
