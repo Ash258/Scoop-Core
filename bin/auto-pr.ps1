@@ -87,6 +87,16 @@ if (!(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyC
     Stop-ScoopExecution -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.'
 }
 
+# Automatically fill upstream in case of auto-pr and current folder is git repository root
+# if (($Utility -eq 'auto-pr') -and ($AdditionalArgs -notcontains '-upstream') -and (Join-Path $PWD '.git' | Test-Path -PathType Container) -and (Test-CommandAvailable 'git')) {
+#     try {
+#         $remoteUrl = Invoke-GitCmd -Command 'config' -Repository $BucketFolder -Argument @('--get', 'remote.origin.url')
+#     } catch {
+#         Stop-ScoopExecution -Message 'Cannot automatically determine upstream parameter. Use ''--additional-options -upstream <upstream>'''
+#     }
+#     $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*?)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
+# }
+
 function execute($cmd) {
     Write-Host $cmd -ForegroundColor Green
     $output = Invoke-Expression $cmd
