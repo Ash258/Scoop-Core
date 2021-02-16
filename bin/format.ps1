@@ -132,6 +132,12 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     }
 
     #region Migrations and fixes
+    # Migrate _comment into ##
+    if ($manifest.'_comment') {
+        $manifest | Add-Member -MemberType 'NoteProperty' -Name '##' -Value $manifest.'_comment'
+        $manifest.PSObject.Properties.Remove('_comment')
+    }
+
     $manifest = _adjustProperty -Manifest $manifest -Property 'checkver' -ScriptBlock $checkverFormatBlock -SkipAutoupdate
 
     #region Architecture properties sort
