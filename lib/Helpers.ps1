@@ -350,6 +350,21 @@ function New-IssuePrompt {
     Write-UserMessage -Message "$msg`n$url" -Color 'DarkRed'
 }
 
+function Get-NotePropertyEnumerator {
+    <#
+    .SYNOPSIS
+        Line saver for evergreen ($object.PSObject.Properties | ? 'membertype' -eq 'noteproperty').GetEnumerator()
+    .PARAMETER Object
+        Specifes the object to be enumerated.
+    #>
+    [CmdletBinding()]
+    param([PScustomObject] $Object)
+
+    process {
+        return @($Object.PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty').GetEnumerator()
+    }
+}
+
 #region Exceptions
 class ScoopException: System.Exception {
     $Message
