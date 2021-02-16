@@ -180,7 +180,14 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     #endregion Architecture properties sort
 
     $newManifest = [PSCustomObject] @{ }
-    # Add properties information properties in special order into new object and remove from old object
+    # Add informational properties in special order ranked by usability into new object and remove from old object
+    # Comment for maintainers has to be at first
+    # Version is mandatory manifest identificator
+    # Description is essential information for user
+    # Homepage provides more information in case description is not enough
+    # License has to follow after user decide to install app after reading description and browser web
+    # Notes contains usefull information for user. When they cat the manifest it has to be visible at top
+    # Changelog is additional not required information
     '##', 'version', 'description', 'homepage', 'license', 'notes', 'changelog', 'suggest', 'depends' | ForEach-Object {
         $val = $manifest.$_
         if ($val) {
