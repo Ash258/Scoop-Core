@@ -181,7 +181,7 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
 
     $newManifest = [PSCustomObject] @{ }
     # Add properties information properties in special order into new object and remove from old object
-    '##', 'version', 'description', 'homepage', 'license', 'notes', 'changelog', 'depends' | ForEach-Object {
+    '##', 'version', 'description', 'homepage', 'license', 'notes', 'changelog', 'suggest', 'depends' | ForEach-Object {
         $val = $manifest.$_
         if ($val) {
             $newManifest | Add-Member -MemberType 'NoteProperty' -Name $_ -Value $val
