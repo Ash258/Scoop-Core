@@ -274,18 +274,23 @@ function Expand-InnoArchive {
     )
 
     process {
-        if ((get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract) {
+        $isInnoextract = (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract
+        if ($isInnoextract) {
             Write-UserMessage -Message 'Using innoextract is experimental' -Warning
 
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
-            $argList = @('--extract', '--silent', '--output-dir', "'$DestinationPath'")
+            $argList = @('--extract', '--output-dir', """$DestinationPath""")
             $innoPath = Get-HelperPath -Helper 'Innoextract'
             $inno = 'innoextract'
 
+            # TODO: Fix nested directories. Include do not extract it. Just include only
             switch -Regex ($ExtractDir) {
-                '^[^{].*' { $argList += "--include 'app\$ExtractDir'" }
-                '^{.*' { $argList += "-c$ExtractDir" } # TODO: Fix
-                default { }
+                '^[^{].*' { $argList += '--include', """app\$ExtractDir""" }
+                '^{.*' {
+                    $_new = (($ExtractDir -replace '{') -replace '}') -replace '_', '`$' # TODO: ?? _ => $
+                    $argList += '--include', """$_new"""
+                }
+                default { $argList += '--include', """app""" }
             }
         } else {
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
