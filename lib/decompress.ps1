@@ -301,7 +301,7 @@ function Expand-InnoArchive {
         }
 
         if ($Switches) { $argList += (-split $Switches) }
-        $argList += "'$Path'"
+        $argList += """$Path"""
 
         try {
             $status = Invoke-ExternalCommand $innoPath $argList -LogPath $logPath
