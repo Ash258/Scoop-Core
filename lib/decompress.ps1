@@ -283,14 +283,19 @@ function Expand-InnoArchive {
             $innoPath = Get-HelperPath -Helper 'Innoextract'
             $inno = 'innoextract'
 
-            # TODO: Fix nested directories. Include do not extract it. Just include only
             switch -Regex ($ExtractDir) {
-                '^[^{].*' { $argList += '--include', """app\$ExtractDir""" }
-                '^{.*' {
-                    $_new = (($ExtractDir -replace '{') -replace '}') -replace '_', '`$' # TODO: ?? _ => $
-                    $argList += '--include', """$_new"""
+                '^[^{].*' {
+                    $toMove = "app\$ExtractDir"
+                    $argList += '--include', """$toMove"""
                 }
-                default { $argList += '--include', """app""" }
+                '^{.*' {
+                    $toMove = (($ExtractDir -replace '{') -replace '}') -replace '_', '$' # TODO: ?? _ => $
+                    $argList += '--include', """$toMove"""
+                }
+                default {
+                    $toMove = 'app'
+                    $argList += '--include', """$toMove"""
+                }
             }
         } else {
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
@@ -317,6 +322,10 @@ function Expand-InnoArchive {
         if (!$status) {
             throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n $(friendly_path $logPath)" # TerminatingError thrown
         }
+
+        # Innoextract --include do not extract the directory, it only filter the content
+        # Need to manually move the nested directories
+        if ($isInnoextract) { movedir "$DestinationPath\$toMove" "$DestinationPath" | Out-Null }
 
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 

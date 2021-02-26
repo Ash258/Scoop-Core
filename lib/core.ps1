@@ -643,6 +643,7 @@ function isFileLocked([string]$path) {
 
 function is_directory([String] $path) { return (Test-Path $path) -and (Get-Item $path) -is [System.IO.DirectoryInfo] }
 
+# Move content of directory into different directory
 function movedir {
     [CmdletBinding()]
     param ($from, $to)
