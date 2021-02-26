@@ -4,6 +4,7 @@
 
 ### 0.6-pre2
 
+- **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
 - **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
     - Remove deprecated short properties
