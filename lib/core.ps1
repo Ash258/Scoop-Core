@@ -574,6 +574,9 @@ function Invoke-ExternalCommand {
         $Process.StartInfo.Verb = 'RunAs'
     }
 
+    debug $Process.StartInfo.FileName
+    debug $Process.StartInfo.Arguments
+
     try {
         $Process.Start() | Out-Null
     } catch {
