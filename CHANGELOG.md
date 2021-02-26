@@ -4,6 +4,7 @@
 
 ### 0.6-pre2
 
+- **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
     - Remove deprecated short properties
     - Cleanup descriptions
