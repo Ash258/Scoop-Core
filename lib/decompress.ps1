@@ -326,7 +326,7 @@ function Expand-InnoArchive {
 
         # Innoextract --include do not extract the directory, it only filter the content
         # Need to manually move the nested directories
-        if ($isInnoextract) { movedir "$DestinationPath\$toMove" "$DestinationPath" | Out-Null }
+        if ($isInnoextract) { movedir "$DestinationPath\$toMove" $DestinationPath | Out-Null }
 
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
