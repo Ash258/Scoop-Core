@@ -274,6 +274,7 @@ function Expand-InnoArchive {
     )
 
     process {
+        $DestinationPath = $DestinationPath.TrimEnd('\').TrimEnd('/')
         $isInnoextract = (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract
         if ($isInnoextract) {
             Write-UserMessage -Message 'Using innoextract is experimental' -Warning
