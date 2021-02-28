@@ -347,7 +347,7 @@ function Get-HelperPath {
     [OutputType([String])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd', 'Innoextract')]
         [String] $Helper
     )
 
@@ -358,6 +358,7 @@ function Get-HelperPath {
             'Innounp' { $helperPath = Get-AppFilePath 'innounp' 'innounp.exe' }
             'Lessmsi' { $helperPath = Get-AppFilePath 'lessmsi' 'lessmsi.exe' }
             'Zstd' { $HelperPath = Get-AppFilePath 'zstd' 'zstd.exe' }
+            'Innoextract' { $HelperPath = Get-AppFilePath 'innoextract' 'innoextract.exe' }
             '7zip' {
                 $helperPath = Get-AppFilePath '7zip' '7z.exe'
                 if ([String]::IsNullOrEmpty($helperPath)) {
@@ -387,7 +388,7 @@ function Test-HelperInstalled {
     [OutputType([bool])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
-        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd')]
+        [ValidateSet('7zip', 'Lessmsi', 'Innounp', 'Dark', 'Aria2', 'Zstd', 'Innoextract')]
         [String] $Helper
     )
 
@@ -573,6 +574,9 @@ function Invoke-ExternalCommand {
         $Process.StartInfo.Verb = 'RunAs'
     }
 
+    debug $Process.StartInfo.FileName
+    debug $Process.StartInfo.Arguments
+
     try {
         $Process.Start() | Out-Null
     } catch {
@@ -639,6 +643,7 @@ function isFileLocked([string]$path) {
 
 function is_directory([String] $path) { return (Test-Path $path) -and (Get-Item $path) -is [System.IO.DirectoryInfo] }
 
+# Move content of directory into different directory
 function movedir {
     [CmdletBinding()]
     param ($from, $to)
