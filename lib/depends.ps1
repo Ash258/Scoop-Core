@@ -77,7 +77,13 @@ function script_deps($script) {
     if (($script -like '*Expand-DarkArchive *') -and !(Test-HelperInstalled -Helper 'Dark')) { $deps += 'dark' }
     if (($script -like '*Expand-7zipArchive *') -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if (($script -like '*Expand-MsiArchive *') -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
-    if (($script -like '*Expand-InnoArchive *') -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+    if ($script -like '*Expand-InnoArchive *') {
+        if ((get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or ($script -like '* -UseInnoextract *')) {
+            if (!(Test-HelperInstalled -Helper 'InnoExtract')) { $deps += 'innoextract' }
+        } else {
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+        }
+    }
     if (($script -like '*Expand-ZstdArchive *') -and !(Test-HelperInstaller -Helper 'Zstd')) {
         # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
         if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
@@ -91,9 +97,15 @@ function install_deps($manifest, $arch) {
     $deps = @()
     $urls = url $manifest $arch
 
-    if ($manifest.innosetup -and !(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
     if ((Test-7zipRequirement -URL $urls) -and !(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
     if ((Test-LessmsiRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Lessmsi')) { $deps += 'lessmsi' }
+    if ($manifest.innosetup) {
+        if (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) {
+            if (!(Test-HelperInstalled -Helper 'Innoextract')) { $deps += 'innoextract' }
+        } else {
+            if (!(Test-HelperInstalled -Helper 'Innounp')) { $deps += 'innounp' }
+        }
+    }
     if ((Test-ZstdRequirement -URL $urls) -and !(Test-HelperInstalled -Helper 'Zstd')) {
         # Ugly, unacceptable and horrible patch to cover the tar.zstd use cases
         if (!(Test-HelperInstalled -Helper '7zip')) { $deps += '7zip' }
