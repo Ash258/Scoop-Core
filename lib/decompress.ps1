@@ -287,7 +287,7 @@ function Expand-InnoArchive {
             Write-UserMessage -Message 'Using innoextract is experimental' -Warning
 
             $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
-            $argList = @('--extract', '--output-dir', """$DestinationPath""", '--default-language', 'enu')
+            $argList = @('--extract', '--output-dir', """$DestinationPath""", '--default-language', '"enu"')
             $innoPath = Get-HelperPath -Helper 'Innoextract'
             $inno = 'innoextract'
 
@@ -335,7 +335,7 @@ function Expand-InnoArchive {
         # Need to manually move the nested directories
         if ($isInnoextract) { movedir "$DestinationPath\$toMove" $DestinationPath | Out-Null }
 
-        #if (Test-Path $logPath) { Remove-Item $logPath -Force }
+        if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
         # Remove original archive file
         if ($Removal) { Remove-Item $Path -Force }
