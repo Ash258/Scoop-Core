@@ -158,6 +158,9 @@ function Out-UTF8File {
         [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
         [Alias('Value')]
         $Content
     )
@@ -188,6 +191,9 @@ function Out-UTF8Content {
         [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
         [Alias('Value')]
         $Content
     )
