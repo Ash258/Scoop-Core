@@ -165,6 +165,7 @@ function Out-UTF8File {
         $Content
     )
     process {
+        if ($null -eq $Content) { return }
         if ($PSVersionTable.PSVersion.Major -ge 6) {
             Set-Content -LiteralPath $File -Value $Content -Encoding 'utf8'
         } else {
