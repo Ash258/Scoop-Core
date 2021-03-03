@@ -55,19 +55,6 @@ param(
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
-$Dir = Resolve-Path $Dir
-$exitCode = 0
-$problems = 0
-$RepositoryRoot = Get-Item $Dir
-if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
-    $RepositoryRoot = $RepositoryRoot.Parent.FullName
-} else {
-    $RepositoryRoot = $RepositoryRoot.FullName
-}
-$RepositoryRoot = $RepositoryRoot.TrimEnd('/').TrimEnd('\') # Just in case
-$repoContext = "-C ""$RepositoryRoot"""
-
 if ($Help -or (!$Push -and !$Request)) {
     Write-UserMessage @'
 Usage: auto-pr.ps1 [OPTION]
@@ -157,6 +144,21 @@ a new version of [$app]($homepage) is available.
     }
 }
 
+$exitCode = 0
+$problems = 0
+$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
+$Dir = Resolve-Path $Dir
+$RepositoryRoot = Get-Item $Dir
+
+# Prevent edge case when someone name the bucket 'bucket'
+if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
+    $RepositoryRoot = $RepositoryRoot.Parent.FullName
+} else {
+    $RepositoryRoot = $RepositoryRoot.FullName
+}
+
+$RepositoryRoot = $RepositoryRoot.TrimEnd('/').TrimEnd('\') # Just in case
+$repoContext = "-C ""$RepositoryRoot"""
 $splat = @{ 'Repository' = $RepositoryRoot }
 
 Write-UserMessage 'Updating ...' -ForegroundColor 'DarkCyan'
