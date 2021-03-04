@@ -51,21 +51,9 @@ param(
     [Switch] $SkipCheckver
 )
 
-'Helpers', 'manifest', 'json' | ForEach-Object {
+'Helpers', 'manifest', 'Git', 'json' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
-
-$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
-$Dir = Resolve-Path $Dir
-$exitCode = 0
-$problems = 0
-$RepositoryRoot = Get-Item $Dir
-if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
-    $RepositoryRoot = $RepositoryRoot.Parent.FullName
-} else {
-    $RepositoryRoot = $RepositoryRoot.FullName
-}
-$repoContext = "-C ""$RepositoryRoot"""
 
 if ($Help -or (!$Push -and !$Request)) {
     Write-UserMessage @'
@@ -83,7 +71,7 @@ Optional options:
     exit 3
 }
 
-if (!(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyContinue')) {
+if ($Request -and !(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyContinue')) {
     Stop-ScoopExecution -Message 'hub is required! Please refer to ''https://hub.github.com/'' to find out how to get hub for your platform.'
 }
 
@@ -97,13 +85,21 @@ if (!(Get-Command -Name 'hub' -CommandType 'Application' -ErrorAction 'SilentlyC
 #     $splatParameters.Add('Upstream', ($remoteUrl -replace '^.+[:/](?<user>.*?)/(?<repo>.*?)(\.git)?$', '${user}/${repo}:master')) # TODO: Main adoption
 # }
 
-function execute($cmd) {
-    Write-Host $cmd -ForegroundColor Green
-    $output = Invoke-Expression $cmd
+function _gitWrapper {
+    param([String] $Command, [String[]] $Argument, [String] $Repository, [Switch] $GH, [Switch] $Proxy)
 
-    if ($LASTEXITCODE -gt 0) { Stop-ScoopExecution -Message "^^^ Error! See above ^^^ (last command: $cmd)" }
+    process {
+        $utility = if ($GH) { 'gh' } else { 'git' }
+        $mes = "$utility -C ""$Repository"" $Command $($Argument -join ' ')"
+        Write-UserMessage -Message $mes -Color 'Green'
 
-    return $output
+        $output = Invoke-GitCmd -Repository $Repository -Command $Command -Argument $Argument -Proxy:$Proxy
+        if ($LASTEXITCODE -gt 0) {
+            Stop-ScoopExecution -Message "^^^ See above ^^^ (last command: $mes)"
+        }
+
+        return $output
+    }
 }
 
 # json object, application name, upstream repository, relative path to manifest file
@@ -158,13 +154,30 @@ a new version of [$app]($homepage) is available.
     }
 }
 
+$exitCode = 0
+$problems = 0
+$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
+$Dir = Resolve-Path $Dir
+$RepositoryRoot = Get-Item $Dir
+
+# Prevent edge case when someone name the bucket 'bucket'
+if (($RepositoryRoot.BaseName -eq 'bucket') -and (!(Join-Path $RepositoryRoot '.git' | Test-Path -PathType 'Container'))) {
+    $RepositoryRoot = $RepositoryRoot.Parent.FullName
+} else {
+    $RepositoryRoot = $RepositoryRoot.FullName
+}
+
+$RepositoryRoot = $RepositoryRoot.TrimEnd('/').TrimEnd('\') # Just in case
+$repoContext = "-C ""$RepositoryRoot"""
+$splat = @{ 'Repository' = $RepositoryRoot }
+
 Write-UserMessage 'Updating ...' -ForegroundColor 'DarkCyan'
 if ($Push) {
-    execute "hub $repoContext pull origin master"
-    execute "hub $repoContext checkout master"
+    _gitWrapper @splat -Command 'pull' -Argument 'origin', 'master' -Proxy
+    _gitWrapper @splat -Command 'checkout' -Argument 'master'
 } else {
-    execute "hub $repoContext pull upstream master"
-    execute "hub $repoContext push origin master"
+    _gitWrapper @splat -Command 'pull' -Argument 'upstream', 'master' -Proxy
+    _gitWrapper @splat -Command 'push' -Argument 'origin', 'master' -Proxy
 }
 
 if (!$SkipCheckver) {
@@ -177,7 +190,7 @@ if (!$SkipCheckver) {
     }
 }
 
-foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Object { $_ -like 'bucket/*' }) {
+foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-only' | Where-Object { $_ -like 'bucket/*' }) {
     $gci = Get-Item "$RepositoryRoot\$changedFile"
     $applicationName = $gci.BaseName
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
@@ -203,13 +216,15 @@ foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Objec
     if ($Push) {
         Write-UserMessage "Creating update $applicationName ($version) ..." -ForegroundColor 'DarkCyan'
 
-        execute "hub $repoContext add $changedFile"
+        _gitWrapper @splat -Command 'add' -Argument """$changedFile"""
+
         # Detect if file was staged, because it's not when only LF or CRLF have changed
-        $status = execute "hub $repoContext status --porcelain -uno"
+        $status = _gitWrapper @splat -Command 'status' -Argument '--porcelain', '--untracked-files=no'
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
 
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
-            execute "hub $repoContext commit --message '${applicationName}: Update to version $version'"
+            $delim = if (Test-IsUnix) { '""' } else { '"' }
+            _gitWrapper @splat -Command 'commit' -Argument '--message', "$delim${applicationName}: Update to version $version$delim"
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
@@ -220,13 +235,13 @@ foreach ($changedFile in hub -C "$RepositoryRoot" diff --name-only | Where-Objec
 
 if ($Push) {
     Write-UserMessage 'Pushing updates ...' -ForegroundColor 'DarkCyan'
-    execute "hub $repoContext push origin master"
+    _gitWrapper @splat -Command 'push' -Argument 'origin', 'master' -Proxy
 } else {
     Write-UserMessage 'Returning to master branch and removing unstaged files ...' -ForegroundColor 'DarkCyan'
-    execute "hub $repoContext checkout --force master"
+    _gitWrapper @splat -Command 'checkout' -Argument '--force', 'master' -Proxy
 }
 
-execute "hub $repoContext reset --hard"
+_gitWrapper @splat -Command 'reset' -Argument '--hard'
 
 if ($problems -gt 0) { $exitCode = 10 + $problems }
 exit $exitCode
