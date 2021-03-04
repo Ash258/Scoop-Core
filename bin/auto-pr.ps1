@@ -30,7 +30,6 @@
     Update all manifests inside 'bucket/' directory.
 #>
 param(
-    [Parameter(Mandatory)]
     [ValidateScript( {
             if ($_ -notmatch '^(.*)\/(.*):(.*)$') { throw 'Upstream must be in format: <user>/<repo>:<branch>' }
             $true
@@ -55,18 +54,18 @@ param(
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-if ($Help -or (!$Push -and !$Request)) {
+if ($Help -or (!$Push -and !$Request) -or ($Request -and !$Upstream)) {
     Write-UserMessage @'
 Usage: auto-pr.ps1 [OPTION]
 
 Mandatory options:
-  -p,  -push                Push updates directly to 'origin master'
-  -r,  -request             Create pull-requests on 'upstream master' for each update
+  -p,  -Push                Push updates directly to 'origin master'
+  -r,  -Request             Create pull-requests on 'upstream master' for each update
 
 Optional options:
-  -u,  -upstream            Upstream repository with target branch
-                            Only used if -r is set (default: lukesampson/scoop:master)
-  -h,  -help
+  -u,  -Upstream            Upstream repository with target branch.
+                            If -Request is specified these parameter is required and will be used.
+  -h,  -Help
 '@
     exit 3
 }
@@ -146,7 +145,6 @@ a new version of [$app]($homepage) is available.
 
 $exitCode = 0
 $problems = 0
-$Upstream | Out-Null # PowerShell/PSScriptAnalyzer#1472
 $Dir = Resolve-Path $Dir
 $RepositoryRoot = Get-Item $Dir
 
