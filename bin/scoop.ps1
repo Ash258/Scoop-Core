@@ -62,15 +62,11 @@ if ($version) {
     Invoke-ScoopCommand 'help' @{ 'cmd' = $cmd }
     $exitCode = $LASTEXITCODE
 } elseif ($validCommand) {
-    # Filter out --help and -h to prevent handling them in each command
-    # This should never be needed, but just in case to prevent failures of installation, etc
-    $newArgs = ($args -notlike '--help') -notlike '-h'
-
     if ($cmd -eq 'utils') {
         & "$PSScriptRoot\..\libexec\scoop-utils.ps1" @args
         $exitCode = $LASTEXITCODE
     } else {
-        Invoke-ScoopCommand $cmd $newArgs
+        Invoke-ScoopCommand $cmd $args
         $exitCode = $LASTEXITCODE
     }
 } else {
