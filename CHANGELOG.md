@@ -14,6 +14,7 @@
 - **binaries**: Indicate binary execution errors with exit codes
 - Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**
+    - Require `-Upstream` only when `-Request` is provided
     - Scoop proxy configuration will be used for git calls
     - Call native `git` command instead of `hub` for push operation
     - Refactor all git/hub calls to use -C option
