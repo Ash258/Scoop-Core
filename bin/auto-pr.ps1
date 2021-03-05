@@ -92,7 +92,7 @@ function _gitWrapper {
 }
 
 function _selectMasterBranch {
-    $branches = execute 'hub branch --all'
+    $branches = _gitWrapper @splat -Command 'branch' -Argument '--all'
     $master = if ($branches -like '*/origin/main') { 'main' } else { 'master' }
 
     return $master
