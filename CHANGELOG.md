@@ -4,6 +4,8 @@
 
 ### 0.6-pre2
 
+- **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
+- **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
     - Remove deprecated short properties
     - Cleanup descriptions
@@ -11,6 +13,9 @@
 - **binaries**: Indicate binary execution errors with exit codes
 - Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**
+    - Require `-Upstream` only when `-Request` is provided
+    - Scoop proxy configuration will be used for git calls
+    - Call native `git` command instead of `hub` for push operation
     - Refactor all git/hub calls to use -C option
 - **scoop-checkup**: Test full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created

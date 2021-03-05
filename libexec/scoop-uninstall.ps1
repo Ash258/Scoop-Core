@@ -7,7 +7,7 @@
 #   -g, --global   Uninstall a globally installed app.
 #   -p, --purge    Remove all persistent data.
 
-'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'versions', 'getopt', 'Uninstall' | ForEach-Object {
+'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'Versions', 'getopt', 'Uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

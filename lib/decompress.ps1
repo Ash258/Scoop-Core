@@ -79,6 +79,10 @@ function Test-ZstdRequirement {
         return $File -match '\.zst$'
     }
 }
+
+function _decompressErrorPrompt($path, $log) {
+    return @("Decompress error|-Failed to extract files from $path.", "Log file:", "  $(friendly_path $log)") -join "`n"
+}
 #endregion helpers
 
 function Expand-7zipArchive {
@@ -116,9 +120,12 @@ function Expand-7zipArchive {
     begin {
         if (get_config '7ZIPEXTRACT_USE_EXTERNAL' $false) {
             try {
-                $7zPath = (Get-Command '7z' -CommandType 'Application' | Select-Object -First 1).Source
+                $7zPath = (Get-Command '7z' -CommandType 'Application' -ErrorAction 'Stop' | Select-Object -First 1).Source
             } catch [System.Management.Automation.CommandNotFoundException] {
-                throw [ScoopException] "Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!`nRun 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7zip manually and try again." # TerminatingError thrown
+                throw [ScoopException] (
+                    "Cannot find external 7-Zip (7z.exe) while '7ZIPEXTRACT_USE_EXTERNAL' is 'true'!",
+                    "Run 'scoop config 7ZIPEXTRACT_USE_EXTERNAL false' or install 7zip manually and try again." -join "`n"
+                ) # TerminatingError thrown
             }
         } else {
             $7zPath = Get-HelperPath -Helper '7zip'
@@ -146,7 +153,7 @@ function Expand-7zipArchive {
         }
 
         if (!$status) {
-            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $LogPath)" # TerminatingError thrown
+            throw [ScoopException] (_decompressErrorPrompt $Path $logPath) # TerminatingError thrown
         }
         if (!$isTar -and $ExtractDir) {
             movedir (Join-Path $DestinationPath $ExtractDir) $DestinationPath | Out-Null
@@ -219,7 +226,7 @@ function Expand-MsiArchive {
         $status = Invoke-ExternalCommand $msiPath $argList -LogPath $logPath
 
         if (!$status) {
-            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)" # TerminatingError thrown
+            throw [ScoopException] (_decompressErrorPrompt $Path $logPath) # TerminatingError thrown
         }
 
         $sourceDir = Join-Path $DestinationPath 'SourceDir'
@@ -269,30 +276,65 @@ function Expand-InnoArchive {
         [String] $ExtractDir,
         [Parameter(ValueFromRemainingArguments)]
         [String] $Switches,
-        [Switch] $Removal
+        [Switch] $Removal,
+        [Switch] $UseInnoextract
     )
 
     process {
-        $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
-        $argList = @('-x', "-d`"$DestinationPath`"", "`"$Path`"", '-y')
+        $DestinationPath = $DestinationPath.TrimEnd('\').TrimEnd('/')
+        $isInnoextract = (get_config 'INNOSETUP_USE_INNOEXTRACT' $false) -or $UseInnoextract
+        if ($isInnoextract) {
+            Write-UserMessage -Message 'Using innoextract is experimental' -Warning
 
-        switch -Regex ($ExtractDir) {
-            '^[^{].*' { $argList += "-c{app}\$ExtractDir" }
-            '^{.*' { $argList += "-c$ExtractDir" }
-            default { $argList += '-c{app}' }
+            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innoextract.log'
+            $argList = @('--extract', '--output-dir', """$DestinationPath""", '--default-language', '"enu"')
+            $innoPath = Get-HelperPath -Helper 'Innoextract'
+            $inno = 'innoextract'
+
+            switch -Regex ($ExtractDir) {
+                '^[^{].*' {
+                    $toMove = "app\$ExtractDir"
+                    $argList += '--include', """$toMove"""
+                }
+                '^{.*' {
+                    $toMove = (($ExtractDir -replace '{') -replace '}') -replace '_', '$' # TODO: ?? _ => $
+                    $argList += '--include', """$toMove"""
+                }
+                default {
+                    $toMove = 'app'
+                    $argList += '--include', """$toMove"""
+                }
+            }
+        } else {
+            $logPath = Split-Path $Path -Parent | Join-Path -ChildPath 'innounp.log'
+            $argList = @('-x', "-d`"$DestinationPath`"", '-y')
+            $innoPath = Get-HelperPath -Helper 'Innounp'
+            $inno = 'innounp'
+
+            switch -Regex ($ExtractDir) {
+                '^[^{].*' { $argList += "-c""{app}\$ExtractDir""" }
+                '^{.*' { $argList += "-c""$ExtractDir""" }
+                default { $argList += '-c"{app}"' }
+            }
         }
+
         if ($Switches) { $argList += (-split $Switches) }
+        $argList += """$Path"""
 
         try {
-            # TODO: Find out extract_dir issue.
-            # When there is no specified directory in archive innounp will just exit with 0 and version of file
-            $status = Invoke-ExternalCommand (Get-HelperPath -Helper 'Innounp') $argList -LogPath $logPath
+            $status = Invoke-ExternalCommand $innoPath $argList -LogPath $logPath
         } catch [System.Management.Automation.ParameterBindingException] {
-            throw [ScoopException] '''innounp'' is not installed or cannot be used' # TerminatingError thrown
+            throw [ScoopException] "'$inno' is not installed or cannot be used" # TerminatingError thrown
         }
+
         if (!$status) {
-            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n $(friendly_path $logPath)" # TerminatingError thrown
+            throw [ScoopException] (_decompressErrorPrompt $Path $logPath) # TerminatingError thrown
         }
+
+        # Innoextract --include do not extract the directory, it only filter the content
+        # Need to manually move the nested directories
+        if ($isInnoextract) { movedir "$DestinationPath\$toMove" $DestinationPath | Out-Null }
+
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
         # Remove original archive file
@@ -405,7 +447,7 @@ function Expand-DarkArchive {
         }
 
         if (!$status) {
-            throw [ScoopException] "Decompress error|-Failed to extract files from $Path.`nLog file:`n  $(friendly_path $logPath)" # TerminatingError thrown
+            throw [ScoopException] (_decompressErrorPrompt $Path $logPath) # TerminatingError thrown
         }
         if (Test-Path $logPath) { Remove-Item $logPath -Force }
 
@@ -471,7 +513,7 @@ function Expand-ZstdArchive {
 
         $status = Invoke-ExternalCommand -Path $zstdPath -ArgumentList $_arg -LogPath $_log
         if (!$status) {
-            throw "Decompress error|-Failed to extract files from $_path.`nLog file:`n  $(friendly_path $_log)"
+            throw [ScoopException] (_decompressErrorPrompt $_path $_log) # TerminatingError thrown
         }
 
         Remove-Item -Path $_log -ErrorAction 'SilentlyContinue' -Force
