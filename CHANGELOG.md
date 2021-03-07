@@ -7,6 +7,7 @@
 - **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
 - **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
+    - Add `disable` property to `checkver` and `autoupdate`
     - Remove deprecated short properties
     - Cleanup descriptions
 - Remove deprecated functions from code-base
