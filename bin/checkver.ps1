@@ -197,14 +197,14 @@ function Invoke-Check {
     }
 
     # Forcing an update implies updating
-    if ($ForceUpdate) { $Update = $true }
+    if ($ForceUpdate) {
+        $Update = $true
+    } elseif ($Update -and ($json.autoupdate.disable -and ($json.autoupdate.disable -eq $true))) {
+        Write-UserMessage "${appName}: Skipping disabled autoupdate" -Info
+        return
+    }
 
     if ($Update -and $json.autoupdate) {
-        if ($json.autoupdate.disable -and ($json.autoupdate.disable -eq $true)) {
-            Write-UserMessage "${appName}: Skipping disabled autoupdate" -Info
-            return
-        }
-
         if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color 'DarkMagenta' }
         if ($Version -ne '') { $ver = $Version }
 
@@ -238,7 +238,7 @@ foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
         continue
     }
     if ($m.checkver) {
-        if ($m.checkver.disable -and ($m.checkver.disable -eq $true)) {
+        if (!$ForceUpdate -and ($m.checkver.disable -and ($m.checkver.disable -eq $true))) {
             Write-UserMessage "$($ff.BaseName): Skipping disabled checkver" -Info
             continue
         }

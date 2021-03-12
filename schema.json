@@ -316,7 +316,7 @@
                             "$ref": "#/definitions/stringOrArrayOfStrings"
                         },
                         "disable": {
-                            "description": "Specifies to not execute checkver script without deleting whole property.",
+                            "description": "Specifies to not execute checkver script without deleting whole property. Forcing checkver will ignore this setting.",
                             "type": "boolean"
                         }
                     }
@@ -437,7 +437,7 @@
                     "type": "string"
                 },
                 "disable": {
-                    "description": "Specifies to prevent autoupdating of manifest without deleting whole property.",
+                    "description": "Specifies to prevent autoupdating of manifest without deleting whole property. Forcing checkver will ignore this setting.",
                     "type": "boolean"
                 }
             }

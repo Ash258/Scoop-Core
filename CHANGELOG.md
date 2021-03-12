@@ -11,6 +11,7 @@
 - **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
     - Add `disable` property to `checkver` and `autoupdate`
+        - `-Force` will ignore this property
     - Remove deprecated short properties
     - Cleanup descriptions
 - Remove deprecated functions from code-base
