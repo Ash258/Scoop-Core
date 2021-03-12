@@ -5,6 +5,8 @@
 ### 0.6-pre2
 
 - New command `utils` added
+- **git**: Fix proxy handling
+- **scoop-psmodules**: Add global modules to path only if global manifest is installed
 - **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
 - **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
