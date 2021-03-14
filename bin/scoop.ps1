@@ -63,7 +63,7 @@ if ($version) {
     $exitCode = $LASTEXITCODE
 } elseif ($validCommand) {
     if ($cmd -eq 'utils') {
-        & "$PSScriptRoot\..\libexec\scoop-utils.ps1" @args
+        & (Join-Path $PSScriptRoot '..\libexec\scoop-utils.ps1') @args
         $exitCode = $LASTEXITCODE
     } else {
         Invoke-ScoopCommand $cmd $args
