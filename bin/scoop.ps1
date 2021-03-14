@@ -64,11 +64,10 @@ if ($version) {
 } elseif ($validCommand) {
     if ($cmd -eq 'utils') {
         & (Join-Path $PSScriptRoot '..\libexec\scoop-utils.ps1') @args
-        $exitCode = $LASTEXITCODE
     } else {
         Invoke-ScoopCommand $cmd $args
-        $exitCode = $LASTEXITCODE
     }
+    $exitCode = $LASTEXITCODE
 } else {
     Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'." -Output
     $exitCode = 2
