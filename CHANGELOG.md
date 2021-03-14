@@ -5,6 +5,7 @@
 ### 0.6-pre2
 
 - New command `utils` added
+- Native parameter binding for aliases works again
 - **git**: Fix proxy handling
 - **psmodules**: Add global modules to path only if global manifest is installed
 - **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
@@ -24,6 +25,7 @@
     - Refactor all git/hub calls to use -C option
 - **scoop-checkup**: Test full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created
+- **autoupdate**: Do not autoupdate unless URL is accessible after successful hash extraction
 
 ### 0.6-pre1
 
