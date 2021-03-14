@@ -10,7 +10,7 @@
 # Options:
 #   -b, --bucketdir         Use specific bucket directory instead of default './bucket/'.
 #   --additional-options    Valid, powershell like parameters passed to specific utility binary.
-#                               Refer to each utility for all availalbe parameters/options.
+#                               Refer to each utility for all available parameters/options.
 #   -h, --help              Show help for this command.
 #
 # Example usage:
