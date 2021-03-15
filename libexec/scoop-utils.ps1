@@ -20,7 +20,7 @@
 #    'scoop utils auto-pr --additional-options -Upstream "user/repo:branch" -skipcheckver -push' => Execute auto-pr with specific upstream string
 #
 
-'core', 'getopt', 'Git', 'Helpers', 'help' | ForEach-Object {
+'core', 'getopt', 'Helpers', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
