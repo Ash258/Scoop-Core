@@ -314,6 +314,10 @@
                         "script": {
                             "description": "Specifies custom PowerShell commands to retrieve latest version.",
                             "$ref": "#/definitions/stringOrArrayOfStrings"
+                        },
+                        "disable": {
+                            "description": "Specifies to not execute checkver script without deleting whole property. Forcing checkver will ignore this setting.",
+                            "type": "boolean"
                         }
                     }
                 }
@@ -431,6 +435,10 @@
                 "extract_dir": {
                     "description": "Specifies to update 'extract_dir' property.",
                     "type": "string"
+                },
+                "disable": {
+                    "description": "Specifies to prevent autoupdating of manifest without deleting whole property. Forcing checkver will ignore this setting.",
+                    "type": "boolean"
                 }
             }
         }

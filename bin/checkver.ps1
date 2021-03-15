@@ -197,7 +197,12 @@ function Invoke-Check {
     }
 
     # Forcing an update implies updating
-    if ($ForceUpdate) { $Update = $true }
+    if ($ForceUpdate) {
+        $Update = $true
+    } elseif ($Update -and ($json.autoupdate.disable -and ($json.autoupdate.disable -eq $true))) {
+        Write-UserMessage "${appName}: Skipping disabled autoupdate" -Info
+        return
+    }
 
     if ($Update -and $json.autoupdate) {
         if ($ForceUpdate) { Write-UserMessage -Message 'Forcing autoupdate!' -Color 'DarkMagenta' }
@@ -232,7 +237,13 @@ foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
         Write-UserMessage -Message "Invalid manifest: $($ff.Name)" -Err
         continue
     }
-    if ($m.checkver) { $Queue += , @($ff, $m) }
+    if ($m.checkver) {
+        if (!$ForceUpdate -and ($m.checkver.disable -and ($m.checkver.disable -eq $true))) {
+            Write-UserMessage "$($ff.BaseName): Skipping disabled checkver" -Info
+            continue
+        }
+        $Queue += , @($ff, $m)
+    }
 }
 
 foreach ($q in $Queue) {

@@ -69,7 +69,7 @@ function Invoke-GitCmd {
 
             if ($prox -and ($prox -ne 'none')) {
                 $keyword = if (Test-IsUnix) { 'export' } else { 'SET' }
-                $commandToRunWindows = $commandToRunNix = "$keyword HTTPS_PROXY=$prox && $keyword HTTP_PROXY=$prox && $commandToRun"
+                $commandToRunWindows = $commandToRunNix = "$keyword HTTPS_PROXY=$prox&&$keyword HTTP_PROXY=$prox&&$commandToRun"
             }
         }
 
