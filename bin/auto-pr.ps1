@@ -93,7 +93,7 @@ function _gitWrapper {
 
 function _selectMasterBranch {
     $branches = _gitWrapper @splat -Command 'branch' -Argument '--all'
-    $master = if ($branches -like '*/origin/main') { 'main' } else { 'master' }
+    $master = if ($branches -like '* remotes/origin/main') { 'main' } else { 'master' }
 
     return $master
 }
