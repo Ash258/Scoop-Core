@@ -301,3 +301,18 @@ function Test-DiagShovelAdoption {
 
     return $true
 }
+
+function Test-MainBranchAdoption {
+    <#
+    .SYNOPSIS
+        Test if shovel and all changed buckets were switched to main branch.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $verdict = $true
+
+
+    return $verdict
+}
