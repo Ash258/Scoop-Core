@@ -119,6 +119,7 @@ function Add-Bucket {
 
     ensure $SCOOP_BUCKETS_DIRECTORY | Out-Null
     $bucketDirectory = (ensure $bucketDirectory).Path
+    Write-UserMessage -Message 'Cloning bucket repository... ' -Output:$false
     Invoke-GitCmd -Command 'clone' -Argument '--quiet', """$RepositoryUrl""", """$bucketDirectory""" -Proxy
 
     Write-UserMessage -Message "The $name bucket was added successfully." -Success
