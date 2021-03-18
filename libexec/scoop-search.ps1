@@ -26,6 +26,8 @@ if ($Query) {
     } catch {
         Stop-ScoopExecution -Message "Invalid regular expression: $($_.Exception.InnerException.Message)"
     }
+} else {
+    $Query = $null
 }
 
 $exitCode = 0

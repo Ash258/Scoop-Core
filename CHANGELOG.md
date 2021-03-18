@@ -4,6 +4,7 @@
 
 ### 0.6-pre2
 
+- **scoop-search**: Fix search without parameter provided
 - New command `utils` added
 - Native parameter binding for aliases works again
 - **git**: Fix proxy handling
