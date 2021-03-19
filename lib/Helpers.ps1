@@ -158,10 +158,14 @@ function Out-UTF8File {
         [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
         [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
         [Alias('Value')]
         $Content
     )
     process {
+        if ($null -eq $Content) { return }
         if ($PSVersionTable.PSVersion.Major -ge 6) {
             Set-Content -LiteralPath $File -Value $Content -Encoding 'utf8'
         } else {
@@ -188,6 +192,9 @@ function Out-UTF8Content {
         [Alias('Path', 'LiteralPath')]
         [System.IO.FileInfo] $File,
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
+        [AllowNull()]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
         [Alias('Value')]
         $Content
     )
@@ -348,6 +355,21 @@ function New-IssuePrompt {
     }
 
     Write-UserMessage -Message "$msg`n$url" -Color 'DarkRed'
+}
+
+function Get-NotePropertyEnumerator {
+    <#
+    .SYNOPSIS
+        Line saver for evergreen ($object.PSObject.Properties | ? 'membertype' -eq 'noteproperty').GetEnumerator()
+    .PARAMETER Object
+        Specifes the object to be enumerated.
+    #>
+    [CmdletBinding()]
+    param([PScustomObject] $Object)
+
+    process {
+        return @($Object.PSObject.Properties | Where-Object -Property 'MemberType' -EQ -Value 'NoteProperty').GetEnumerator()
+    }
 }
 
 #region Exceptions

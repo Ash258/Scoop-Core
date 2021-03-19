@@ -20,6 +20,7 @@ $issues += !(Test-DiagDrive)
 $issues += !(Test-DiagConfig)
 $issues += !(Test-DiagCompletionRegistered)
 $issues += !(Test-DiagShovelAdoption)
+$issues += !(Test-MainBranchAdoption)
 
 if ($issues -gt 0) {
     Write-UserMessage -Message '', "Found $issues potential $(pluralize $issues 'problem' 'problems')." -Warning

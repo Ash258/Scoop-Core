@@ -24,6 +24,7 @@ local configOptions = parser({
     'aria2-options',
     'debug' .. booleanParser,
     'default-architecture' .. architectureParser,
+    'INNOSETUP_USE_INNOEXTRACT' .. booleanParser,
     'MSIEXTRACT_USE_LESSMSI' .. booleanParser,
     'NO_JUNCTIONS' .. booleanParser,
     'SCOOP_REPO',
@@ -223,6 +224,11 @@ local scoopParser = parser({
         '-k', '--no-cache',
         '-s', '--skip',
         '-q', '--quiet',
+        '-h', '--help'
+    ):loop(1),
+    'utils' .. parser({'auto-pr', 'checkhashes', 'checkurl', 'checkver', 'describe', 'format', 'missing-checkver'},
+        '--additional-options',
+        '-b', '--bucketdir',
         '-h', '--help'
     ):loop(1),
     'virustotal' .. parser({getLocallyAvailableApplicationsByScoop},

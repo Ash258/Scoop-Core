@@ -18,7 +18,7 @@ if (Join-Path $currentdir '.git' | Test-Path -PathType 'Container') {
     $target = @{ 'Repository' = $currentdir }
 
     Invoke-GitCmd @target -Command 'fetch' -Argument '--quiet', 'origin' -Proxy
-    $commits = Invoke-GitCmd @target -Command 'log' -Argument '--oneline', "HEAD..origin/$(get_config SCOOP_BRANCH)"
+    $commits = Invoke-GitCmd @target -Command 'log' -Argument '--oneline', """HEAD..origin/$(get_config 'SCOOP_BRANCH' 'main')"""
 
     if ($commits) { $needs_update = $true }
 } else {

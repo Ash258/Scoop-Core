@@ -2,9 +2,8 @@
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
-# TODO: Change
-$DEFAULT_UPDATE_REPO = 'https://github.com/lukesampson/scoop'
-$DEFAULT_UPDATE_BRANCH = 'master'
+$DEFAULT_UPDATE_REPO = 'https://github.com/Ash258/Scoop-Core'
+$DEFAULT_UPDATE_BRANCH = 'main'
 # TODO: CONFIG adopt refactor
 $SHOW_UPDATE_LOG = get_config 'show_update_log' $true
 
@@ -140,6 +139,11 @@ function Update-Scoop {
     if (!$configRepo) {
         $configRepo = $DEFAULT_UPDATE_REPO
         set_config 'SCOOP_REPO' $DEFAULT_UPDATE_REPO | Out-Null
+    }
+    # Main adoption
+    if ($configBranch -and ($configBranch -eq 'master')) {
+        Write-UserMessage -Message 'Master branch should not be used anymore. Migrating to ''main''' -Warning
+        $configBranch = $null # Trigger automatic config handler below
     }
     if (!$configBranch) {
         $configBranch = $DEFAULT_UPDATE_BRANCH

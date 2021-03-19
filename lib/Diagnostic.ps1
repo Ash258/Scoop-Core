@@ -4,7 +4,7 @@ Return $true if the test passed, otherwise $false.
 Use 'Write-UserMessage -Warning' to highlight the issue, and follow up with the recommended actions to rectify.
 #>
 
-'core', 'buckets', 'decompress', 'Helpers' | ForEach-Object {
+'core', 'buckets', 'decompress', 'Git', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "$_.ps1")
 }
 
@@ -300,4 +300,58 @@ function Test-DiagShovelAdoption {
     }
 
     return $true
+}
+
+function Test-MainBranchAdoption {
+    <#
+    .SYNOPSIS
+        Test if shovel and all locally added buckets were switched to main branch.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $verdict = $true
+    $br = get_config 'SCOOP_BRANCH'
+    $scoopHome = versiondir 'scoop' 'current'
+    $fix = @(
+        '  Fixable with running following command:'
+        '    scoop update'
+    )
+
+    # Shovel - empty config
+    if ($null -eq $br) {
+        Write-UserMessage -Message '''SCOOP_BRANCH'' configuration option is not configured.' -Warning
+        Write-UserMessage -Message $fix
+
+        $verdict = $false
+    } elseif (($br -eq 'master') -or (Invoke-GitCmd -Repository $scoopHome -Command 'branch' -Argument '--show-current') -eq 'master') {
+        # Shovel - master config, current master branch
+        Write-UserMessage -Message 'Default branch was changed to ''main''.' -Warning
+        Write-UserMessage -Message $fix
+
+        $verdict = $false
+    }
+
+    $toFix = @()
+    foreach ($b in Get-LocalBucket) {
+        $path = Find-BucketDirectory -Name $b -Root
+        $branches = Invoke-GitCmd -Repository $path -Command 'branch' -Argument '--all'
+        $current = Invoke-GitCmd -Repository $path -Command 'branch' -Argument '--show-current'
+
+        if (($branches -like '* remotes/origin/main') -and ($current -eq 'master')) {
+            $toFix += @{ 'name' = $b; 'path' = $path }
+            $verdict = $false
+        }
+    }
+
+    if (($verdict -eq $false) -and ($toFix.Count -gt 0)) {
+        Write-UserMessage -Message "Locally added buckets should be reconfigured to main branch." -Warning
+        Write-UserMessage -Message @(
+            '  Fixable with running following commands:'
+            ($toFix | ForEach-Object { "    git -C '$($_.path)' checkout main" })
+        )
+    }
+
+    return $verdict
 }

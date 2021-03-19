@@ -4,16 +4,32 @@
 
 ### 0.6-pre2
 
+- **scoop-search**: Fix search without parameter provided
+- New command `utils` added
+- Native parameter binding for aliases works again
+- **git**: Fix proxy handling
+- **psmodules**: Add global modules to path only if global manifest is installed
+- **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
+- **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
+    - Add `disable` property to `checkver` and `autoupdate`
+        - `-Force` will ignore this property
     - Remove deprecated short properties
     - Cleanup descriptions
 - Remove deprecated functions from code-base
 - **binaries**: Indicate binary execution errors with exit codes
 - Git operations with custom wrapper are now executable under Unix-like systems
 - **auto-pr**
+    - Use `main` branch instead of `master` if `remotes/origin/main` exists
+    - Require `-Upstream` only when `-Request` is provided
+    - Scoop proxy configuration will be used for git calls
+    - Call native `git` command instead of `hub` for push operation
     - Refactor all git/hub calls to use -C option
-- **scoop-checkup**: Test full shovel adoption
+- **scoop-checkup**:
+    - Check for main branches adoption (if supported)
+    - Check for full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created
+- **autoupdate**: Do not autoupdate unless URL is accessible after successful hash extraction
 
 ### 0.6-pre1
 

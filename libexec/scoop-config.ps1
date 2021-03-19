@@ -49,7 +49,7 @@
 #   Git repository containining scoop source code.
 #   This configuration is useful for custom tweaked forks.
 #
-# SCOOP_BRANCH: master|develop
+# SCOOP_BRANCH: main|NEW
 #   Allow to use different branch than master.
 #   Could be used for testing specific functionalities before released into all users.
 #   If you want to receive updates earlier to test new functionalities use develop (see: 'https://github.com/lukesampson/scoop/issues/2939')

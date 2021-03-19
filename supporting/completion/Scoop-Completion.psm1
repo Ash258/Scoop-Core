@@ -1,9 +1,10 @@
-if (!((Get-Command 'scoop' -ErrorAction SilentlyContinue) -or (Get-Command 'shovel' -ErrorAction SilentlyContinue))) {
+if (!((Get-Command 'scoop' -ErrorAction 'SilentlyContinue') -or (Get-Command 'shovel' -ErrorAction 'SilentlyContinue'))) {
     Write-Error 'Scoop is not installed'
     exit 1
 }
 
 $script:SCOOP_DIRECTORY = $env:SCOOP, "$env:USERPROFILE\scoop" | Where-Object { ![String]::IsNullOrEmpty($_) } | Select-Object -First 1
+$script:SCOOP_GLOBAL_DIRECTORY = $env:SCOOP_GLOBAL, "$env:ProgramData\scoop" | Where-Object { ![String]::IsNullOrEmpty($_) } | Select-Object -First 1
 $script:SCOOP_COMMANDS = @(
     'alias'
     'bucket'
@@ -28,6 +29,7 @@ $script:SCOOP_COMMANDS = @(
     'unhold'
     'uninstall'
     'update'
+    'utils'
     'virustotal'
     'which'
 )
@@ -36,6 +38,7 @@ $script:SCOOP_SUB_COMMANDS = @{
     'bucket' = 'add known list rm'
     'cache'  = 'rm show'
     'config' = 'rm show'
+    'utils'  = 'auto-pr checkhashes checkurl checkver describe format missing-checkver'
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
     'cleanup'    = 'g k'
@@ -47,6 +50,7 @@ $script:SCOOP_SHORT_PARAMETERS = @{
     'unhold'     = 'g'
     'uninstall'  = 'g p'
     'update'     = 'f g i k s q'
+    'utils'      = 'b'
     'virustotal' = 'a s n'
 }
 $script:SCOOP_LONG_PARAMETERS = @{
@@ -59,6 +63,7 @@ $script:SCOOP_LONG_PARAMETERS = @{
     'unhold'     = 'global'
     'uninstall'  = 'global purge'
     'update'     = 'force global independent no-cache skip quiet'
+    'utils'      = 'bucketdir additional-options'
     'virustotal' = 'arch scan no-depends'
 }
 # Add --help and -h to all
@@ -127,7 +132,7 @@ function script:New-AllScoopAlias {
 
     'scoop', 'shovel' | ForEach-Object {
         $al += $_, "$_\.ps1", "$_\.cmd"
-        $al += @(Get-Alias | Where-Object -Property Definition -EQ -Value $_ | Select-Object -ExpandProperty Name)
+        $al += @(Get-Alias | Where-Object -Property 'Definition' -EQ -Value $_ | Select-Object -ExpandProperty 'Name')
     }
 
     return $al -join '|'
@@ -145,7 +150,12 @@ function script:Expand-ScoopCommand($Filter, [Switch] $IncludeAlias) {
 }
 
 function script:Get-LocallyInstalledApplicationsByScoop($Filter) {
-    return @(Get-ChildItem $SCOOP_DIRECTORY 'apps\*' -Exclude 'scoop' -Directory -Name) -like "$Filter*"
+    $apps = @()
+    $SCOOP_DIRECTORY, $SCOOP_GLOBAL_DIRECTORY | ForEach-Object {
+        $apps += @(Get-ChildItem $_ 'apps\*' -Exclude 'scoop' -Directory -Name)
+    }
+
+    return @($apps | Select-Object -Unique) -like "$Filter*"
 }
 
 function script:Get-LocallyAvailableApplicationsByScoop($Filter) {
@@ -153,7 +163,7 @@ function script:Get-LocallyAvailableApplicationsByScoop($Filter) {
 
     $manifests = @()
     foreach ($buc in $buckets) {
-        $manifests += Get-ChildItem $buc.FullName 'bucket\*' -File | Select-Object -ExpandProperty BaseName
+        $manifests += Get-ChildItem $buc.FullName 'bucket\*' -File | Select-Object -ExpandProperty 'BaseName'
     }
 
     return @($manifests | Select-Object -Unique) -like "$Filter*"

@@ -111,7 +111,7 @@ function Add-Bucket {
     $bucketDirectory = Find-BucketDirectory -Name $Name -Root
     if (Test-Path $bucketDirectory) { throw "Bucket with name '$Name' already exists." }
 
-    Write-UserMessage -Message 'Checking repository... ' -Output:$false
+    Write-UserMessage -Message 'Checking repository...' -Output:$false
     $out = Invoke-GitCmd -Command 'ls-remote' -Argument """$RepositoryUrl""" -Proxy 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "'$RepositoryUrl' is not valid git repository ($out)"
@@ -119,6 +119,7 @@ function Add-Bucket {
 
     ensure $SCOOP_BUCKETS_DIRECTORY | Out-Null
     $bucketDirectory = (ensure $bucketDirectory).Path
+    Write-UserMessage -Message 'Cloning bucket repository...' -Output:$false
     Invoke-GitCmd -Command 'clone' -Argument '--quiet', """$RepositoryUrl""", """$bucketDirectory""" -Proxy
 
     Write-UserMessage -Message "The $name bucket was added successfully." -Success

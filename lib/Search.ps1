@@ -43,10 +43,14 @@ function Search-RemoteBucket {
     #>
     [CmdletBinding()]
     [OutputType([System.String[]])]
-    param([String] $Bucket, [String] $Query)
+    param(
+        [String] $Bucket,
+        [AllowNull()]
+        [String] $Query
+    )
 
     process {
-        $repo = known_bucket_repo $bucket
+        $repo = known_bucket_repo $Bucket
         if (!$repo) { return $null }
         if (Test-GithubApiRateLimitBreached) {
             Write-UserMessage -Message "GitHub ratelimit reached: Cannot query $repo" -Err
@@ -79,7 +83,8 @@ function Search-RemoteBucket {
                 debug $rateLimitRemaining
                 if ($rateLimitRemaining -eq 0) { Test-GithubApiRateLimitBreached -Breach | Out-Null }
             }
-            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)?(.*$Query.*)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$)" | ForEach-Object { $Matches[2] }
+            $result = $response.tree | Where-Object -Property 'path' -Match "(^(?:bucket/)(.*$Query.*)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$)" `
+            | ForEach-Object { $Matches[2] }
         }
 
         return $result
@@ -99,7 +104,7 @@ function Search-AllRemote {
     #>
     [CmdletBinding()]
     [OutputType([System.Object[]])]
-    param([String] $Query)
+    param([AllowNull()][String] $Query)
 
     process {
         $Query | Out-Null # PowerShell/PSScriptAnalyzer#1472
