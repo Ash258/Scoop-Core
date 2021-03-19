@@ -26,8 +26,8 @@
     - Call native `git` command instead of `hub` for push operation
     - Refactor all git/hub calls to use -C option
 - **scoop-checkup**:
-    - Check for full shovel adoption
     - Check for main branches adoption (if supported)
+    - Check for full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created
 - **autoupdate**: Do not autoupdate unless URL is accessible after successful hash extraction
 
