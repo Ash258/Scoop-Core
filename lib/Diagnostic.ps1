@@ -305,7 +305,7 @@ function Test-DiagShovelAdoption {
 function Test-MainBranchAdoption {
     <#
     .SYNOPSIS
-        Test if shovel and all changed buckets were switched to main branch.
+        Test if shovel and all locally added buckets were switched to main branch.
     #>
     [CmdletBinding()]
     [OutputType([bool])]
