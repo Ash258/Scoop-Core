@@ -10,6 +10,9 @@
 # To install an app from a manifest on your computer
 #   scoop install \path\to\app.json
 #
+# To install an app from a manifest using specific options
+#   scoop install vscode --parameters 'CONTEXT=1' 'FULLPORTABLE=1'
+#
 # Options:
 #   -h, --help                Show help for this command.
 #   -g, --global              Install the app globally.
@@ -17,6 +20,7 @@
 #   -k, --no-cache            Don't use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).
 #   -a, --arch <32bit|64bit>  Use the specified architecture, if the app supports it.
+#   -p, --parameters          Manifest specific parameters (KEY=VALUE). Hash to be always last option
 
 'Helpers', 'core', 'manifest', 'buckets', 'decompress', 'install', 'shortcuts', 'psmodules', 'Update', 'Versions', 'help', 'getopt', 'depends' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -57,9 +61,11 @@ function is_installed($app, $global, $version) {
     return $false
 }
 
-$opt, $apps, $err = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
+$opt, $apps, $err, $configOptions = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
 if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
 
+# Write-Host $configOptions.beta
+# exit 0
 $exitCode = 0
 $problems = 0
 $global = $opt.g -or $opt.global

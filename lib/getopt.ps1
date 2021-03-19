@@ -7,7 +7,7 @@
 # longopts:
 #    array of strings that are long-form options. options that take
 #    a parameter should end with '='
-# returns @(opts hash, remaining_args array, error string)
+# returns @(opts hash, remaining_args array, error string, customOptions)
 function getopt($argv, $shortopts, $longopts) {
     $opts = @{ }
     $rem = @()
@@ -19,6 +19,7 @@ function getopt($argv, $shortopts, $longopts) {
     # Ensure these are arrays
     $argv = @($argv)
     $longopts = @($longopts)
+    $customOptions = [Ordered] @{ }
 
     for ($i = 0; $i -lt $argv.length; $i++) {
         $arg = $argv[$i]
@@ -30,6 +31,16 @@ function getopt($argv, $shortopts, $longopts) {
 
         if ($arg.startswith('--')) {
             $name = $arg.substring(2)
+
+            if ($name -eq 'parameters') {
+                # Get only provided parameters
+                $special = $argv[($i + 1)..($argv.Length - 1)]
+                foreach ($sp in $special) {
+                    $key, $value = $sp -split '='
+                    $customOptions.Add($key.ToLower(), $value)
+                }
+                break
+            }
 
             $longopt = $longopts | Where-Object { $_ -match "^$name=?$" }
 
@@ -69,5 +80,5 @@ function getopt($argv, $shortopts, $longopts) {
         }
     }
 
-    return $opts, $rem
+    return $opts, $rem, $null, $customOptions
 }
