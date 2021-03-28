@@ -218,7 +218,7 @@ function Invoke-Check {
             ConvertTo-Manifest -Path $gci.FullName -Manifest $newManifest
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
-            throw 'Trigger problem counter'
+            throw 'Trigger problem detection'
         }
     }
 }
