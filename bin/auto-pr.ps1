@@ -50,6 +50,7 @@ param(
     [Switch] $SkipCheckver
 )
 
+$checkverPath = Join-Path $PSScriptRoot 'checkver.ps1'
 'Helpers', 'manifest', 'Git', 'json' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
@@ -178,11 +179,11 @@ if ($Push) {
 }
 
 if (!$SkipCheckver) {
-    & "$PSScriptRoot\checkver.ps1" -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
+    & $checkverPath -App $App -Dir $Dir -Update -SkipUpdated:$SkipUpdated
     if ($SpecialSnowflakes) {
         Write-UserMessage -Message "Forcing update on special snowflakes: $($SpecialSnowflakes -join ',')" -Color 'DarkCyan'
         $SpecialSnowflakes -split ',' | ForEach-Object {
-            & "$PSScriptRoot\checkver.ps1" $_ -Dir $Dir -ForceUpdate
+            & $checkverPath $_ -Dir $Dir -ForceUpdate
         }
     }
 }

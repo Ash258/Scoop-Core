@@ -2,6 +2,10 @@
 
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
+### 0.6-pre3
+
+- **checkver**: Properly reflect execution issues with exit code
+
 ### 0.6-pre2
 
 - **scoop-search**: Fix search without parameter provided

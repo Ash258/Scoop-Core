@@ -75,6 +75,8 @@ $Search = $App
 $Queue = @()
 $UNIVERSAL_REGEX = '[vV]?([\d.]+)'
 $GITHUB_REGEX = "/releases/tag/$UNIVERSAL_REGEX"
+$exitCode = 0
+$problems = 0
 
 #region Functions
 function next($AppName, $Err) {
@@ -216,6 +218,7 @@ function Invoke-Check {
             ConvertTo-Manifest -Path $gci.FullName -Manifest $newManifest
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
+            throw 'Trigger problem detection'
         }
     }
 }
@@ -235,6 +238,7 @@ foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
         $m = ConvertFrom-Manifest -Path $ff.FullName
     } catch {
         Write-UserMessage -Message "Invalid manifest: $($ff.Name)" -Err
+        ++$problems
         continue
     }
     if ($m.checkver) {
@@ -249,6 +253,7 @@ foreach ($ff in Get-ChildItem $Dir "$Search.*" -File) {
 foreach ($q in $Queue) {
     $gci, $json = $q
     $name = $gci.Name
+    $problemOccured = $false # Partially prevent duplicating problems
 
     $substitutions = Get-VersionSubstitution -Version $json.version
 
@@ -271,6 +276,7 @@ foreach ($q in $Queue) {
     if ($json.checkver -eq 'github') {
         if (!$json.homepage.StartsWith('https://github.com/')) {
             Write-UserMessage -Message "$name checkver expects the homepage to be a github repository" -Err
+            $problemOccured = $true
         }
         $url = $json.homepage + '/releases/latest'
         $regex = $GITHUB_REGEX
@@ -282,10 +288,12 @@ foreach ($q in $Queue) {
 
     if ($json.checkver.re) {
         Write-UserMessage -Message "${name}: 're' is deprecated. Use 'regex' instead" -Err
+        $problemOccured = $true
         $regex = $json.checkver.re
     }
     if ($json.checkver.jp) {
         Write-UserMessage -Message "${name}: 'jp' is deprecated. Use 'jsonpath' instead" -Err
+        $problemOccured = $true
         $jsonpath = $json.checkver.jp
     }
 
@@ -311,6 +319,8 @@ foreach ($q in $Queue) {
         'gci'      = $gci
     }
 
+    if ($problemOccured) { ++$problems }
+
     $wc.Headers.Add('Referer', (strip_filename $url))
     $wc.DownloadStringAsync($url, $state)
 }
@@ -325,10 +335,12 @@ while ($inProgress -lt $Queue.Length) {
     try {
         Invoke-Check $ev
     } catch {
+        ++$problems
         continue
     }
 }
 
-exit 0
+if ($problems -gt 0) { $exitCode = 10 + $problems }
+exit $exitCode
 
 #endregion Main

@@ -184,10 +184,10 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     # Add informational properties in special order ranked by usability into new object and remove from old object
     # Comment for maintainers has to be at first
     # Version is mandatory manifest identificator
-    # Description is mandator and essential information for user
+    # Description is mandatory and essential information for user
     # Homepage provides additional information in case description is not enough
-    # License has to follow immediatelly after homepge. User most likely decided to install app after reading description or visiting homepage
-    # Notes contains usefull information for user. When they cat the manifest it has to be visible on top
+    # License has to follow immediatelly after homepage. User most likely decided to install app after reading description or visiting homepage
+    # Notes contains useful information for user. When they cat the manifest it has to be visible on top
     # Changelog is additional not required information
     '##', 'version', 'description', 'homepage', 'license', 'notes', 'changelog', 'suggest', 'depends' | ForEach-Object {
         $val = $manifest.$_
