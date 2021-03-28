@@ -4,6 +4,8 @@
 
 ### 0.6-pre3
 
+- Archive old versions of manifest when executing checkver/autoupdate
+    - Support operations on archived versions
 - **checkver**: Properly reflect execution issues with exit code
 
 ### 0.6-pre2
