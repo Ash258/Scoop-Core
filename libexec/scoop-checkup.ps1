@@ -21,6 +21,7 @@ $issues += !(Test-DiagConfig)
 $issues += !(Test-DiagCompletionRegistered)
 $issues += !(Test-DiagShovelAdoption)
 $issues += !(Test-MainBranchAdoption)
+$issues += !(Test-ScoopConfigFile)
 
 if ($issues -gt 0) {
     Write-UserMessage -Message '', "Found $issues potential $(pluralize $issues 'problem' 'problems')." -Warning

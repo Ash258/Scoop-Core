@@ -3,3 +3,4 @@
 *.exe -text
 *.zip -text
 *.dll -text
+*.*sh -text eol=lf

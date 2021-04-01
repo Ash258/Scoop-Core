@@ -46,7 +46,7 @@ function Test-DiagWindowsDefender {
     if (Test-IsUnix) { return $true }
 
     $defender = Get-Service -Name 'WinDefend' -ErrorAction 'SilentlyContinue'
-    if (($defender -and $defender.Status) -and ($defender.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running)) {
+    if ((is_admin) -and ($defender -and $defender.Status) -and ($defender.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Running)) {
         if (Test-CommandAvailable -Command 'Get-MpPreference') {
             $installPath = if ($Global) { $SCOOP_GLOBAL_ROOT_DIRECTORY } else { $SCOOP_ROOT_DIRECTORY }
             $exclusionPath = (Get-MpPreference).ExclusionPath
@@ -170,6 +170,18 @@ function Test-DiagEnvironmentVariable {
         $result = $false
     }
 
+    # Does not make sense to have global defined on user level
+    $value = [System.Environment]::GetEnvironmentVariable('SCOOP_GLOBAL', 'User')
+    if ($value) {
+        Write-UserMessage -Message '''SCOOP_GLOBAL'' environment variable is configured on User level' -Warning
+        Write-UserMessage -Message @(
+            '  Fixable with running following command:'
+            "    [Environment]::SetEnvironmentVariable('SCOOP_GLOBAL', '$value', 'Machine')"
+        )
+
+        $result = $false
+    }
+
     return $result
 }
 
@@ -202,6 +214,7 @@ function Test-DiagHelpersInstalled {
             '  Fixable with running following command:'
             '    scoop install innounp'
         )
+
         $result = $false
     }
 
@@ -223,6 +236,7 @@ function Test-DiagHelpersInstalled {
             '  Fixable with running following command:'
             '    scoop install lessmsi'
         )
+
         $result = $false
     }
 
@@ -247,6 +261,7 @@ function Test-DiagConfig {
             '  Fixable with running following command:'
             '    scoop install lessmsi; scoop config MSIEXTRACT_USE_LESSMSI $true'
         )
+
         $result = $false
     }
 
@@ -341,6 +356,7 @@ function Test-MainBranchAdoption {
 
         if (($branches -like '* remotes/origin/main') -and ($current -eq 'master')) {
             $toFix += @{ 'name' = $b; 'path' = $path }
+
             $verdict = $false
         }
     }
@@ -350,6 +366,54 @@ function Test-MainBranchAdoption {
         Write-UserMessage -Message @(
             '  Fixable with running following commands:'
             ($toFix | ForEach-Object { "    git -C '$($_.path)' checkout main" })
+        )
+    }
+
+    return $verdict
+}
+
+function Test-ScoopConfigFile {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    $verdict = $true
+
+    if (!(Test-Path $SCOOP_CONFIGURATION_FILE)) {
+        Write-UserMessage -Message 'Configuration file does not exists.' -Warn
+        Write-UserMessage -Message @(
+            '  Fixable with running following commands:'
+            "    scoop update"
+        )
+
+        $verdict = $false
+    }
+
+    $old = Join-Path $env:USERPROFILE '.scoop'
+    if (Test-Path $old) {
+        Write-UserMessage -Message 'Old configuration file exists. It should be removed' -Warn
+        Write-UserMessage -Message @(
+            '  Fixable with running following commands:'
+            "    Remove-Item '$old'"
+        )
+
+        $verdict = $false
+    }
+
+    $toFix = @()
+    'rootPath', 'globalPath', 'cachePath' | ForEach-Object {
+        $c = get_config $_
+        if ($c) {
+            $toFix += $_
+
+            $verdict = $false
+        }
+    }
+    if ($toFix.Count -gt 0) {
+        Write-UserMessage -Message 'Some configuration options are no longer supported.' -Warn
+        Write-UserMessage -Message @(
+            '  Fixable with running following commands:'
+            ($toFix | ForEach-Object { "    scoop config rm '$_'" })
         )
     }
 

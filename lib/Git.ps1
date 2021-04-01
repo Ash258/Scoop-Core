@@ -30,6 +30,7 @@ function Invoke-GitCmd {
             $Repository = $Repository.TrimEnd('\').TrimEnd('/')
             $preAction = @('-C', """$Repository""")
         }
+        $preAction += '--no-pager'
     }
 
     process {
@@ -43,7 +44,6 @@ function Invoke-GitCmd {
                 $Argument += '--rebase=false'
             }
             'UpdateLog' {
-                $preAction += '--no-pager'
                 $action = 'log'
                 $para = @(
                     '--no-decorate'
@@ -55,7 +55,6 @@ function Invoke-GitCmd {
                 $Argument = $para + $Argument
             }
             'VersionLog' {
-                $preAction += '--no-pager'
                 $action = 'log'
                 $Argument += '--oneline', '--max-count=1', 'HEAD'
             }
