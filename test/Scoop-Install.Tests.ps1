@@ -37,6 +37,12 @@ Describe 'ensure_architecture' -Tag 'Scoop' {
 Describe 'appname_from_url' -Tag 'Scoop' {
     It 'should extract the correct name' {
         appname_from_url 'https://example.org/directory/foobar.json' | Should -be 'foobar'
+        appname_from_url 'https://example.org/directory/cosi.yml' | Should -be 'cosi'
+        appname_from_url 'https://example.org/directory/cosi.yaml' | Should -be 'cosi'
+
+        appname_from_url 'https://raw.githubusercontent.com/Ash258/Scoop-Ash258/main/bucket/pwsh.json' | Should -be 'pwsh'
+        appname_from_url 'https://raw.githubusercontent.com/Ash258/Scoop-Ash258/main/bucket/old/pwsh/7.2.3.json' | Should -be 'pwsh'
+        appname_from_url 'https://raw.githubusercontent.com/Ash258/Scoop-Ash258/main/bucket/old/pwsh/7.5.3.yml' | Should -be 'pwsh'
     }
 }
 
