@@ -358,7 +358,7 @@ function Get-VersionSubstitution ([String] $Version, [Hashtable] $CustomMatches 
     return $versionVariables
 }
 
-function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable) {
+function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable, [String] $Extension = '.json') {
     Write-UserMessage -Message "Autoupdating $app" -Color 'DarkCyan'
 
     $oldVersion = $json.version
@@ -427,26 +427,20 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
 
     $newManifest = $null
     if ($has_changes -and !$has_errors) {
-        # # Write file
-        # Write-UserMessage -Message "Writing updated $app manifest" -Color DarkGreen
+        # Archive older version
+        if ($json.autoupdate.archive -and ($json.autoupdate.archive -eq $true)) {
+            $oldJson = $json.PSObject.Copy()
+            $appOldPath = Join-Path $dir "old\$app"
+            $manifestOldPath = Join-Path $appOldPath "${oldVersion}${Extension}"
 
-        # $path = Join-Path $dir "$app.json"
+            Write-UserMessage -Message "Archiving manifest with version $oldVersion to $manifestOldPath" -Info
 
-        # # Archive older version
-        # if ($json.autoupdate.archive) {
-        #     $oldJson = $json.PSObject.Copy()
-        #     $appOldPath = Join-Path $dir "old\$app"
-        #     $manifestOldPath = Join-Path $appOldPath "$oldVersion.json"
-        #     Write-UserMessage -Message "Archiving manifest with version $oldVersion to $manifestOldPath" -Info
+            $oldJson.PSObject.Properties.Remove('checkver')
+            $oldJson.PSObject.Properties.Remove('autoupdate')
 
-        #     $oldJson.PSObject.Properties.Remove('checkver')
-        #     $oldJson.PSObject.Properties.Remove('autoupdate')
-
-        #     New-Item $appOldPath -ItemType Directory -ErrorAction SilentlyContinue -Force | Out-Null
-        #     $oldJson | ConvertToPrettyJson | Out-UTF8File -Path $manifestOldPath
-        # }
-
-        # $json | ConvertToPrettyJson | Out-UTF8File -Path $path
+            New-Item $appOldPath -ItemType 'Directory' -ErrorAction 'SilentlyContinue' -Force | Out-Null
+            ConvertTo-Manifest -Manifest $oldJson -File $manifestOldPath
+        }
 
         # Notes
         if ($json.autoupdate.note) { Write-UserMessage -Message '', $json.autoupdate.note -Color 'DarkYellow' }

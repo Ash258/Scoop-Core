@@ -211,7 +211,7 @@ function Invoke-Check {
         if ($Version -ne '') { $ver = $Version }
 
         try {
-            $newManifest = Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable
+            $newManifest = Invoke-Autoupdate $appName $Dir $json $ver $matchesHashtable -Extension $gci.Extension
             if ($null -eq $newManifest) { throw "Could not update $appname" }
 
             Write-UserMessage -Message "Writing updated $appName manifest" -Color 'DarkGreen'

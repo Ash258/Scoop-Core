@@ -188,7 +188,12 @@ if (!$SkipCheckver) {
     }
 }
 
-foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-only' | Where-Object { $_ -like 'bucket/*' }) {
+# Iterate only in bucket/* and ignore bucket/old/*
+$manifestsToUpdate = _gitWrapper @splat -Command 'diff' -Argument '--name-only'
+$manifestsToUpdate = $manifestsToUpdate | Where-Object { $_ -like 'bucket/*' }
+$manifestsToUpdate = $manifestsToUpdate | Where-Object { $_ -notlike 'bucket/old/*' }
+
+foreach ($changedFile in $manifestsToUpdate) {
     $gci = Get-Item "$RepositoryRoot\$changedFile"
     $applicationName = $gci.BaseName
     if ($gci.Extension -notmatch "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
@@ -217,15 +222,13 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
         _gitWrapper @splat -Command 'add' -Argument """$changedFile"""
 
         # Archiving
-        # TODO: Consider $gci usage
         $archived = $false
-        $bucketRoot = if ($Dir.EndsWith('bucket')) { Split-Path $Dir -Parent } else { $Dir }
         $oldAppPath = Join-Path $Dir "old\$applicationName"
-        $oldVersionManifest = execute "hub $repoContext ls-files --others --exclude-standard" | Where-Object { $_ -like "bucket/old/$app/*" }
+        $oldVersionManifest = @(_gitWrapper @splat -Command 'ls-files' -Argument '--other', '--exclude-standard') | Where-Object { $_ -like "bucket/old/$applicationName/*" }
 
-        if ($oldVersionManifest -and ($json.autoupdate.archive)) {
-            execute "hub $repoContext add $oldVersionManifest"
-            $oldVersion = (Join-Path $bucketRoot $oldVersionManifest | Get-Item).BaseName
+        if ($oldVersionManifest -and ($manifestObject.autoupdate.archive)) {
+            _gitWrapper @splat -Command 'add' -Argument """$oldVersionManifest"""
+            $oldVersion = (Join-Path $RepositoryRoot $oldVersionManifest | Get-Item).BaseName
             $archived = $true
         }
 
@@ -234,11 +237,11 @@ foreach ($changedFile in _gitWrapper @splat -Command 'diff' -Argument '--name-on
         $status = $status | Where-Object { $_ -match "M\s{2}.*$($gci.Name)" }
         if ($status -and $status.StartsWith('M  ') -and $status.EndsWith($gci.Name)) {
             $delim = if (Test-IsUnix) { '""' } else { '"' }
+            $commitA = '--message', "$delim${applicationName}: Update to version $version$delim"
             if ($archived) {
-                execute "hub $repoContext commit -m '${applicationName}: Update to version $version' -m 'Archive version $oldVersion'"
-            } else {
-                _gitWrapper @splat -Command 'commit' -Argument '--message', "$delim${applicationName}: Update to version $version$delim"
+                $commitA += '--message', "${delim}Archive version $oldVersion$delim"
             }
+            _gitWrapper @splat -Command 'commit' -Argument $commitA
         } else {
             Write-UserMessage "Skipping $applicationName because only LF/CRLF changes were detected ..." -Info
         }
