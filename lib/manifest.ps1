@@ -283,12 +283,19 @@ function generate_user_manifest($app, $bucket, $version) {
     Write-UserMessage -Warning -Message "Looking for archived manifest for '$app' ($version)"
 
     # Seach local path
-    # TODO: Generic manifest extension
-    $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp\$version.json"
+    # TODO: Export to function
+    $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp" | Get-ChildItem -File
+    $archivedManifest = $archivedManifest | Where-Object -Property 'Name' -Match -Value "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+    if ($archivedManifest.Count -gt 0) {
+        $archivedManifest = $archivedManifest | Where-Object -Property 'BaseName' -EQ -Value $version
+    }
+
     if (Test-Path $archivedManifest) {
+        $archivedManifest = Get-Item -LiteralPath $archivedManifest
         Write-UserMessage -Message 'Found archived version' -Success
-        $workspace = Join-Path (usermanifestsdir) "$app.json"
-        Copy-Item $archivedManifest $workspace -Force
+
+        $workspace = Join-Path (usermanifestsdir) "$cleanApp$($archivedManifest.Extension)"
+        Copy-Item $archivedManifest.FullName $workspace -Force
 
         return $workspace
     }
@@ -299,7 +306,10 @@ function generate_user_manifest($app, $bucket, $version) {
     )
 
     if (!($manifest.autoupdate)) {
-        Write-UserMessage -Message "'$app' does not have autoupdate capability`r`ncould not find manifest for '$app@$version'" -Warning
+        Write-UserMessage -Warning -Message @(
+            "'$app' does not have autoupdate capability"
+            "could not find manifest for '$app@$version'"
+        )
         return $null
     }
 
