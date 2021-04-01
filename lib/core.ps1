@@ -443,12 +443,12 @@ function app_status($app, $global) {
     return $status
 }
 
-# TODO: YAML / Generic extension
 function appname_from_url($url) {
-    $appName = (Split-Path $url -Leaf) -replace '\.json$'
+    # Variable from manifest.ps1, which is not dot sourced, it should not be problem, but needs to refactored
+    $appName = (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
     $br = '[/\\]'
-    if ($url -match "${br}bucket${br}old${br}(.+)${br}.+\.json") {
-        $appName = $Matches[1]
+    if ($url -match "${br}bucket${br}old${br}(?<app>.+)${br}(?<version>.+)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
+        $appName = $Matches['app']
     }
 
     return $appName
