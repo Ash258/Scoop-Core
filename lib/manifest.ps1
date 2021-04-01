@@ -287,7 +287,8 @@ function generate_user_manifest($app, $bucket, $version) {
     $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp" | Get-ChildItem -File
     $archivedManifest = $archivedManifest | Where-Object -Property 'Name' -Match -Value "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
     if ($archivedManifest.Count -gt 0) {
-        $archivedManifest = $archivedManifest | Where-Object -Property 'BaseName' -EQ -Value $version
+        $archivedManifest = @($archivedManifest | Where-Object -Property 'BaseName' -EQ -Value $version)
+        $archivedManifest = $archivedManifest[0]
     }
 
     if (Test-Path $archivedManifest) {
