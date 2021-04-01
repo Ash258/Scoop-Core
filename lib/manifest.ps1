@@ -295,7 +295,7 @@ function generate_user_manifest($app, $bucket, $version) {
         $archivedManifest = Get-Item -LiteralPath $archivedManifest
         Write-UserMessage -Message 'Found archived version' -Success
 
-        $workspace = Join-Path (usermanifestsdir) "$cleanApp$($archivedManifest.Extension)"
+        $workspace = usermanifestsdir | Join-Path -ChildPath "$cleanApp$($archivedManifest.Extension)"
         Copy-Item $archivedManifest.FullName $workspace -Force
 
         return $workspace
