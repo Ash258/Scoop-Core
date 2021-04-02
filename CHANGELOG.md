@@ -5,7 +5,6 @@
 ### 0.6-pre3
 
 - Archive old versions of manifest when executing checkver/autoupdate
-    - Support operations on archived versions
 - **Git**: Always use `--no-pager` option
 - **checkup**: Test Windows Defender exlusions only when executed with administrator privileges
 - Remove automatic config migration
