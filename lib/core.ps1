@@ -913,6 +913,7 @@ function applist($apps, $global, $bucket = $null) {
 }
 
 function parse_app([string] $app) {
+    # TODO: YAML
     # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
     if ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
         return $matches['app'], $matches['bucket'], $matches['version']
