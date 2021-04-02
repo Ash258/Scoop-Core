@@ -438,7 +438,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             $oldJson.PSObject.Properties.Remove('checkver')
             $oldJson.PSObject.Properties.Remove('autoupdate')
 
-            New-Item $appOldPath -ItemType 'Directory' -ErrorAction 'SilentlyContinue' -Force | Out-Null
+            Confirm-DirectoryExistence $appOldPath | Out-Null
             ConvertTo-Manifest -Manifest $oldJson -File $manifestOldPath
         }
 
