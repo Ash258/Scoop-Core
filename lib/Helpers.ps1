@@ -99,7 +99,7 @@ function Confirm-DirectoryExistence {
     )
 
     process {
-        if (!(Test-Path $Directory -PathType 'Container')) { New-Item $Directory -ItemType 'Directory' | Out-Null }
+        if (!(Test-Path -LiteralPath $Directory -PathType 'Container')) { New-Item $Directory -ItemType 'Directory' | Out-Null }
 
         return Resolve-Path $Directory
     }
