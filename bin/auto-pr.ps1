@@ -223,13 +223,15 @@ foreach ($changedFile in $manifestsToUpdate) {
 
         # Archiving
         $archived = $false
-        $oldAppPath = Join-Path $Dir "old\$applicationName"
-        $oldVersionManifest = @(_gitWrapper @splat -Command 'ls-files' -Argument '--other', '--exclude-standard') | Where-Object { $_ -like "bucket/old/$applicationName/*" }
+        if ($manifestObject.autoupdate.archive -and ($manifestObject.autoupdate.archive -eq $true)) {
+            $oldAppPath = Join-Path $Dir "old\$applicationName"
+            $oldVersionManifest = @(_gitWrapper @splat -Command 'ls-files' -Argument '--other', '--exclude-standard') | Where-Object { $_ -like "bucket/old/$applicationName/*" }
 
-        if ($oldVersionManifest -and ($manifestObject.autoupdate.archive)) {
-            _gitWrapper @splat -Command 'add' -Argument """$oldVersionManifest"""
-            $oldVersion = (Join-Path $RepositoryRoot $oldVersionManifest | Get-Item).BaseName
-            $archived = $true
+            if ($oldVersionManifest) {
+                _gitWrapper @splat -Command 'add' -Argument """$oldVersionManifest"""
+                $oldVersion = (Join-Path $RepositoryRoot $oldVersionManifest | Get-Item).BaseName
+                $archived = $true
+            }
         }
 
         # Detect if file was staged, because it's not when only LF or CRLF have changed
