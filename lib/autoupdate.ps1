@@ -358,7 +358,7 @@ function Get-VersionSubstitution ([String] $Version, [Hashtable] $CustomMatches 
     return $versionVariables
 }
 
-function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable, [String] $Extension = '.json') {
+function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hashtable] $MatchesHashtable, [String] $Extension = '.json', [Switch] $IgnoreArchive) {
     Write-UserMessage -Message "Autoupdating $app" -Color 'DarkCyan'
 
     $oldVersion = $json.version
@@ -428,7 +428,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
     $newManifest = $null
     if ($has_changes -and !$has_errors) {
         # Archive older version
-        if ($json.autoupdate.archive -and ($json.autoupdate.archive -eq $true)) {
+        if (!$IgnoreArchive -and ($json.autoupdate.archive -and ($json.autoupdate.archive -eq $true))) {
             $oldJson = $json.PSObject.Copy()
             $appOldPath = Join-Path $dir "old\$app"
             $manifestOldPath = Join-Path $appOldPath "${oldVersion}${Extension}"
