@@ -97,6 +97,23 @@ function ConvertTo-Manifest {
     }
 }
 
+function Resolve-ManifestInformation {
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param([String] $ApplicationQuery)
+
+    process {
+        Write-Host $ApplicationQuery -f red
+        return [Ordered] @{
+            'ApplicationName' = ''
+            'Version'         = ''
+            'Bucket'          = ''
+            'ManifestObject'  = @{}
+            'Url'             = ''
+        }
+    }
+}
+
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
