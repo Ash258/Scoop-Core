@@ -362,7 +362,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
     Write-UserMessage -Message "Autoupdating $app" -Color 'DarkCyan'
 
     $oldVersion = $json.version
-    $oldJson = $json.PSObject.Copy()
+    $oldJson = $json | ConvertTo-Json -Depth 50 | ConvertFrom-Json # Deep clone object
     $has_changes = $false
     $has_errors = $false
     [bool] $valid = $true
