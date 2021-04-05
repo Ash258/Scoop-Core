@@ -103,13 +103,54 @@ function Resolve-ManifestInformation {
     param([String] $ApplicationQuery)
 
     process {
-        Write-Host $ApplicationQuery -f red
+        if (Test-Path -LiteralPath $ApplicationQuery) {
+            # Local full path
+            try {
+                $manifest = ConvertFrom-Manifest -LiteralPath $ApplicationQuery
+            } catch {
+                throw [ScoopException] "File is not a valid manifest ($($_.Exception.Message))" # TerminatingError thrown
+            }
+            $localPath = Get-Item -LiteralPath $ApplicationQuery
+            $applicationName = $localPath.BaseName
+
+            # TODO: Extract to separate function which will match file paths
+            $br = '[/\\]'
+            if ($localPath.FullName -match "${br}bucket${br}old${br}(?<manifestName>.+?)${br}(?<manifestVersion>.+?)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$") {
+                $applicationName = $Matches['manifestName']
+                $applicationVersion = $Matches['manifestVersion'] # Will be overridden
+            }
+            $applicationVersion = $manifest.version
+            $bucket = $null
+        } elseif ($ApplicationQuery -match '^https?://') {
+            # TODO: Implement download with proxy
+            # https
+            throw 'Not implemented'
+
+        } else {
+            throw 'Not supported way how to provide manifest'
+        }
+
+        # lookup
+        # version looup
+        # Bucket lookup
+        # Bucket version lookup
+
+        # TODO: Validate manifest object
+        if ($null -eq $manifest.version) {
+            debug $manifest
+            throw [ScoopException] "Not a valid manifest" # TerminatingError thrown
+        }
+
         return [Ordered] @{
-            'ApplicationName' = ''
-            'Version'         = ''
-            'Bucket'          = ''
-            'ManifestObject'  = @{}
-            'Url'             = ''
+            'ApplicationName'  = $applicationName
+            'Version'          = $applicationVersion
+            'Bucket'           = $bucket
+            'ManifestObject'   = $manifest
+            # TODO:
+            'Url'              = ''
+            'LocalPath'        = ''
+            'CalculatedUrl'    = ''
+            'CalculatedBucket' = ''
         }
     }
 }
