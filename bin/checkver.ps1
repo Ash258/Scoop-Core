@@ -313,7 +313,7 @@ foreach ($q in $Queue) {
     }
 
     if ($url -like '*api.github.com/*') { $useGithubAPI = $true }
-    if ($useGithubAPI) {
+    if ($useGithubAPI -and ($null -ne $GH_TOKEN)) {
         $url = $url -replace '//(www\.)?github.com/', '//api.github.com/repos/'
         $wc.Headers.Add('Authorization', "token $GH_TOKEN")
     }
