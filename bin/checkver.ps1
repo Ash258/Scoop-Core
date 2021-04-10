@@ -75,6 +75,9 @@ $Search = $App
 $Queue = @()
 $UNIVERSAL_REGEX = '[vV]?([\d.]+)'
 $GITHUB_REGEX = "/releases/tag/$UNIVERSAL_REGEX"
+$GH_TOKEN = $env:GITHUB_TOKEN
+$cfToken = get_config 'githubToken'
+if ($cfToken) { $GH_TOKEN = $cfToken }
 $exitCode = 0
 $problems = 0
 
@@ -270,6 +273,7 @@ foreach ($q in $Queue) {
     $xpath = ''
     $replace = ''
     $reverse = $json.checkver.reverse -and $json.checkver.reverse -eq 'true'
+    $useGithubAPI = $false
 
     if ($json.checkver.url) { $url = $json.checkver.url }
 
@@ -278,12 +282,15 @@ foreach ($q in $Queue) {
             Write-UserMessage -Message "$name checkver expects the homepage to be a github repository" -Err
             $problemOccured = $true
         }
-        $url = $json.homepage + '/releases/latest'
+        $url = $json.homepage.TrimEnd('/') + '/releases/latest'
         $regex = $GITHUB_REGEX
+        $useGithubAPI = $true
     }
     if ($json.checkver.github) {
-        $url = $json.checkver.github + '/releases/latest'
+        $url = $json.checkver.github.TrimEnd('/') + '/releases/latest'
         $regex = $GITHUB_REGEX
+        # TODO: See if this could be used allways
+        if ($json.checkver.PSObject.Properties.Count -eq 1) { $useGithubAPI = $true }
     }
 
     if ($json.checkver.re) {
@@ -305,6 +312,11 @@ foreach ($q in $Queue) {
         $regex = if ($json.checkver -is [System.String]) { $json.checkver } else { $UNIVERSAL_REGEX }
     }
 
+    if ($url -like '*api.github.com/*') { $useGithubAPI = $true }
+    if ($useGithubAPI -and ($null -ne $GH_TOKEN)) {
+        $url = $url -replace '//(www\.)?github.com/', '//api.github.com/repos/'
+        $wc.Headers.Add('Authorization', "token $GH_TOKEN")
+    }
     $url = Invoke-VariableSubstitution -Entity $url -Substitutes $substitutions
 
     $state = New-Object PSObject @{

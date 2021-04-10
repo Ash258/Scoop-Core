@@ -9,7 +9,10 @@
 - **checkup**: Test Windows Defender exlusions only when executed with administrator privileges
 - Remove automatic config migration
 - **config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
-- **checkver**: Properly reflect execution issues with exit code
+- **checkver**:
+    - Prevent hitting GitHub rate limits
+        - GitHub checkver will use `api.github.com/repos` and github token from environment `GITHUB_TOKEN` or config option `githubToken`
+    - Properly reflect execution issues with exit code
 
 ### 0.6-pre2
 
@@ -51,9 +54,9 @@
 - **binaries**: Support YAML typed manifests
 - General code cleanup and documentation tweaks
 
-## [0.55](https://github.com/Ash258/Scoop-Core/milestone/2)
+## [0.5.5](https://github.com/Ash258/Scoop-Core/milestone/2)
 
-### 0.55-pre5
+### 0.5.5-pre5
 
 - **manifests**: Introduce manifest helpers to avoid repeating lines in manifests
     - `Assert-Administrator`, `Assert-WindowsMinimalVersion`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
@@ -76,7 +79,7 @@
 - **autoupdate**: Support base64 for all extraction types
 - Small code cleanup and refactorings
 
-### 0.55-pre4
+### 0.5.5-pre4
 
 - **update**: Ignore merge commits in update log
 - `scoop --version` reports PowerShell version
@@ -84,23 +87,23 @@
 - **buckets**: Indicate successfull bucket removal
 - **buckets**: Indicate inability of bucket removal
 
-### 0.55-pre3
+### 0.5.5-pre3
 
 - Sync with upstream/master
 
-### 0.55-pre2
+### 0.5.5-pre2
 
 - `scoop search` reimplemented
 - **scoop-config**: Fix regression from `--help` addition
 - **decompress**: Fix 7zip requirements detection
 - **autoupdate**: Added `$headVersion` and `$tailVersion` substitutes
 
-### 0.55.1-pre
+### 0.5.5-pre1
 
 - Allow `-h` and `--help` parameters for all scoop commands
 - Lots of refactorings
 
-### 0.55-pre - Abort deprecation 🎉
+### 0.5.5-pre - Abort deprecation 🎉
 
 - `abort` funcion completely eliminated
     - Multiple manifest installation is not broken in case of one failure. (for example)
