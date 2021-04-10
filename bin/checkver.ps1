@@ -75,13 +75,11 @@ $Search = $App
 $Queue = @()
 $UNIVERSAL_REGEX = '[vV]?([\d.]+)'
 $GITHUB_REGEX = "/releases/tag/$UNIVERSAL_REGEX"
-$exitCode = 0
-$problems = 0
 $GH_TOKEN = $env:GITHUB_TOKEN
 $cfToken = get_config 'githubToken'
-if ($cfToken) {
-    $GH_TOKEN = $cfToken
-}
+if ($cfToken) { $GH_TOKEN = $cfToken }
+$exitCode = 0
+$problems = 0
 
 #region Functions
 function next($AppName, $Err) {
@@ -291,9 +289,8 @@ foreach ($q in $Queue) {
     if ($json.checkver.github) {
         $url = $json.checkver.github.TrimEnd('/') + '/releases/latest'
         $regex = $GITHUB_REGEX
-        if ($json.checkver.PSObject.Properties.Count -eq 1) {
-            $useGithubAPI = $true
-        }
+        # TODO: See if this could be used allways
+        if ($json.checkver.PSObject.Properties.Count -eq 1) { $useGithubAPI = $true }
     }
 
     if ($json.checkver.re) {
