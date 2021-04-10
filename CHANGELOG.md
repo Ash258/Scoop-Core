@@ -11,7 +11,7 @@
 - **config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
 - **checkver**:
     - Prevent hitting GitHub rate limits
-        - GitHub checkver will use `api.github.com/repos` and github token from environment `GITHUB_TOKEN` or config option `githubToken`
+        - GitHub checkver will use `api.github.com/repos` and github token from environment variable `GITHUB_TOKEN` or config option `githubToken`
     - Properly reflect execution issues with exit code
 
 ### 0.6-pre2
@@ -20,7 +20,7 @@
 - New command `utils` added
 - Native parameter binding for aliases works again
 - **git**: Fix proxy handling
-- **psmodules**: Add global modules to path only if global manifest is installed
+- **psmodules**: Add global modules to path only if manifest is installed globally
 - **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
 - **format**: Extract checkver fixes into own function and add generic adjust property function
 - **schema**
@@ -36,7 +36,7 @@
     - Require `-Upstream` only when `-Request` is provided
     - Scoop proxy configuration will be used for git calls
     - Call native `git` command instead of `hub` for push operation
-    - Refactor all git/hub calls to use -C option
+    - Refactor all git/hub calls to use `-C` option
 - **scoop-checkup**:
     - Check for main branches adoption (if supported)
     - Check for full shovel adoption
@@ -52,7 +52,7 @@
 - **scoop-install**: Allow modules to be installed globally
 - **scoop-install**: Prevent repeated installation of same manifest/url/local file
 - **binaries**: Support YAML typed manifests
-- General code cleanup and documentation tweaks
+- General code cleanup and code documentation tweaks
 
 ## [0.5.5](https://github.com/Ash258/Scoop-Core/milestone/2)
 
@@ -67,7 +67,7 @@
     - Fix `installer.keep` inconsitency between powershell scripts and executables
 - **manifests**: Present `pre_download` property
 - **scoop-install**: Fix installlation of different/older versions
-- **scoop-info**: Respect NO_JUNCTION config
+- **scoop-info**: Respect `NO_JUNCTION` config
 - Add changelog to repository
 - **autoupdate**: Initial preparations for array support
 - **manifests**: Add `changelog` property
@@ -84,12 +84,12 @@
 - **update**: Ignore merge commits in update log
 - `scoop --version` reports PowerShell version
 - **depends**: Correctly detect globally installed dependencies
-- **buckets**: Indicate successfull bucket removal
+- **buckets**: Indicate successful bucket removal
 - **buckets**: Indicate inability of bucket removal
 
 ### 0.5.5-pre3
 
-- Sync with upstream/master
+- Sync with `upstream/master`
 
 ### 0.5.5-pre2
 
@@ -106,7 +106,7 @@
 ### 0.5.5-pre - Abort deprecation 🎉
 
 - `abort` funcion completely eliminated
-    - Multiple manifest installation is not broken in case of one failure. (for example)
+    - One failed manifest installation/update/download/... will not cause whole command to exit prematurelly
 - **lint**: Code fixes
 
 ## 0.5.2 - Shim fixes
@@ -126,7 +126,7 @@
 
 - Fosshub downloads hotfix
 
-## [0.5 - Fork initializaiton](https://github.com/Ash258/Scoop-Core/milestone/1)
+## [0.5 - Fork initialization](https://github.com/Ash258/Scoop-Core/milestone/1)
 
 - Licensed under `GPL-3.0-only`
 
@@ -161,7 +161,7 @@
 - Refactored handling of manifests versions
 - Exit codes are handled in a saner way
     - See `scoop --help` for used exit codes
-- Internal application files are not using generic name
+- Internal application files do not use generic name
     - `install.json` -> `scoop-install.json`
     - `manifest.json` -> `scoop-manifest.json`
 - System bitness is determined by integer pointer size
