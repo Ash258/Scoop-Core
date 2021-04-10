@@ -315,7 +315,7 @@ foreach ($q in $Queue) {
     if ($url -like '*api.github.com/*') { $useGithubAPI = $true }
     if ($useGithubAPI) {
         $url = $url -replace '//(www\.)?github.com/', '//api.github.com/repos/'
-        $wc.Headers.Add('Authorization', "bearer $GH_TOKEN")
+        $wc.Headers.Add('Authorization', "token $GH_TOKEN")
     }
     $url = Invoke-VariableSubstitution -Entity $url -Substitutes $substitutions
 
