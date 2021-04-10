@@ -9,7 +9,10 @@
 - **checkup**: Test Windows Defender exlusions only when executed with administrator privileges
 - Remove automatic config migration
 - **config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
-- **checkver**: Properly reflect execution issues with exit code
+- **checkver**:
+    - Prevent hitting GitHub rate limits
+        - GitHub checkver will use `api.github.com/repos` and github token from envrionment `GITHUB_TOKEN` or config option `githubToken`
+    - Properly reflect execution issues with exit code
 
 ### 0.6-pre2
 

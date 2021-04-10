@@ -31,7 +31,8 @@ local configOptions = parser({
     'SCOOP_BRANCH',
     'show_update_log' .. booleanParser,
     'virustotal_api_key',
-    'proxy'
+    'proxy',
+    'githubToken'
 })
 
 -- region Functions
