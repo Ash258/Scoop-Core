@@ -98,11 +98,17 @@ function ConvertTo-Manifest {
 }
 
 function Resolve-ManifestInformation {
+    # TODO: Docs
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
-    param([String] $ApplicationQuery)
+    param([Parameter(Mandatory)] [String] $ApplicationQuery)
 
     process {
+        $bucketLookup = '(?<bucket>[a-zA-Z\d-]+)'
+        $applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
+        $versionLookup = '@(?<version>.+)'
+        $lookupRegex = "^($bucketLookup/)?$applicationLookup($versionLookup)?$"
+
         if (Test-Path -LiteralPath $ApplicationQuery) {
             # Local full path
             try {
@@ -123,17 +129,12 @@ function Resolve-ManifestInformation {
             $bucket = $null
         } elseif ($ApplicationQuery -match '^https?://') {
             # TODO: Implement download with proxy
-            # https
-            throw 'Not implemented'
-
+            throw 'Not implemented https'
+        } elseif ($ApplicationQuery -match $lookupRegex) {
+            throw 'Not implemented lookup'
         } else {
             throw 'Not supported way how to provide manifest'
         }
-
-        # lookup
-        # version looup
-        # Bucket lookup
-        # Bucket version lookup
 
         # TODO: Validate manifest object
         if ($null -eq $manifest.version) {
