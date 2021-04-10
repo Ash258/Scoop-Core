@@ -11,7 +11,7 @@
 - **config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
 - **checkver**:
     - Prevent hitting GitHub rate limits
-        - GitHub checkver will use `api.github.com/repos` and github token from envrionment `GITHUB_TOKEN` or config option `githubToken`
+        - GitHub checkver will use `api.github.com/repos` and github token from environment `GITHUB_TOKEN` or config option `githubToken`
     - Properly reflect execution issues with exit code
 
 ### 0.6-pre2
