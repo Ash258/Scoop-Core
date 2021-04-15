@@ -4,6 +4,7 @@
 
 ### 0.6-pre3
 
+- **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
 - **scoop-cache**: Allow multiple apps to be passed as argument
 - **Autoupdate**: Archive old versions of manifest when executing checkver/autoupdate
 - **Git**: Always use `--no-pager` option
