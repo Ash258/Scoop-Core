@@ -37,7 +37,7 @@ if ($cmd -notin @('rm', 'show')) { Stop-ScoopExecution -Message "Unknown subcomm
 if (!$isShow -and !$applications) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
 
 if ($isShow) {
-    Show-CachedFileList $applications
+    Show-CachedFileList -ApplicationFilter $applications
 } else {
     foreach ($app in $applications) {
         try {
