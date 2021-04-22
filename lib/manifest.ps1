@@ -284,14 +284,14 @@ function generate_user_manifest($app, $bucket, $version) {
 
     # Seach local path
     # TODO: Export to function
-    $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp" | Get-ChildItem -File
+    $archivedManifest = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$cleanApp" | Get-ChildItem -ErrorAction 'SilentlyContinue' -File
     $archivedManifest = $archivedManifest | Where-Object -Property 'Name' -Match -Value "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
     if ($archivedManifest.Count -gt 0) {
         $archivedManifest = @($archivedManifest | Where-Object -Property 'BaseName' -EQ -Value $version)
         $archivedManifest = $archivedManifest[0]
     }
 
-    if (Test-Path $archivedManifest) {
+    if ($archivedManifest -and (Test-Path -LiteralPath $archivedManifest)) {
         $archivedManifest = Get-Item -LiteralPath $archivedManifest
         Write-UserMessage -Message 'Found archived version' -Success
 

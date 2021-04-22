@@ -36,6 +36,13 @@ foreach ($app in $apps) {
         continue
     }
 
+    # Globally installed, but required locally
+    if (!$global -and ((installed $app $true))) {
+        Write-UserMessage -Message "'$app' installed globally" -Err
+        ++$problems
+        continue
+    }
+
     $splat = @{ 'AppName' = $app; 'Global' = $global }
     $info = Get-InstalledApplicationInformation @splat
     $splat.Add('Property', 'hold')
