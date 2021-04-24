@@ -13,7 +13,7 @@
 #
 # Subcommands:
 #   rm              Remove an application specific files from cache.
-#   show            Show an overview of all cached files. Default command when any is provided.
+#   show            Show an overview of all cached files. Default subcommand when none is provided.
 #
 # Options:
 #   -h, --help      Show help for this command.
