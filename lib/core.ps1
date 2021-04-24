@@ -915,7 +915,7 @@ function applist($apps, $global, $bucket = $null) {
 function parse_app([string] $app) {
     # TODO: YAML
     # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
-    if ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
+    if ($app -match '(?:(?<bucket>[a-zA-Z0-9-.]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
         return $matches['app'], $matches['bucket'], $matches['version']
     }
     return $app, $null, $null
@@ -1159,6 +1159,9 @@ $globaldir = $SCOOP_GLOBAL_ROOT_DIRECTORY
 $cachedir = $SCOOP_CACHE_DIRECTORY
 $scoopConfig = $SCOOP_CONFIGURATION
 $configFile = $SCOOP_CONFIGURATION_FILE
+
+# Do not use the new native command parsing PowerShell/PowerShell#15239, Ash258/Scoop-Core#142
+$PSNativeCommandArgumentPassing = 'Legacy'
 
 # Setup proxy globally
 setup_proxy

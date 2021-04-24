@@ -4,11 +4,15 @@
 
 ### 0.6-pre3
 
-- **autoupdate**: Archive old versions of manifest when executing checkver/autoupdate
+- **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
+- **scoop-cache**: Allow multiple apps to be passed as argument
+- **scoop-(un)hold**: Detect and show error when global option is missing for globally installed application
+- **Core**: Use `Legacy` command argument passing
+- **Autoupdate**: Archive old versions of manifest when executing checkver/autoupdate
 - **Git**: Always use `--no-pager` option
-- **checkup**: Test Windows Defender exlusions only when executed with administrator privileges
+- **scoop-checkup**: Test Windows Defender exlusions only when executed with administrator privileges
 - Remove automatic config migration
-- **config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
+- **Config**: Do not support `rootPath`, `globalPath`, `cachePath` config options
 - **checkver**:
     - Prevent hitting GitHub rate limits
         - GitHub checkver will use `api.github.com/repos` and github token from environment variable `GITHUB_TOKEN` or config option `githubToken`

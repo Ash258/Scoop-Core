@@ -61,9 +61,13 @@ foreach ($app in $application) {
 
     # Generate manifest if there is different version in manifest
     if (($null -ne $version) -and ($manifest.version -ne $version)) {
-        $generated = generate_user_manifest $appName $bucket $version
-        if ($null -eq $generated) {
-            Write-UserMessage -Message 'Manifest cannot be generated with provided version' -Err
+        try {
+            $generated = generate_user_manifest $appName $bucket $version
+            if ($null -eq $generated) {
+                throw [ScoopException] ''
+            }
+        } catch {
+            Write-UserMessage -Message 'Archived manifest does not exist and version specific manifest cannot be generated with provided version' -Err
             ++$problems
 
             continue
