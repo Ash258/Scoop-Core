@@ -1,6 +1,6 @@
-# Usage: scoop virustotal [* | app1 app2 ...] [options]
-# Summary: Look for app's hash on virustotal.com
-# Help: Look for app's hash (MD5, SHA1 or SHA256) on virustotal.com
+# Usage: scoop virustotal [<OPTIONS>] <APP>...
+# Summary: Look for app's hash on virustotal.com.
+# Help: Look for app's hash (MD5, SHA1 or SHA256) on virustotal.com.
 #
 # Use a single '*' for app to check all installed apps.
 #
@@ -13,7 +13,7 @@
 # that this script can use to submit unknown packages for inspection
 # if you use the `--scan' flag.  Tell scoop about your API key with:
 #
-#   scoop config virustotal_api_key <your API key: 64 lower case hex digits>
+#   scoop config 'virustotal_api_key' <your API key: 64 lower case hex digits>
 #
 # Exit codes:
 # 0 -> success
@@ -43,7 +43,7 @@ Reset-Alias
 
 $opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
 if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Application parameter missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required' }
 
 $architecture = ensure_architecture ($opt.a + $opt.arch)
@@ -58,6 +58,7 @@ if (!$opt.n -and !$opt.'no-depends') { $apps = install_order $apps $architecture
 $exitCode = 0
 
 foreach ($app in $apps) {
+    # TODO: Adopt Resolve-ManifestInformation
     $manifest, $bucket = find_manifest $app
     if (!$manifest) {
         $exitCode = $exitCode -bor $VT_ERR.NoInfo
