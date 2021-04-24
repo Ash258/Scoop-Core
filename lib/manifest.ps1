@@ -196,6 +196,30 @@ function Get-RemoteManifest {
         }
     }
 }
+
+function Get-ManifestFromLookup {
+    <#
+    .SYNOPSIS
+        Lookup for manifest in all local buckets and return required information.
+    .PARAMETER Query
+        Specifies the lookup query.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
+
+    process {
+        $name = $Query
+        $manifest = @{}
+        $manifestFile = Get-Item $name
+
+        return @{
+            'Name'     = $name
+            'Manifest' = $manifest
+            'Path'     = $manifestFile
+        }
+    }
+}
 #endregion Resolve Helpers
 
 function Resolve-ManifestInformation {
@@ -239,6 +263,11 @@ function Resolve-ManifestInformation {
             $url = $ApplicationQuery
         } elseif ($ApplicationQuery -match $_lookupRegex) {
             throw 'Not implemented lookup'
+            $res = Get-ManifestFromLookup -Query $ApplicationQuery
+            $applicationName = $res.Name
+            $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
+            $localPath = $res.Path
         } else {
             throw 'Not supported way how to provide manifest'
         }
