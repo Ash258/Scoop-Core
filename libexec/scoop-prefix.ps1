@@ -1,20 +1,23 @@
-# Usage: scoop prefix <app> [options]
-# Summary: Returns the path to the specified app
+# Usage: scoop prefix [<OPTIONS>] <APP>
+# Summary: Returns the location/path of installed application.
 #
 # Options:
 #   -h, --help      Show help for this command.
-
-param($app)
 
 'core', 'help', 'Helpers', 'manifest', 'buckets' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
+
+$opt, $app, $err = getopt $args
+
+if ($err) { Stop-ScoopExecution -Message "scoop prefix: $err" -ExitCode 2 }
+if (!$app) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+
 $exitCode = 0
 
-if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
-
+# TODO: Global switch
 # TODO: NO_JUNCTION
 $app_path = versiondir $app 'current' $false
 if (!(Test-Path $app_path)) { $app_path = versiondir $app 'current' $true }
