@@ -1,5 +1,11 @@
-# Usage: scoop status [options]
-# Summary: Show status and check for new app versions
+# Usage: scoop status [<OPTIONS>]
+# Summary: Show status and check for available updates for all installed applications.
+# Help: Status command will check for following potential problems:
+#    Scoop installation is out-of-date.
+#    Applications failed to install.
+#    Original manifests of installed applications were removed.
+#    Installed applications use old version.
+#    No dependencies are missing.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -10,7 +16,7 @@
 
 Reset-Alias
 
-# check if scoop needs updating
+# Check if scoop needs updating
 $currentdir = versiondir 'scoop' 'current'
 $needs_update = $false
 
@@ -41,9 +47,9 @@ $exitCode = 0
 # local and global apps
 foreach ($global in ($true, $false)) {
     $dir = appsdir $global
-    if (!(Test-Path $dir)) { continue }
+    if (!(Test-Path -LiteralPath $dir)) { continue }
 
-    foreach ($application in (Get-ChildItem $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
+    foreach ($application in (Get-ChildItem -LiteralPath $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
         $app = $application.name
         $status = app_status $app $global
         if ($status.failed) {
@@ -67,7 +73,7 @@ foreach ($global in ($true, $false)) {
 if ($outdated) {
     $exitCode = 3
     Write-UserMessage -Message 'Updates are available for:' -Color 'DarkCyan'
-    $outdated.keys | ForEach-Object {
+    $outdated.Keys | ForEach-Object {
         $versions = $outdated.$_
         "    ${_}: $($versions[0]) -> $($versions[1])"
     }
@@ -75,7 +81,7 @@ if ($outdated) {
 
 if ($onhold) {
     Write-UserMessage -Message 'These apps are outdated and on hold:' -Color 'DarkCyan'
-    $onhold.keys | ForEach-Object {
+    $onhold.Keys | ForEach-Object {
         $versions = $onhold.$_
         "    ${_}: $($versions[0]) -> $($versions[1])"
     }
