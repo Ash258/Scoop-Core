@@ -46,7 +46,7 @@ function Show-CachedFileList {
         $_url = @{ 'Expression' = { $_.url }; 'Alignment' = 'Right' }
         $_size = @{ 'Expression' = { $_.size }; 'Alignment' = 'Right' }
 
-        $files | ForEach-Object { Get-CachedFileInfo $_ } | Format-Table -Property $_size, $_app, $_url -AutoSize -HideTableHeaders
+        $files | ForEach-Object { Get-CachedFileInfo -File $_ } | Format-Table -Property $_size, $_app, $_url -AutoSize -HideTableHeaders
         Write-Output "Total: $($files.Length) $(pluralize $files.Length 'file' 'files'), $(filesize $totalSize)"
     }
 }
