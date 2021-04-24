@@ -101,7 +101,18 @@ function ConvertTo-Manifest {
 $_br = '[/\\]'
 $_archivedManifestRegex = "${_br}bucket${_br}old${_br}(?<manifestName>.+?)${_br}(?<manifestVersion>.+?)\.(?<manifestExtension>$ALLOWED_MANIFEST_EXTENSION_REGEX)$"
 
+$_bucketLookup = '(?<bucket>[a-zA-Z\d.-]+)'
+$_applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
+$_versionLookup = '@(?<version>.+)'
+$_lookupRegex = "^($_bucketLookup/)?$_applicationLookup($_versionLookup)?$"
+
 function Get-LocalManifest {
+    <#
+    .SYNOPSIS
+        Get "metadata" about local manifest with support for archived manifests.
+    .PARAMETER Query
+        Specifies the file path where manifest is stored.
+    #>
     [CmdletBinding()]
     [OutputType([System.Collections.Hashtable])]
     param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
@@ -211,11 +222,6 @@ function Resolve-ManifestInformation {
     param([Parameter(Mandatory)] [String] $ApplicationQuery)
 
     process {
-        $bucketLookup = '(?<bucket>[a-zA-Z\d.-]+)'
-        $applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
-        $versionLookup = '@(?<version>.+)'
-        $lookupRegex = "^($bucketLookup/)?$applicationLookup($versionLookup)?$"
-
         $manifest = $applicationName = $applicationVersion = $bucket = $localPath = $url = $calcBucket = $calcURL = $null
 
         if (Test-Path -LiteralPath $ApplicationQuery) {
@@ -231,7 +237,7 @@ function Resolve-ManifestInformation {
             $manifest = $res.Manifest
             $localPath = $res.Path
             $url = $ApplicationQuery
-        } elseif ($ApplicationQuery -match $lookupRegex) {
+        } elseif ($ApplicationQuery -match $_lookupRegex) {
             throw 'Not implemented lookup'
         } else {
             throw 'Not supported way how to provide manifest'
