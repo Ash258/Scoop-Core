@@ -1,9 +1,8 @@
-# Usage: scoop search [query] [options]
-# Summary: Search available apps
-# Help: Searches for apps that are available to install.
+# Usage: scoop search [<OPTIONS>] [<QUERY>]
+# Summary: Search for applications, which are available for installation.
 #
-# If used with [query], shows app names that match the query.
-# Without [query], shows all the available apps.
+# Help: When <QUERY> parameter is not provided, all available applications will be shown.
+# <QUERY> Parameter could be regular expression.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -32,7 +31,7 @@ if ($Query) {
 
 $exitCode = 0
 
-Write-Host 'Searching in local buckets ...'
+Write-UserMessage -Message 'Searching in local buckets...'
 $localResults = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
@@ -71,14 +70,14 @@ foreach ($bucket in (Get-LocalBucket)) {
 if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
 if (!$localResults -or $Remote) {
     if (!(Test-GithubApiRateLimitBreached)) {
-        Write-Host 'Searching in remote buckets ...'
+        Write-UserMessage -Message 'Searching in remote buckets ...'
         $remoteResults = Search-AllRemote -Query $Query
 
         if ($remoteResults) {
-            Write-Host "`nResults from other known buckets:`n"
+            Write-UserMessage -Message "`nResults from other known buckets:`n"
             foreach ($r in $remoteResults) {
-                Write-Host "'$($r.bucket)' bucket (Run 'scoop bucket add $($r.bucket)'):"
-                $r.results | ForEach-Object { "    $_" }
+                Write-UserMessage -Message "'$($r.bucket)' bucket (Run 'scoop bucket add $($r.bucket)'):"
+                $r.results | ForEach-Object { Write-UserMessage -Message "    $_" }
             }
         } else {
             Stop-ScoopExecution 'No matches in remote buckets found'
