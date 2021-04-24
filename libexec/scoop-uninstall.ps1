@@ -1,6 +1,5 @@
-# Usage: scoop uninstall <app> [options]
-# Summary: Uninstall an app
-# Help: e.g. scoop uninstall git
+# Usage: scoop uninstall [<OPTIONS>] <APP>...
+# Summary: Uninstall specified application(s).
 #
 # Options:
 #   -h, --help     Show help for this command.
@@ -14,13 +13,12 @@
 Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gp' 'global', 'purge'
-
 if ($err) { Stop-ScoopExecution -Message "scoop uninstall: $err" -ExitCode 2 }
 
 $global = $opt.g -or $opt.global
 $purge = $opt.p -or $opt.purge
 
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 if ($global -and !(is_admin)) {
     Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall global apps.' -ExitCode 4
@@ -40,8 +38,8 @@ if (!$apps) {
 
 $exitCode = 0
 $problems = 0
-# TODO: remove label
-:app_loop foreach ($_ in $apps) {
+
+foreach ($_ in $apps) {
     ($app, $global, $bucket) = $_
 
     $result = $false

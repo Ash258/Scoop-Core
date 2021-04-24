@@ -820,6 +820,8 @@ function Confirm-InstallationStatus {
     $installed = @()
 
     $Apps | Select-Object -Unique | Where-Object -Property 'Name' -NE -Value 'scoop' | ForEach-Object {
+        # TODO: Adopt Resolve-ManifestInformation
+        # Should not be needed to resolve, as it will contain only valid installed applications
         $app, $null, $null = parse_app $_
         $buc = (app_status $app $Global).bucket
         if ($Global) {
