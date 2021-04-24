@@ -1,9 +1,9 @@
-# Usage: scoop update <app> [options]
-# Summary: Update apps, or Scoop itself
-# Help: 'scoop update' updates Scoop to the latest version.
-# 'scoop update <app>' installs a new version of that app, if there is one.
+# Usage: scoop update [<OPTIONS>] [<APP>...]
+# Summary: Update installed application(s), or Scoop itself.
+# Help: 'scoop update' updates Scoop and all local buckets to the latest version.
+#    'scoop update <APP>' updates already installed application to the latest available version.
 #
-# You can use '*' in place of <app> to update all apps.
+# You can use '*' in place of <APP> to update all apps.
 #
 # Options:
 #   -h, --help                Show help for this command.
@@ -33,8 +33,8 @@ $independent = $opt.i -or $opt.independent
 
 $exitCode = 0
 if (!$apps) {
-    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global option is invalid when <app> is not specified.' -ExitCode 2 }
-    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache option is invalid when <app> is not specified.' -ExitCode 2 }
+    if ($global) { Stop-ScoopExecution -Message 'scoop update: --global option is invalid when <APP> is not specified.' -ExitCode 2 }
+    if (!$useCache) { Stop-ScoopExecution -Message 'scoop update: --no-cache option is invalid when <APP> is not specified.' -ExitCode 2 }
 
     Update-Scoop
 } else {
