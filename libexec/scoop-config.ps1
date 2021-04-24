@@ -111,7 +111,7 @@ $name = $nameValue[0]
 $value = $nameValue[1]
 
 if ($name -eq 'rm') {
-    if (!$value) { Stop-ScoopExecution -Message 'Prameter <VALUE> is required for ''rm'' subcommand.' -ExitCode 2 }
+    if (!$value) { Stop-ScoopExecution -Message 'Parameter <VALUE> is required for ''rm'' subcommand.' -ExitCode 2 }
 
     set_config $value $null | Out-Null
     Write-UserMessage -Message "'$value' has been removed"
