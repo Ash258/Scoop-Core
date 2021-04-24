@@ -98,13 +98,30 @@ function ConvertTo-Manifest {
 }
 
 function Resolve-ManifestInformation {
-    # TODO: Docs
+    <#
+    .SYNOPSIS
+        Find and parse manifest file according to search query. Return universal object with all relevant information about manifest.
+    .PARAMETER ApplicationQuery
+        Specifies the string used for looking for manifest.
+    .EXAMPLE
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh@7.2.0'
+
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh@6.1.3'
+
+        Resolve-ManifestInformation -ApplicationQuery '.\bucket\old\cosi\7.1.0.yaml'
+        Resolve-ManifestInformation -ApplicationQuery '.\cosi.yaml'
+
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/alfa.yaml'
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/old/alfa/0.0.15-12060.yaml'
+    #>
     [CmdletBinding()]
     [OutputType([PSCustomObject])]
     param([Parameter(Mandatory)] [String] $ApplicationQuery)
 
     process {
-        $bucketLookup = '(?<bucket>[a-zA-Z\d-]+)'
+        $bucketLookup = '(?<bucket>[a-zA-Z\d.-]+)'
         $applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
         $versionLookup = '@(?<version>.+)'
         $lookupRegex = "^($bucketLookup/)?$applicationLookup($versionLookup)?$"
@@ -119,6 +136,7 @@ function Resolve-ManifestInformation {
             $localPath = Get-Item -LiteralPath $ApplicationQuery
             $applicationName = $localPath.BaseName
 
+            # Check if archived version was provided
             # TODO: Extract to separate function which will match file paths
             $br = '[/\\]'
             if ($localPath.FullName -match "${br}bucket${br}old${br}(?<manifestName>.+?)${br}(?<manifestVersion>.+?)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$") {
