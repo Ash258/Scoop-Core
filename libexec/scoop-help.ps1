@@ -1,16 +1,18 @@
-# Usage: scoop help <command> [options]
-# Summary: Show help for a command
+# Usage: scoop help [<OPTIONS>] [<COMMAND>]
+# Summary: Show help for specific scoop command or scoop itself.
 #
 # Options:
 #   -h, --help      Show help for this command.
 
-param($cmd)
-
-'help', 'Helpers' | ForEach-Object {
+'help', 'Helpers', 'getopt' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
+
+$opt, $cmd, $err = getopt $args
+
+if ($err) { Stop-ScoopExecution -Message "scoop help: $err" -ExitCode 2 }
 
 $exitCode = 0
 $commands = commands
