@@ -1,13 +1,12 @@
-# Usage: scoop cleanup <apps> [options]
-# Summary: Cleanup apps by removing old versions
-# Help: 'scoop cleanup' cleans Scoop apps by removing old versions.
-# 'scoop cleanup <app>' cleans up the old versions of that app if said versions exist.
+# Usage: scoop cleanup [<OPTIONS>] <APP>...
+# Summary: Perform cleanup on specified installed application(s) by removing old/not actively used versions.
+# Help: All old/not used versions of application will be removed.
 #
-# You can use '*' in place of <app> to cleanup all apps.
+# You can use '*' in place of <APP> to cleanup all installed applications.
 #
 # Options:
 #   -h, --help         Show help for this command.
-#   -g, --global       Perform cleanup on globally installed app. (Include them if '*' is used)
+#   -g, --global       Perform cleanup on globally installed application(s). (Include them if '*' is used)
 #   -k, --cache        Remove outdated download cache.
 
 'core', 'manifest', 'buckets', 'Versions', 'getopt', 'help', 'install' | ForEach-Object {
@@ -22,7 +21,7 @@ if ($err) { Stop-ScoopExecution -Message "scoop cleanup: $err" -ExitCode 2 }
 $global = $opt.g -or $opt.global
 $cache = $opt.k -or $opt.cache
 
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
 
 $problems = 0
