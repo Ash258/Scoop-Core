@@ -1,14 +1,14 @@
-# Usage: scoop list [query] [options]
-# Summary: List installed apps
+# Usage: scoop list [<OPTIONS>] [<QUERY>]
+# Summary: List installed applications.
 #
-# Help: Lists all installed apps, or the apps matching the supplied query.
+# Help: Lists all installed applications, or the applications matching the supplied query.
 #
 # Options:
 #   -h, --help          Show help for this command.
-#   -i, --installed     List apps sorted by installed date.
-#   -u, --updated       List apps sorted by update time.
-#   -r, --reverse       Apps will be listed descending order.
-#                           In case of Installed or Updated, apps will be listed from newest to oldest.
+#   -i, --installed     List applications sorted by installation date.
+#   -u, --updated       List applications sorted by update time.
+#   -r, --reverse       Applications will be listed descending order.
+#                           In case of --installed or --updated, applications will be listed from newest to oldest.
 
 'core', 'buckets', 'getopt', 'Helpers', 'Versions', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
