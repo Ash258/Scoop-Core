@@ -1,16 +1,17 @@
-# Usage: scoop cat <apps> [options]
-# Summary: Show content of specified manifest.
+# Usage: scoop cat [<OPTIONS>] <APP>...
+# Summary: Show content of specified manifest(s).
 #
 # Options:
 #   -h, --help      Show help for this command.
 
+# TODO: get-opt
 param([Parameter(ValueFromRemainingArguments)] [String[]] $Application)
 
 'help', 'Helpers', 'install', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-if (!$Application) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 $exitCode = 0
 $problems = 0
@@ -18,6 +19,7 @@ foreach ($app in $Application) {
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
 
+    # TODO: Adopt Resolve-ManifestInformation
     $cleanAppName, $bucket, $version = parse_app $app
     $appName, $manifest, $foundBucket, $url = Find-Manifest $cleanAppName $bucket
     if ($null -eq $bucket) { $bucket = $foundBucket }
@@ -37,6 +39,7 @@ foreach ($app in $Application) {
     if ($manifest) {
         Write-UserMessage -Message "Showing manifest for $app" -Color 'Green'
 
+        # TODO: YAML
         $manifest | ConvertToPrettyJson | Write-UserMessage -Output
     } else {
         Write-UserMessage -Message "Manifest for $app not found" -Err
