@@ -1,8 +1,10 @@
-# Usage: scoop hold <apps> [options]
-# Summary: Hold an app to disable updates
+# Usage: scoop hold [<OPTIONS>] <APP>...
+# Summary: Hold an application(s) to disable updates.
+# Help: Application which is configured as held, cannot be updated, unless it is un-holded manually.
+#
 # Options:
 #   -h, --help                Show help for this command.
-#   -g, --global              Hold globally installed app.
+#   -g, --global              Hold globally installed application(s).
 
 'core', 'getopt', 'help', 'Helpers', 'Applications' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
