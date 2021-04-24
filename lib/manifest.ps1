@@ -100,6 +100,34 @@ function ConvertTo-Manifest {
 #region Resolve Helpers
 $_br = '[/\\]'
 $_archivedManifestRegex = "${_br}bucket${_br}old${_br}(?<manifestName>.+?)${_br}(?<manifestVersion>.+?)\.(?<manifestExtension>$ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
+function Get-LocalManifest {
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
+
+    process {
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $Query
+        } catch {
+            throw [ScoopException] "File is not a valid manifest ($($_.Exception.Message))" # TerminatingError thrown
+        }
+        $localPath = Get-Item -LiteralPath $Query
+        $applicationName = $localPath.BaseName
+
+        # Check if archived version was provided
+        if ($localPath.FullName -match $_archivedManifestRegex) {
+            $applicationName = $Matches['manifestName']
+        }
+
+        return @{
+            'Name'     = $applicationName
+            'Manifest' = $manifest
+            'Path'     = $localPath
+        }
+    }
+}
+
 function Get-RemoteManifest {
     <#
     .SYNOPSIS
@@ -188,32 +216,19 @@ function Resolve-ManifestInformation {
         $versionLookup = '@(?<version>.+)'
         $lookupRegex = "^($bucketLookup/)?$applicationLookup($versionLookup)?$"
 
-        $manifest = $applicationName = $applicationVersion = $localPath = $url = $null
+        $manifest = $applicationName = $applicationVersion = $bucket = $localPath = $url = $calcBucket = $calcURL = $null
 
         if (Test-Path -LiteralPath $ApplicationQuery) {
-            # Local full path
-            try {
-                $manifest = ConvertFrom-Manifest -LiteralPath $ApplicationQuery
-            } catch {
-                throw [ScoopException] "File is not a valid manifest ($($_.Exception.Message))" # TerminatingError thrown
-            }
-            $localPath = Get-Item -LiteralPath $ApplicationQuery
-            $applicationName = $localPath.BaseName
-
-            # Check if archived version was provided
-            # TODO: Extract to separate function which will match file paths
-            $br = '[/\\]'
-            if ($localPath.FullName -match "${br}bucket${br}old${br}(?<manifestName>.+?)${br}(?<manifestVersion>.+?)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$") {
-                $applicationName = $Matches['manifestName']
-                $applicationVersion = $Matches['manifestVersion'] # Will be overridden
-            }
-            $applicationVersion = $manifest.version
-            $bucket = $null
+            $res = Get-LocalManifest -Query $ApplicationQuery
+            $applicationName = $res.Name
+            $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
+            $localPath = $res.Path
         } elseif ($ApplicationQuery -match '^https?://') {
             $res = Get-RemoteManifest -URL $ApplicationQuery
             $applicationName = $res.Name
-            $manifest = $res.Manifest
             $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
             $localPath = $res.Path
             $url = $ApplicationQuery
         } elseif ($ApplicationQuery -match $lookupRegex) {
@@ -235,8 +250,8 @@ function Resolve-ManifestInformation {
             'ManifestObject'   = $manifest
             'Url'              = $url
             'LocalPath'        = $localPath
-            'CalculatedUrl'    = ''
-            'CalculatedBucket' = ''
+            'CalculatedUrl'    = $calcURL
+            'CalculatedBucket' = $calcBucket
         }
     }
 }

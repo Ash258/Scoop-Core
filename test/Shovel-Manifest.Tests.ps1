@@ -5,7 +5,7 @@
 
 Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
     BeforeAll {
-        $working_dir = setup_working 'manifest'
+        $working_dir = (setup_working 'manifest' | Resolve-Path).Path
     }
 
     It 'should handle full local path' {
@@ -13,6 +13,7 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $result.ApplicationName | Should -Be 'pwsh'
         $result.Version | Should -Be '7.1.3'
         $result.ManifestObject.checkver | Should -Be 'github'
+        $result.LocalPath | Should -Be "$working_dir\bucket\pwsh.json"
         $result = $null
 
         # Mix of dividers
@@ -20,6 +21,7 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $result.ApplicationName | Should -Be 'cosi'
         $result.Version | Should -Be '7.1.3'
         $result.ManifestObject.checkver | Should -Be 'github'
+        $result.LocalPath | Should -Be "$working_dir\bucket\cosi.yaml"
         $result = $null
     }
 
@@ -28,18 +30,21 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $result.ApplicationName | Should -Be 'pwsh'
         $result.Version | Should -Be '6.2.3'
         $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+        $result.LocalPath | Should -Be "$working_dir\bucket\old\pwsh\6.2.3.yml"
         $result = $null
 
         $result = Resolve-ManifestInformation "$working_dir\bucket\old\cosi\7.1.0.yaml"
         $result.ApplicationName | Should -Be 'cosi'
         $result.Version | Should -Be '7.1.0'
         $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+        $result.LocalPath | Should -Be "$working_dir\bucket\old\cosi\7.1.0.yaml"
         $result = $null
 
         $result = Resolve-ManifestInformation "$working_dir\bucket/old\cosi/7.1.0.yaml"
         $result.ApplicationName | Should -Be 'cosi'
         $result.Version | Should -Be '7.1.0'
         $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+        $result.LocalPath | Should -Be "$working_dir\bucket\old\cosi\7.1.0.yaml"
         $result = $null
 
         $result = Resolve-ManifestInformation "$($working_dir -replace '\\', '/')/bucket/old/cosi/7.1.0.yaml"
