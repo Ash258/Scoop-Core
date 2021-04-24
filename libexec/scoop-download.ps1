@@ -4,11 +4,11 @@
 # Help: All manifest files will be downloaded into cache folder.
 #
 # Options:
-#   -h, --help                      Show help for this command.
-#   -s, --skip                      Skip hash check validation.
-#   -u, --utility <native|aria2>    Force using specific download utility.
-#   -a, --arch <32bit|64bit>        Use the specified architecture.
-#   -b, --all-architectures         All avaible files across all architectures will be downloaded.
+#   -h, --help                          Show help for this command.
+#   -s, --skip                          Skip hash check validation.
+#   -u, --utility <native|aria2>        Force using specific download utility.
+#   -a, --arch <32bit|64bit|arm64>      Use the specified architecture.
+#   -b, --all-architectures             All avaible files across all architectures will be downloaded.
 
 'getopt', 'help', 'manifest', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -31,8 +31,8 @@ try {
 } catch {
     Stop-ScoopExecution -Message "$_" -ExitCode 2
 }
-# Add both architectures
-if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit' }
+# Add all architectures
+if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit', 'arm64' }
 #endregion Parameter validation
 
 $exitCode = 0

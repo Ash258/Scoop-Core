@@ -90,9 +90,11 @@ Describe -Tag 'Manifests' 'manifest-validation' {
                 $manifest = parse_json $file.fullname
                 $url = arch_specific 'url' $manifest '32bit'
                 $url64 = arch_specific 'url' $manifest '64bit'
-                if (!$url) {
-                    $url = $url64
-                }
+                $urlarm64 = arch_specific 'url' $manifest 'arm64'
+
+                if (!$url) { $url = $url64 }
+                if (!$url) { $url = $urlarm64 }
+
                 $url | Should -Not -BeNullOrEmpty
             }
         }

@@ -40,7 +40,11 @@ function Optimize-SecurityProtocol {
 }
 
 function Get-UserAgent {
-    return "Scoop/1.0 (+http://scoop.sh/) PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor); $(if($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'){'Win64; x64; '})$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})$PSEdition)"
+    # TODO: ARM rework completely
+    $shovel = "Shovel/$SHOVEL_VERSION (+https://shovel.ash258.com)"
+    $powershellVersion = "PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+
+    return "$shovel $powershellVersion (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor); $(if($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'){'Win64; x64; '})$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})$PSEdition)"
 }
 
 function Show-DeprecatedWarning {
@@ -56,6 +60,20 @@ function Show-DeprecatedWarning {
 
     Write-UserMessage -Message ('"{0}" will be deprecated. Please change your code/manifest to use "{1}"' -f $Invocation.MyCommand.Name, $New) -Warning
     Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color 'DarkGray'
+}
+
+function Test-IsArmArchitecture {
+    <#
+    .SYNOPSIS
+        Custom check to identify arm based devices.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process {
+        return $false
+    }
 }
 
 function Test-IsUnix {
@@ -740,6 +758,7 @@ function shim($path, $global, $name, $arg) {
     if ($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
         # TODO: Use relative path from this file
+        # TODO: ARM support
         versiondir 'scoop' 'current' | Join-Path -ChildPath 'supporting\shimexe\bin\shim.exe' | Copy-Item -Destination "$shim.exe" -Force
         $result = @("path = $resolved_path")
         if ($arg) { $result += "args = $arg" }
@@ -796,6 +815,7 @@ function ensure_architecture($architecture_opt) {
     switch ($architecture_opt) {
         { @('64bit', '64', 'x64', 'amd64', 'x86_64', 'x86-64') -contains $_ } { return '64bit' }
         { @('32bit', '32', 'x86', 'i386', '386', 'i686') -contains $_ } { return '32bit' }
+        { @('arm64', 'aarch64', 'armv8') -contains $_ } { return 'arm64' }
         default { throw [System.ArgumentException] "Invalid architecture: '$architecture_opt'" }
     }
 }
@@ -1133,6 +1153,12 @@ if ($c) {
     Write-UserMessage -Message 'Configuration option ''rootPath'' is deprecated. Configure ''SCOOP'' environment variable instead' -Err
     if (!$env:SCOOP) { $env:SCOOP = $c }
 }
+
+# Main shovel version
+$SHOVEL_VERSION = '0.6-pre3'
+
+# All supported architectures
+$SHOVEL_SUPPORTED_ARCHITECTURES = @('64bit', '32bit', 'arm64')
 
 # Path gluing has to remain in these global variables to not fail in case user do not have some environment configured (most likely linux case)
 # Scoop root directory

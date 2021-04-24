@@ -100,9 +100,9 @@ foreach ($man in $Queue) {
     if ($manifest.url) {
         $manifest.url | ForEach-Object { $urls += $_ }
     } else {
-        # TODO: Multiple architectures
-        url $manifest '64bit' | ForEach-Object { $urls += $_ }
-        url $manifest '32bit' | ForEach-Object { $urls += $_ }
+        foreach ($a in $SHOVEL_SUPPORTED_ARCHITECTURES) {
+            url $manifest $a | ForEach-Object { $urls += $_ }
+        }
     }
 
     $urls | ForEach-Object {

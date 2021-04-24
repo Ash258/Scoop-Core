@@ -28,7 +28,7 @@
 #       * An empty or unset value for proxy is equivalent to 'default' (with no username or password)
 #       * To bypass the system proxy and connect directly, use 'none' (with no username or password)
 #
-# default-architecture: 64bit|32bit
+# default-architecture: 64bit|32bit|arm64
 #   Allow to configure preferred architecture for application installation.
 #   If not specified, architecture is determined be system.
 #

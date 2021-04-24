@@ -80,12 +80,14 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
         $manifest.url | ForEach-Object { $urls += $_ }
         $manifest.hash | ForEach-Object { $hashes += $_ }
     } elseif ($manifest.architecture) {
+        # TODO: ARM Better hanlding of multiple architectures
         # First handle 64bit
-        # TODO: Multiple architectures
         url $manifest '64bit' | ForEach-Object { $urls += $_ }
         hash $manifest '64bit' | ForEach-Object { $hashes += $_ }
         url $manifest '32bit' | ForEach-Object { $urls += $_ }
         hash $manifest '32bit' | ForEach-Object { $hashes += $_ }
+        url $manifest 'arm64' | ForEach-Object { $urls += $_ }
+        hash $manifest 'arm64' | ForEach-Object { $hashes += $_ }
     } else {
         err $name 'Manifest does not contain URL property.'
         ++$problems
@@ -171,20 +173,31 @@ foreach ($current in $MANIFESTS) {
             $current.manifest.hash = $actuals
         } else {
             $platforms = ($current.manifest.architecture | Get-Member -MemberType 'NoteProperty').Name
-            # TODO: Multiple architectures
+            # TODO: ARM Better, more sanitized hanlding of multiple architectures
             # Defaults to zero, don't know, which architecture is available
             $64bit_count = 0
             $32bit_count = 0
+            $arm64_count = 0
+            $start = 0
+            $max = 0
 
             if ($platforms.Contains('64bit')) {
                 $64bit_count = $current.manifest.architecture.'64bit'.hash.Count
-                # 64bit is get, donwloaded and added first
-                $current.manifest.architecture.'64bit'.hash = $actuals[0..($64bit_count - 1)]
+                $start = $max
+                $max = $max + $64bit_count
+                $current.manifest.architecture.'64bit'.hash = $actuals[$start..($max - 1)]
             }
             if ($platforms.Contains('32bit')) {
                 $32bit_count = $current.manifest.architecture.'32bit'.hash.Count
-                $max = $64bit_count + $32bit_count - 1 # Edge case if manifest contains 64bit and 32bit.
-                $current.manifest.architecture.'32bit'.hash = $actuals[($64bit_count)..$max]
+                $start = $max
+                $max = $max + $32bit_count
+                $current.manifest.architecture.'32bit'.hash = $actuals[$start..($max - 1)]
+            }
+            if ($platforms.Contains('arm64')) {
+                $arm64_count = $current.manifest.architecture.'arm64'.hash.Count
+                $start = $max
+                $max = $max + $arm64_count
+                $current.manifest.architecture.'arm64'.hash = $actuals[$start..($max - 1)]
             }
         }
 

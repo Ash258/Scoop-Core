@@ -11,12 +11,12 @@
 #   scoop install \path\to\app.json
 #
 # Options:
-#   -h, --help                Show help for this command.
-#   -g, --global              Install the app globally.
-#   -i, --independent         Don't install dependencies automatically.
-#   -k, --no-cache            Don't use the download cache.
-#   -s, --skip                Skip hash validation (use with caution!).
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the app supports it.
+#   -h, --help                      Show help for this command.
+#   -g, --global                    Install the app globally.
+#   -i, --independent               Don't install dependencies automatically.
+#   -k, --no-cache                  Don't use the download cache.
+#   -s, --skip                      Skip hash validation (use with caution!).
+#   -a, --arch <32bit|64bit|arm64>  Use the specified architecture, if the app supports it.
 
 'Helpers', 'core', 'manifest', 'buckets', 'decompress', 'install', 'shortcuts', 'psmodules', 'Update', 'Versions', 'help', 'getopt', 'depends' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
