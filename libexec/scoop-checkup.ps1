@@ -1,6 +1,6 @@
-# Usage: scoop checkup [options]
-# Summary: Check for potential problems
-# Help: Performs a series of diagnostic tests to try to identify things that may cause problems with Scoop.
+# Usage: scoop checkup [<OPTIONS>]
+# Summary: Check system for pontential problems.
+# Help: Perform a series of diagnostic tests to try to identify configurations/issues that may cause problems while using Scoop.
 #
 # Options:
 #   -h, --help      Show help for this command.
