@@ -41,7 +41,7 @@ $Utility = $rem[0]
 $VALID_UTILITIES = @(
     'auto-pr'
     'checkhashes'
-    'checkurl'
+    'checkurls'
     'checkver'
     'describe'
     'format'

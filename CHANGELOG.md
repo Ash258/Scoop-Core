@@ -4,6 +4,7 @@
 
 ### 0.6-pre3
 
+- **scoop-utils**: Use correct name of `checkurls` utility
 - **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
 - **scoop-cache**: Allow multiple apps to be passed as argument
 - **scoop-(un)hold**: Detect and show error when global option is missing for globally installed application
