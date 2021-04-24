@@ -1,5 +1,5 @@
-# Usage: scoop unhold <apps> [options]
-# Summary: Unhold an app to enable updates
+# Usage: scoop unhold [<OPTIONS>] <APP>...
+# Summary: Unhold an installed application(s) to enable updates.
 #
 # Options:
 #   -h, --help           Show help for this command.
@@ -13,7 +13,7 @@ Reset-Alias
 
 $opt, $apps, $err = getopt $args 'g' 'global'
 if ($err) { Stop-ScoopExecution -Message "scoop unhold: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 $global = $opt.g -or $opt.global
 
