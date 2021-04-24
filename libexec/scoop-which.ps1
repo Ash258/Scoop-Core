@@ -1,6 +1,5 @@
 # Usage: scoop which [<OPTIONS>] <COMMAND>
-# Summary: Locate a shim/executable (similar to 'which' on Linux).
-# Help: Locate the path to a shim/executable that was installed with Scoop (similar to 'which' on Linux).
+# Summary: Locate the path to a shim/executable of application that was installed with Scoop (similar to 'which' on Linux).
 #
 # Options:
 #   -h, --help      Show help for this command.

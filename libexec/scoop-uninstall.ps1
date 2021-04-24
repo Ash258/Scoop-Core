@@ -3,7 +3,7 @@
 #
 # Options:
 #   -h, --help     Show help for this command.
-#   -g, --global   Uninstall a globally installed app.
+#   -g, --global   Uninstall a globally installed application(s).
 #   -p, --purge    Remove all persistent data.
 
 'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'Versions', 'getopt', 'Uninstall' | ForEach-Object {

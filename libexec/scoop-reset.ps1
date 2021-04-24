@@ -1,6 +1,6 @@
 # Usage: scoop reset [<OPTIONS>] <APP>...
 # Summary: Force binaries/shims, shortcuts, environment variables and persisted data to be re-linked.
-# Help: Could be used to resolve conflicts in favor of a particular app.
+# Help: Could be used to resolve conflicts in favor of a particular application(s).
 # For example, if you have installed 'python' and 'python27', you can use 'scoop reset' to switch between
 # using one or the other.
 #

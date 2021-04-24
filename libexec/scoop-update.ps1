@@ -3,12 +3,12 @@
 # Help: 'scoop update' updates Scoop and all local buckets to the latest version.
 #    'scoop update <APP>' updates already installed application to the latest available version.
 #
-# You can use '*' in place of <APP> to update all apps.
+# You can use '*' in place of <APP> to update all applications.
 #
 # Options:
 #   -h, --help                Show help for this command.
 #   -f, --force               Force update even when there isn't a newer version.
-#   -g, --global              Update a globally installed app.
+#   -g, --global              Update a globally installed application(s).
 #   -i, --independent         Don't install dependencies automatically.
 #   -k, --no-cache            Don't use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).

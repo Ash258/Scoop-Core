@@ -1,8 +1,6 @@
 # Usage: scoop virustotal [<OPTIONS>] <APP>...
-# Summary: Look for app's hash on virustotal.com.
-# Help: Look for app's hash (MD5, SHA1 or SHA256) on virustotal.com.
-#
-# Use a single '*' for app to check all installed apps.
+# Summary: Search virustotal database for potential viruses in files provided in manifest(s).
+# Help: You can use '*' in place of <APP> to check all installed applications.
 #
 # The download's hash is also a key to access VirusTotal's scan results.
 # This allows to check the safety of the files without even downloading
@@ -16,19 +14,19 @@
 #   scoop config 'virustotal_api_key' <your API key: 64 lower case hex digits>
 #
 # Exit codes:
-# 0 -> success
-# 1 -> problem parsing arguments
-# 2 -> at least one package was marked unsafe by VirusTotal
-# 4 -> at least one exception was raised while looking for info
-# 8 -> at least one package couldn't be queried because its hash type
-#      isn't supported by VirusTotal, the manifest couldn't be found
-#      or didn't contain a hash
-# Note: the exit codes (2, 4 & 8) may be combined, e.g. 6 -> exit codes
-#       2 & 4 combined
+#   0 -> success
+#   1 -> problem parsing arguments
+#   2 -> at least one package was marked unsafe by VirusTotal
+#   4 -> at least one exception was raised while looking for info
+#   8 -> at least one package couldn't be queried because its hash type
+#        isn't supported by VirusTotal, the manifest couldn't be found
+#        or didn't contain a hash
+#   Note: the exit codes (2, 4 & 8) may be combined, e.g. 6 -> exit codes
+#         2 & 4 combined
 #
 # Options:
 #   -h, --help                Show help for this command.
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the app supports it.
+#   -a, --arch <32bit|64bit>  Use the specified architecture, if the application supports it.
 #   -s, --scan                For packages where VirusTotal has no information, send download URL
 #                             for analysis (and future retrieval). This requires you to configure
 #                             your virustotal_api_key (see help entry for config command).
