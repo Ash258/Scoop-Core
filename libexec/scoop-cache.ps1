@@ -1,4 +1,4 @@
-# Usage: scoop cache [<COMMAND>] [<OPTIONS>] [<APP>...]
+# Usage: scoop cache [<SUBCOMMAND>] [<OPTIONS>] [<APP>...]
 # Summary: Show or clear the download cache.
 # Help: Scoop caches downloaded files to remove the need for repeated downloads of same files.
 #
@@ -11,7 +11,7 @@
 # To clear everything in cache, use:
 #   scoop cache rm *
 #
-# Commands:
+# Subcommands:
 #   rm              Remove an application specific files from cache.
 #   show            Show an overview of all cached files. Default command when any is provided.
 #
@@ -34,7 +34,7 @@ $exitCode = 0
 $problems = 0
 
 if ($cmd -notin @('rm', 'show')) { Stop-ScoopExecution -Message "Unknown subcommand: '$cmd'" -Usage (my_usage) }
-if (!$isShow -and !$applications) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
+if (!$isShow -and !$applications) { Stop-ScoopExecution -Message 'Parameter <APP> is required for ''rm'' subcommand' -Usage (my_usage) }
 
 if ($isShow) {
     Show-CachedFileList -ApplicationFilter $applications
