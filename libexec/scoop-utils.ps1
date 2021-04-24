@@ -1,4 +1,4 @@
-# Usage: scoop utils [utility] [path] [options] [--additional-options ...]
+# Usage: scoop utils <UTILITY> [<OPTIONS>] [<PATH>] [--additional-options <OPTS>...]
 # Summary: Wrapper around utilities for maintaining buckets and manifests.
 # Help: Bucket maintainers no longer need to have own 'bin' folder and they can use native command.
 #
@@ -48,8 +48,8 @@ $VALID_UTILITIES = @(
     'missing-checkver'
 )
 
-if (!$Utility) { Stop-ScoopExecution -Message 'No utility provided' -ExitCode 1 -Usage (my_usage) }
-if ($Utility -notin $VALID_UTILITIES) { Stop-ScoopExecution -Message "$Utility is not valid Scoop utility" -ExitCode 1 -Usage (my_usage) }
+if (!$Utility) { Stop-ScoopExecution -Message 'Parameter <UTILITY> missing' -ExitCode 1 -Usage (my_usage) }
+if ($Utility -notin $VALID_UTILITIES) { Stop-ScoopExecution -Message "'$Utility' is not valid Scoop utility" -ExitCode 1 -Usage (my_usage) }
 
 $UtilityPath = (Join-Path $PSScriptRoot '..\bin' | Get-ChildItem -Filter "$Utility.ps1" -File).FullName
 $BucketFolder = Join-Path $PWD 'bucket'
@@ -69,7 +69,7 @@ if (!$ManifestPath) {
 try {
     $BucketFolder = Resolve-Path $BucketFolder -ErrorAction 'Stop'
 } catch {
-    Stop-ScoopExecution -Message "scoop utils: $BucketFolder is not valid directory" -ExitCode 2
+    Stop-ScoopExecution -Message "scoop utils: '$BucketFolder' is not valid directory" -ExitCode 2
 }
 #endregion Parameter handling/validation
 
