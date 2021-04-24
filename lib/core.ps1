@@ -757,9 +757,12 @@ function shim($path, $global, $name, $arg) {
 
     if ($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
+        $executableName = if (Test-IsArmArchitecture) { 'shim.arm64.exe' } else { 'shim.exe' }
         # TODO: Use relative path from this file
-        # TODO: ARM support
-        versiondir 'scoop' 'current' | Join-Path -ChildPath 'supporting\shimexe\bin\shim.exe' | Copy-Item -Destination "$shim.exe" -Force
+        $shimExePath = versiondir 'scoop' 'current' | Join-Path -ChildPath "supporting\shimexe\bin\$executableName"
+
+        Copy-Item -LiteralPath $shimExePath -Destination "$shim.exe" -Force
+
         $result = @("path = $resolved_path")
         if ($arg) { $result += "args = $arg" }
 
