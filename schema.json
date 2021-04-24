@@ -376,14 +376,26 @@
                 }
             ]
         },
+        "autoupdateUrl": {
+            "description": "Specify URL to be updated.",
+            "anyOf": [
+                {
+                    "type": "string",
+                    "format": "uri"
+                },
+                {
+                    "type": "string",
+                    "regex": "(https?://)*([www.])*\\w+\\.\\w+\\D+"
+                }
+            ]
+        },
         "autoupdateArchitecture": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "url": {
                     "description": "Specifies URLs to be updated.",
-                    "type": "string",
-                    "format": "uri"
+                    "$ref": "#/definitions/autoupdateUrl"
                 },
                 "hash": {
                     "description": "Specifies how hashes are extracted.",
@@ -429,8 +441,7 @@
                 },
                 "url": {
                     "description": "Specifies the URL to be updated",
-                    "type": "string",
-                    "format": "uri"
+                    "$ref": "#/definitions/autoupdateUrl"
                 },
                 "hash": {
                     "description": "Specifies how the hashes are extracted",
@@ -448,6 +459,10 @@
         }
     },
     "properties": {
+        "$schema": {
+            "description": "Specify path to the json schema, used for validation of the json file.",
+            "type": "string"
+        },
         "##": {
             "description": "Specifies a comment/additional information for other contributors.",
             "$ref": "#/definitions/stringOrArrayOfStrings"

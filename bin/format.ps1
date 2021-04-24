@@ -180,6 +180,10 @@ foreach ($gci in Get-ChildItem $Dir "$App.*" -File) {
     }
     #endregion Architecture properties sort
 
+    if ($manifest.'$schema') {
+        $manifest.PSObject.Properties.Remove('$schema')
+    }
+
     $newManifest = [PSCustomObject] @{ }
     # Add informational properties in special order ranked by usability into new object and remove from old object
     # Comment for maintainers has to be at first

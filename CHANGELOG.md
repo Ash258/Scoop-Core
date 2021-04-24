@@ -4,6 +4,7 @@
 
 ### 0.6-pre3
 
+- **schema**: Fix validation for curly bracket variables in autoupdate
 - **scoop-utils**: Use correct name of `checkurls` utility
 - **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
 - **scoop-cache**: Allow multiple apps to be passed as argument
