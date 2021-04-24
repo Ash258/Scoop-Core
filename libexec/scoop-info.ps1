@@ -1,10 +1,8 @@
-# Usage: scoop info <app> [options]
-# Summary: Display information about an app
+# Usage: scoop info [<OPTIONS>] <APP>
+# Summary: Display information about an application.
 #
 # Options:
 #   -h, --help      Show help for this command.
-
-param($app)
 
 'buckets', 'core', 'depends', 'help', 'install', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -12,8 +10,12 @@ param($app)
 
 Reset-Alias
 
-if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+$opt, $app, $err = getopt $args
 
+if ($err) { Stop-ScoopExecution -Message "scoop info: $err" -ExitCode 2 }
+if (!$app) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+
+# TODO: Adopt Resolve-ManifestInformation
 if ($app -match '^(ht|f)tps?://|\\\\') {
     # check if $app is a URL or UNC path
     $url = $app

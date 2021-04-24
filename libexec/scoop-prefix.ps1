@@ -1,5 +1,5 @@
 # Usage: scoop prefix [<OPTIONS>] <APP>
-# Summary: Returns the location/path of installed application.
+# Summary: Return the location/path of installed application.
 #
 # Options:
 #   -h, --help      Show help for this command.
