@@ -97,6 +97,68 @@ function ConvertTo-Manifest {
     }
 }
 
+#region Resolve Helpers
+$_br = '[/\\]'
+$_archivedManifestRegex = "${_br}bucket${_br}old${_br}(?<manifestName>.+?)${_br}(?<manifestVersion>.+?)\.(?<manifestExtension>$ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+function Get-RemoteManifest {
+    <#
+    .SYNOPSIS
+        Download manifest from provided URL
+    .PARAMETER URL
+        Specifies the URL pointing to manifest.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
+
+    process {
+        $str = $null
+        try {
+            # TODO: Implement proxy
+            $wc = New-Object System.Net.Webclient
+            $wc.Headers.Add('User-Agent', (Get-UserAgent))
+            $str = $wc.DownloadString($URL)
+        } catch [System.Management.Automation.MethodInvocationException] {
+            Write-UserMessage -Message "${URL}: $($_.Exception.InnerException.Message)" -Warning
+        } catch {
+            throw $_.Exception.Message
+        }
+        if (!$str) {
+            throw [ScoopException] "'$URL' does not contain valid manifest" # TerminatingError thrown
+        }
+
+        Confirm-DirectoryExistence -Directory $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Out-Null
+
+        # Parse name and extension from URL
+        $name = Split-Path $URL -Leaf
+        $extension = ($name -split '\.')[-1]
+        $name = $name -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+        if ($URL -match $_archivedManifestRegex) {
+            $name = $Matches['manifestName']
+            $extension = $Matches['manifestExtension']
+        }
+
+        $outName = "$name-$(Get-Random)-$(Get-Random).$extension"
+        $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$outName"
+        if (Test-Path $manifestFile) {
+            $new = Get-Random
+            # TODO: Sanitize contextual renaming of already installed manifests
+            Write-UserMessage -Message "Manifest file '$manifestFile' already exists. Renaming to $new" -Warning
+            Rename-Item $manifestFile "$new.$extension"
+        }
+        Out-UTF8File -Path $manifestFile -Content $str
+
+        $manifest = ConvertFrom-Manifest -Path $manifestFile
+
+        return @{
+            'Name'     = $name
+            'Manifest' = $manifest
+            'Path'     = Get-Item -LiteralPath $manifestFile
+        }
+    }
+}
+#endregion Resolve Helpers
+
 function Resolve-ManifestInformation {
     <#
     .SYNOPSIS
@@ -126,6 +188,8 @@ function Resolve-ManifestInformation {
         $versionLookup = '@(?<version>.+)'
         $lookupRegex = "^($bucketLookup/)?$applicationLookup($versionLookup)?$"
 
+        $manifest = $applicationName = $applicationVersion = $localPath = $url = $null
+
         if (Test-Path -LiteralPath $ApplicationQuery) {
             # Local full path
             try {
@@ -146,8 +210,12 @@ function Resolve-ManifestInformation {
             $applicationVersion = $manifest.version
             $bucket = $null
         } elseif ($ApplicationQuery -match '^https?://') {
-            # TODO: Implement download with proxy
-            throw 'Not implemented https'
+            $res = Get-RemoteManifest -URL $ApplicationQuery
+            $applicationName = $res.Name
+            $manifest = $res.Manifest
+            $applicationVersion = $res.Manifest.version
+            $localPath = $res.Path
+            $url = $ApplicationQuery
         } elseif ($ApplicationQuery -match $lookupRegex) {
             throw 'Not implemented lookup'
         } else {
@@ -165,14 +233,15 @@ function Resolve-ManifestInformation {
             'Version'          = $applicationVersion
             'Bucket'           = $bucket
             'ManifestObject'   = $manifest
-            # TODO:
-            'Url'              = ''
-            'LocalPath'        = ''
+            'Url'              = $url
+            'LocalPath'        = $localPath
             'CalculatedUrl'    = ''
             'CalculatedBucket' = ''
         }
     }
 }
+
+function appname_from_url($url) { return (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$" }
 
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
