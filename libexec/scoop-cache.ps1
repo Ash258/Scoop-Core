@@ -41,7 +41,7 @@ if ($isShow) {
 } else {
     foreach ($app in $applications) {
         try {
-            Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -Force -Recurse
+            Join-Path $SCOOP_CACHE_DIRECTORY "$app#*" | Remove-Item -ErrorAction 'Stop' -Force -Recurse
             Join-Path $SCOOP_CACHE_DIRECTORY "$app.txt" | Remove-Item -ErrorAction 'SilentlyContinue' -Force -Recurse
         } catch {
             Write-UserMessage -Message "Removing ${app}: $($_.Exception.Message)" -Err
