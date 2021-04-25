@@ -10,25 +10,29 @@
 
 Reset-Alias
 
-$opt, $command, $err = getopt $args
+$Opt, $Command, $err = getopt $args
+
 if ($err) { Stop-ScoopExecution -Message "scoop which: $err" -ExitCode 2 }
+if (!$Command) { Stop-ScoopExecution -Message 'Parameter <COMMAND> missing' -Usage (my_usage) }
 
-if (!$command) { Stop-ScoopExecution -Message 'Parameter <COMMAND> missing' -Usage (my_usage) }
-
+$gcm = $null
 try {
-    $gcm = Get-Command $command -ErrorAction 'Stop'
+    $gcm = Get-Command $Command -ErrorAction 'Stop'
 } catch {
-    Stop-ScoopExecution -Message "Command '$command' not found"
+    Stop-ScoopExecution -Message "Command '$Command' not found"
 }
 
+$ExitCode = 0
+$FinalPath = $null
 $userShims = shimdir $false | Resolve-Path
 $globalShims = shimdir $true # don't resolve: may not exist
 
-$FINAL_PATH = $null
-$exitCode = 0
+# TODO: Delete
+$FINAL_PATH = $FinalPath
 
 if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims*") -or ($gcm.Path -like "$globalShims*"))) {
-    $shimText = Get-Content $gcm.Path
+    $shimText = Get-Content -LiteralPath $gcm.Path -Encoding 'UTF8'
+    # TODO: Drop invoke-expression
     $exePath = ($shimText | Where-Object { $_.StartsWith('$path') }) -split ' ' | Select-Object -Last 1 | Invoke-Expression
 
     # Expand relative path
@@ -38,22 +42,22 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
         $exePath = $gcm.Path
     }
 
-    $FINAL_PATH = friendly_path $exePath
+    $FinalPath = friendly_path $exePath
 } else {
     switch ($gcm.CommandType) {
-        'Application' { $FINAL_PATH = $gcm.Source }
+        'Application' { $FinalPath = $gcm.Source }
         'Alias' {
-            $FINAL_PATH = Invoke-ScoopCommand 'which' @{ 'Command' = $gcm.ResolvedCommandName }
+            $FinalPath = Invoke-ScoopCommand 'which' @($gcm.ResolvedCommandName)
             $exitCode = $LASTEXITCODE
         }
         default {
-            Write-UserMessage -Message 'Not a scoop shim'
-            $FINAL_PATH = $gcm.Path
+            Write-UserMessage -Message 'Not a scoop shim' -Output
+            $FinalPath = $gcm.Path
             $exitCode = 3
         }
     }
 }
 
-if ($FINAL_PATH) { Write-UserMessage -Message $FINAL_PATH -Output }
+if ($FinalPath) { Write-UserMessage -Message $FinalPath -Output }
 
 exit $exitCode
