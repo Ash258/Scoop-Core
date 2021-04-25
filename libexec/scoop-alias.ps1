@@ -1,20 +1,31 @@
-# Usage: scoop alias [add|list|rm|edit|path] [<args>] [options]
-# Summary: Manage scoop aliases
-# Help: Add, remove, list or edit Scoop aliases
+# Usage: scoop alias [<SUBCOMMAND>] [<OPTIONS>] [<NAME> <COMMAND> <DESCRIPTION>]
+# Summary: Manage scoop aliases.
+# Help: Add, remove, list or edit scoop aliases.
 #
-# Aliases are custom Scoop subcommands that can be created to make common tasks easier.
+# Aliases are custom scoop subcommands that can be created to make common tasks easier.
+# It could be any valid PowerShell script/command.
 #
-# To add an Alias:
-#     scoop alias add <name> <command> <description>
+# To add an alias:
+#     scoop alias add <NAME> <COMMAND> <DESCRIPTION>
+# Then it could be easily executed as it would be normal scoop command:
+#     scoop <NAME>
 #
-# To edit an Alias inside default system editor:
-#     scoop alias edit <name>
+# To edit an alias inside default system editor:
+#     scoop alias edit <NAME>
 #
 # To get path of the alias file:
-#     scoop alias path <name>
+#     scoop alias path <NAME>
 #
 # e.g.:
 #     scoop alias add test-home 'curl.exe --verbose $args[0] *>&1 | Select-String ''< HTTP/'', ''< Location:''' 'Test URL status code and location'
+#
+# Subcommands:
+#   add             Add a new alias.
+#   list            List all locally added buckets. Default subcommand when none is provided.
+#   known           List all buckets, which are considered as "known" and could be added without providing repository URL.
+#   rm              Remove an already added bucket.
+#   edit              Remove an already added bucket.
+#   path              Remove an already added bucket.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -26,14 +37,17 @@
 
 #region Parameter validation
 $opt, $rem, $err = getopt $args 'v' 'verbose'
-if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop alias: $err" -ExitCode 2 }
 
 $Option = $rem[0]
 $Name = $rem[1]
 $Command = $rem[2]
 $Description = $rem[3]
 $Verbose = $opt.v -or $opt.verbose
+
+if (!$Option) { $Option = 'list' }
 #endregion Parameter validation
+
 $exitCode = 0
 
 switch ($Option) {
