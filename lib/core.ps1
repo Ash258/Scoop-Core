@@ -931,7 +931,8 @@ function show_app($app, $bucket, $version) {
 }
 
 function last_scoop_update() {
-    $lastUpdate = Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate' }
+    # TODO: Config refactor
+    $lastUpdate = Invoke-ScoopCommand 'config' @('lastupdate')
 
     if ($null -ne $lastUpdate) {
         try {
@@ -951,7 +952,8 @@ function is_scoop_outdated() {
     $res = $true
 
     if ($null -eq $lastUp) {
-        Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate'; 'value' = ($now.ToString($UPDATE_DATE_FORMAT)) } | Out-Null
+        # TODO: Config refactor
+        Invoke-ScoopCommand 'config' @('lastupdate', ($now.ToString($UPDATE_DATE_FORMAT))) | Out-Null
     } else {
         $res = $lastUp.AddHours(3) -lt $now.ToLocalTime()
     }

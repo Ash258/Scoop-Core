@@ -59,7 +59,7 @@ if ($version) {
     Invoke-ScoopCommand 'help'
     $exitCode = $LASTEXITCODE
 } elseif ($commandHelp) {
-    Invoke-ScoopCommand 'help' @{ 'cmd' = $cmd }
+    Invoke-ScoopCommand 'help' @($cmd)
     $exitCode = $LASTEXITCODE
 } elseif ($validCommand) {
     Invoke-ScoopCommand $cmd $args
