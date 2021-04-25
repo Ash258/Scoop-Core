@@ -2,14 +2,10 @@
 # Summary: Search virustotal database for potential viruses in files provided in manifest(s).
 # Help: You can use '*' in place of <APP> to check all installed applications.
 #
-# The download's hash is also a key to access VirusTotal's scan results.
+# The hash of file is also a key to access VirusTotal's scan results.
 # This allows to check the safety of the files without even downloading
-# them in many cases.  If the hash is unknown to VirusTotal, the
-# download link is printed to submit it to VirusTotal.
-#
-# If you have signed up to VirusTotal's community, you have an API key
-# that this script can use to submit unknown packages for inspection
-# if you use the `--scan' flag.  Tell scoop about your API key with:
+# them in many cases. If the hash is unknown to VirusTotal, the
+# download link is printed and VirusTotal detection is triggered.
 #
 #   scoop config 'virustotal_api_key' <your API key: 64 lower case hex digits>
 #
@@ -37,35 +33,38 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: --no-depends => --independent
+# TODO: Drop --scan??
+
 Reset-Alias
 
-$opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
+$Opt, $Applications, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
 if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required' }
 
-$architecture = ensure_architecture ($opt.a + $opt.arch)
-$DoScan = $opt.scan -or $opt.s
+$ExitCode = 0
+$Architecture = ensure_architecture ($opt.a + $opt.arch)
+$DoScan = $Opt.s -or $Opt.scan
+$Independent = $Opt.n -or $Opt.'no-depends'
 
-if ($apps -eq '*') {
-    $apps = installed_apps $false
-    $apps += installed_apps $true
+if ($Applications -eq '*') {
+    $Applications = installed_apps $false
+    $Applications += installed_apps $true
 }
-if (!$opt.n -and !$opt.'no-depends') { $apps = install_order $apps $architecture }
+if (!$Independent) { $Applications = install_order $Applications $Architecture }
 
-$exitCode = 0
-
-foreach ($app in $apps) {
+foreach ($app in $Applications) {
     # TODO: Adopt Resolve-ManifestInformation
     $manifest, $bucket = find_manifest $app
     if (!$manifest) {
-        $exitCode = $exitCode -bor $VT_ERR.NoInfo
+        $ExitCode = $ExitCode -bor $VT_ERR.NoInfo
         Write-UserMessage -Message "${app}: manifest not found" -Err
         continue
     }
 
-    foreach ($url in (url $manifest $architecture)) {
-        $hash = hash_for_url $manifest $url $architecture
+    foreach ($url in (url $manifest $Architecture)) {
+        $hash = hash_for_url $manifest $url $Architecture
 
         if (!$hash) {
             Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
@@ -73,16 +72,16 @@ foreach ($app in $apps) {
         }
 
         try {
-            $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
+            $ExitCode = $ExitCode -bor (Search-VirusTotal $hash $app)
         } catch {
-            $exitCode = $exitCode -bor $VT_ERR.Exception
+            $ExitCode = $ExitCode -bor $VT_ERR.Exception
 
             if ($_.Exception.Message -like '*(404)*') {
                 Submit-ToVirusTotal -Url $url -App $app -DoScan:$DoScan
             } else {
                 if ($_.Exception.Message -match '\(204|429\)') {
                     Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
-                    $exitCode = 3
+                    $ExitCode = 3
                     continue
                 }
                 Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
@@ -91,4 +90,4 @@ foreach ($app in $apps) {
     }
 }
 
-exit $exitCode
+exit $ExitCode
