@@ -28,8 +28,8 @@ $AdditionalArgs = @()
 # Remove additional args before processing arguments
 if ($args -contains '--additional-options') {
     $index = $args.IndexOf('--additional-options')
-    $getopt = $args[0..($index - 1)] # Everything before --additional-options is considered as wrapper command options.
-    $AdditionalArgs = $args[($index + 1)..($args.Count - 1)] # Everything after is considered as utility-specific option.
+    $getopt = $args[0..($index - 1)] # Everything before --additional-options is considered as options for wrapper command.
+    $AdditionalArgs = $args[($index + 1)..($args.Count - 1)] # Everything after is considered as utility-specific option, which needs to be passed to utility itself.
 }
 
 #region Parameter handling/validation
