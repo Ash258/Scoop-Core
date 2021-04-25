@@ -27,12 +27,9 @@ $FinalPath = $null
 $userShims = shimdir $false | Resolve-Path
 $globalShims = shimdir $true # don't resolve: may not exist
 
-# TODO: Delete
-$FINAL_PATH = $FinalPath
-
 if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims*") -or ($gcm.Path -like "$globalShims*"))) {
     $shimText = Get-Content -LiteralPath $gcm.Path -Encoding 'UTF8'
-    # TODO: Drop invoke-expression
+    # TODO: Drop Invoke-Expression
     $exePath = ($shimText | Where-Object { $_.StartsWith('$path') }) -split ' ' | Select-Object -Last 1 | Invoke-Expression
 
     # Expand relative path
@@ -48,16 +45,16 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
         'Application' { $FinalPath = $gcm.Source }
         'Alias' {
             $FinalPath = Invoke-ScoopCommand 'which' @($gcm.ResolvedCommandName)
-            $exitCode = $LASTEXITCODE
+            $ExitCode = $LASTEXITCODE
         }
         default {
             Write-UserMessage -Message 'Not a scoop shim' -Output
             $FinalPath = $gcm.Path
-            $exitCode = 3
+            $ExitCode = 3
         }
     }
 }
 
 if ($FinalPath) { Write-UserMessage -Message $FinalPath -Output }
 
-exit $exitCode
+exit $ExitCode
