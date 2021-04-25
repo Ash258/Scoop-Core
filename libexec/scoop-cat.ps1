@@ -4,17 +4,18 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-# TODO: get-opt
-param([Parameter(ValueFromRemainingArguments)] [String[]] $Application)
-
-'help', 'Helpers', 'install', 'manifest' | ForEach-Object {
+'getopt', 'help', 'Helpers', 'install', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+$opt, $Application, $err = getopt $args
+
+if ($err) { Stop-ScoopExecution -Message "scoop cat: $err" -ExitCode 2 }
 if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 $exitCode = 0
 $problems = 0
+
 foreach ($app in $Application) {
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
