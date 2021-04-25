@@ -28,6 +28,7 @@ $userShims = shimdir $false | Resolve-Path
 $globalShims = shimdir $true # don't resolve: may not exist
 
 if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims*") -or ($gcm.Path -like "$globalShims*"))) {
+    # This will show path to the real exe instead of the original ps1 file. Should it be right?
     $shimText = Get-Content -LiteralPath $gcm.Path -Encoding 'UTF8'
     # TODO: Drop Invoke-Expression
     $exePath = ($shimText | Where-Object { $_.StartsWith('$path') }) -split ' ' | Select-Object -Last 1 | Invoke-Expression
