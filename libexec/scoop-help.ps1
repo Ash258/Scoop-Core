@@ -10,37 +10,37 @@
 
 Reset-Alias
 
-$opt, $cmd, $err = getopt $args
+$Options, $Command, $_err = getopt $args
 
-if ($err) { Stop-ScoopExecution -Message "scoop help: $err" -ExitCode 2 }
+if ($_err) { Stop-ScoopExecution -Message "scoop help: $_err" -ExitCode 2 }
 
 $ExitCode = 0
-$commands = commands
+$ValidCommands = commands
 
-if (!($cmd)) {
+if (!($Command)) {
     Write-UserMessage -Output -Message @(
-        'Usage: scoop [<OPTIONS>] [<COMMAND>]'
+        'Usage: scoop [<COMMAND>] [<OPTIONS>]'
         ''
         'Windows command line installer'
         ''
-        'General exit codes'
+        'General exit codes:'
         '   0 - Everything OK'
         '   1 - No parameter provided or usage shown'
         '   2 - Argument parsing error'
         '   3 - General execution error'
         '   4 - Permission/Privileges related issue'
-        '   10 + - Number of failed actions (installations, updates, ...)'
+        '   10+ - Number of failed actions (installations, updates, ...)'
         ''
         'Type ''scoop help <COMMAND>'' to get help for a specific command.'
         ''
         'Available commands are:'
     )
     print_summaries
-} elseif ($commands -contains $cmd) {
-    print_help $cmd
+} elseif ($ValidCommands -contains $Command) {
+    print_help $Command
 } else {
     $ExitCode = 3
-    Write-UserMessage -Message "scoop help: no such command '$cmd'" -Output
+    Write-UserMessage -Message "scoop help: no such command '$Command'" -Output
 }
 
 exit $ExitCode
