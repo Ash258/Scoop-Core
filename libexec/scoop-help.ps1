@@ -10,12 +10,10 @@
 
 Reset-Alias
 
+$ExitCode = 0
 $Options, $Command, $_err = getopt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop help: $_err" -ExitCode 2 }
-
-$ExitCode = 0
-$ValidCommands = commands
 
 if (!($Command)) {
     Write-UserMessage -Output -Message @(
@@ -36,7 +34,7 @@ if (!($Command)) {
         'Available commands are:'
     )
     print_summaries
-} elseif ($ValidCommands -contains $Command) {
+} elseif ((commands) -contains $Command) {
     print_help $Command
 } else {
     $ExitCode = 3
