@@ -4,17 +4,17 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-param($cmd)
-
-# TODO: getopt adoption
-
-'help', 'Helpers' | ForEach-Object {
+'help', 'Helpers', 'getopt' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$exitCode = 0
+$opt, $cmd, $err = getopt $args
+
+if ($err) { Stop-ScoopExecution -Message "scoop help: $err" -ExitCode 2 }
+
+$ExitCode = 0
 $commands = commands
 
 if (!($cmd)) {
@@ -39,9 +39,8 @@ if (!($cmd)) {
 } elseif ($commands -contains $cmd) {
     print_help $cmd
 } else {
-    $exitCode = 3
+    $ExitCode = 3
     Write-UserMessage -Message "scoop help: no such command '$cmd'" -Output
 }
 
-exit $exitCode
-
+exit $ExitCode
