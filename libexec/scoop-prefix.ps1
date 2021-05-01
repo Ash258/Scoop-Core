@@ -8,6 +8,9 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: getopt adoption
+# TODO: Add --global
+
 Reset-Alias
 
 $opt, $app, $err = getopt $args

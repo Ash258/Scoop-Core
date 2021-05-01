@@ -1,16 +1,16 @@
 # Usage: scoop update [<OPTIONS>] [<APP>...]
-# Summary: Update installed application(s), or Scoop itself.
-# Help: 'scoop update' updates Scoop and all local buckets to the latest version.
-#    'scoop update <APP>' updates already installed application to the latest available version.
+# Summary: Update installed application(s), or scoop itself.
+# Help: 'scoop update' updates scoop and all local buckets to the latest version.
+# 'scoop update <APP>' updates already installed application to the latest available version.
 #
 # You can use '*' in place of <APP> to update all applications.
 #
 # Options:
 #   -h, --help                Show help for this command.
-#   -f, --force               Force update even when there isn't a newer version.
+#   -f, --force               Force update even when there is not a newer version.
 #   -g, --global              Update a globally installed application(s).
-#   -i, --independent         Don't install dependencies automatically.
-#   -k, --no-cache            Don't use the download cache.
+#   -i, --independent         Do not install dependencies automatically.
+#   -k, --no-cache            Do not use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).
 #   -q, --quiet               Hide extraneous messages.
 
@@ -38,7 +38,7 @@ if (!$apps) {
 
     Update-Scoop
 } else {
-    if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
+    if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed applications' -ExitCode 4 }
     if (is_scoop_outdated) { Update-Scoop }
     $outdatedApplications = @()
     $applicationsParam = $apps

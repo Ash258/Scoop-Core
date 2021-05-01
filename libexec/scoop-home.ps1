@@ -14,6 +14,7 @@ if ($err) { Stop-ScoopExecution -Message "scoop home: $err" -ExitCode 2 }
 if (!$app) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 Reset-Alias
+
 $exitCode = 0
 
 if ($app) {
@@ -31,7 +32,7 @@ if ($app) {
         Write-UserMessage -Message "Could not find manifest for '$app'." -Err
     }
 } else {
-    Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage)
+    Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage)
 }
 
 exit $exitCode

@@ -14,7 +14,14 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: Export:
+#     - [ ] all installed versions
+#     - [ ] buckets
+#     - [ ] config
+#     - [ ] json
+
 Reset-Alias
+
 $def_arch = default_architecture
 
 $local = installed_apps $false | ForEach-Object { @{ 'name' = $_; 'global' = $false } }

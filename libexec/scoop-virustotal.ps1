@@ -22,7 +22,7 @@
 #
 # Options:
 #   -h, --help                Show help for this command.
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the application supports it.
+#   -a, --arch <32bit|64bit>  Use the specified architecture, if the manifest supports it.
 #   -s, --scan                For packages where VirusTotal has no information, send download URL
 #                             for analysis (and future retrieval). This requires you to configure
 #                             your virustotal_api_key (see help entry for config command).

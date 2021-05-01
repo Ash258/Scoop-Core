@@ -2,7 +2,7 @@
 # Summary: Manage local scoop buckets.
 # Help: Add, list or remove buckets.
 #
-# Buckets are repositories of applications available to install. Scoop comes with
+# Buckets are repositories of manifests available to install. Scoop comes with
 # a default (main) bucket, but you can also add buckets that you or others have
 # published.
 #
@@ -66,9 +66,6 @@ switch ($Cmd) {
     }
     'list' {
         Get-LocalBucket
-    }
-    default {
-        Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage)
     }
 }
 

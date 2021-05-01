@@ -23,6 +23,8 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+Reset-Alias
+
 $getopt = $args
 $AdditionalArgs = @()
 # Remove additional args before processing arguments

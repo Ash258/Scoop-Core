@@ -4,7 +4,8 @@
 # Options:
 #   -h, --help     Show help for this command.
 #   -g, --global   Uninstall a globally installed application(s).
-#   -p, --purge    Remove all persistent data.
+#   -p, --purge    Persisted data will be removed.
+#                  Normally when application is being uninstalled, the data defined in persist property/manually persisted are kept.
 
 'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'Versions', 'getopt', 'Uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -21,7 +22,7 @@ $purge = $opt.p -or $opt.purge
 if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 if ($global -and !(is_admin)) {
-    Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall global apps.' -ExitCode 4
+    Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall globally installed applications.' -ExitCode 4
 }
 
 if ($apps -eq 'scoop') {

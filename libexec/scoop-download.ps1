@@ -1,12 +1,11 @@
 # Usage: scoop download [<OPTIONS>] <APP>...
 # Summary: Download manifest files into cache folder.
-#
 # Help: All manifest files will be downloaded into cache folder without need to install the application.
 #
 # Options:
 #   -h, --help                      Show help for this command.
 #   -s, --skip                      Skip hash check validation (use with caution!).
-#   -u, --utility <native|aria2>    Force using specific download utility.
+#   -u, --utility <native|aria2>    Force to download with specific utility.
 #   -a, --arch <32bit|64bit>        Use the specified architecture.
 #   -b, --all-architectures         All available files across all architectures will be downloaded.
 

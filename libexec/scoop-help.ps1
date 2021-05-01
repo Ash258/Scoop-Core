@@ -19,7 +19,7 @@ $commands = commands
 
 if (!($cmd)) {
     Write-UserMessage -Output -Message @(
-        'Usage: scoop <command> [<args>]'
+        'Usage: scoop [<OPTIONS>] [<COMMAND>]'
         ''
         'Windows command line installer'
         ''
@@ -31,7 +31,7 @@ if (!($cmd)) {
         '   4 - Permission/Privileges related issue'
         '   10 + - Number of failed actions (installations, updates, ...)'
         ''
-        "Type 'scoop help <command>' to get help for a specific command."
+        'Type ''scoop help <COMMAND>'' to get help for a specific command.'
         ''
         'Available commands are:'
     )

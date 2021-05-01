@@ -100,6 +100,8 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: Add --global - Ash258/Scoop-Core#5
+
 Reset-Alias
 
 $opt, $nameValue, $err = getopt $args

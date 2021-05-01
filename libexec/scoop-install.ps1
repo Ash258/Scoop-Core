@@ -12,11 +12,11 @@
 #
 # Options:
 #   -h, --help                Show help for this command.
+#   -a, --arch <32bit|64bit>  Use the specified architecture, if the application's manifest supports it.
 #   -g, --global              Install the application(s) globally.
 #   -i, --independent         Do not install dependencies automatically.
 #   -k, --no-cache            Do not use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the application's manifest supports it.
 
 'Helpers', 'core', 'manifest', 'buckets', 'decompress', 'install', 'shortcuts', 'psmodules', 'Update', 'Versions', 'help', 'getopt', 'depends' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -75,8 +75,8 @@ try {
 } catch {
     Stop-ScoopExecution -Message "$_" -ExitCode 2
 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <apps> missing' -Usage (my_usage) }
-if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed apps' -ExitCode 4 }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed applications' -ExitCode 4 }
 
 if (is_scoop_outdated) { Update-Scoop }
 

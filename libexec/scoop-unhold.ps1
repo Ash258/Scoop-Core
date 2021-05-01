@@ -17,7 +17,7 @@ if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_
 
 $global = $opt.g -or $opt.global
 
-if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed apps' -ExitCode 4 }
+if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed applications' -ExitCode 4 }
 
 $problems = 0
 $exitCode = 0

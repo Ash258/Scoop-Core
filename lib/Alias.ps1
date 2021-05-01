@@ -115,7 +115,8 @@ function Get-ScoopAlias {
     $props.GetEnumerator() | ForEach-Object {
         $content = Get-Content (command_path $_.Name)
         $cmd = ($content | Select-Object -Skip 1).Trim()
-        $sum = (summary $content).Trim()
+        $sum = (summary $content)
+        if ($sum) { $sum = $sum.Trim() }
 
         $aliases += New-Object psobject -Property @{ 'Name' = $_.Name; 'Summary' = $sum; 'Command' = $cmd }
     }

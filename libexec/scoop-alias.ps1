@@ -21,11 +21,10 @@
 #
 # Subcommands:
 #   add             Add a new alias.
-#   list            List all locally added buckets. Default subcommand when none is provided.
-#   known           List all buckets, which are considered as "known" and could be added without providing repository URL.
-#   rm              Remove an already added bucket.
-#   edit              Remove an already added bucket.
-#   path              Remove an already added bucket.
+#   list            List all already added aliases. Default subcommand when none is provided.
+#   rm              Remove an already added alias.
+#   edit            Open specified alias executable in default system editor.
+#   path            Show path to the executable of specified alias.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -35,10 +34,12 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-#region Parameter validation
+# TODO: Add --global - Ash258/Scoop-Core#5
+
 $opt, $rem, $err = getopt $args 'v' 'verbose'
 if ($err) { Stop-ScoopExecution -Message "scoop alias: $err" -ExitCode 2 }
 
+$exitCode = 0
 $Option = $rem[0]
 $Name = $rem[1]
 $Command = $rem[2]
@@ -46,9 +47,6 @@ $Description = $rem[3]
 $Verbose = $opt.v -or $opt.verbose
 
 if (!$Option) { $Option = 'list' }
-#endregion Parameter validation
-
-$exitCode = 0
 
 switch ($Option) {
     'add' {
@@ -95,9 +93,6 @@ switch ($Option) {
             Write-UserMessage -Message "Shim for alias '$Name' does not exist." -Err
             $exitCode = 3
         }
-    }
-    default {
-        Stop-ScoopExecution -Message 'No parameters provided' -Usage (my_usage)
     }
 }
 

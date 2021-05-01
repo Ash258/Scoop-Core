@@ -4,6 +4,8 @@
 
 ### 0.6-pre3
 
+- Unify help entries of executables
+- **scoop-list**: Do not show error when summary is empty
 - **scoop-utils**: Use correct name of `checkurls` utility
 - **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
 - **scoop-cache**: Allow multiple apps to be passed as argument
