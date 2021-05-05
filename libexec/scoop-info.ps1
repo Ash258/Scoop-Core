@@ -4,52 +4,54 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-param($app)
-
-# TODO: getopt adoption
-
-'buckets', 'core', 'depends', 'help', 'install', 'manifest', 'Versions' | ForEach-Object {
+'buckets', 'core', 'depends', 'help', 'getopt', 'install', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-if (!$app) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+$ExitCode = 0
+$Options, $Application, $_err = getopt $args
+
+if ($_err) { Stop-ScoopExecution -Message "scoop info: $_err" -ExitCode 2 }
+if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+
+$Application = $Application[0]
 
 # TODO: Adopt Resolve-ManifestInformation
-if ($app -match '^(ht|f)tps?://|\\\\') {
-    # check if $app is a URL or UNC path
-    $url = $app
-    $app = appname_from_url $url
-    $global = installed $app $true
-    $status = app_status $app $global
+if ($Application -match '^(ht|f)tps?://|\\\\') {
+    # check if $Application is a URL or UNC path
+    $url = $Application
+    $Application = appname_from_url $url
+    $global = installed $Application $true
+    $status = app_status $Application $global
     $manifest = url_manifest $url
     $manifest_file = $url
 } else {
-    # else $app is a normal app name
-    $global = installed $app $true
-    $app, $bucket, $null = parse_app $app
-    $status = app_status $app $global
-    $manifest, $bucket = find_manifest $app $bucket
+    # else $Application is a normal app name
+    $global = installed $Application $true
+    $Application, $bucket, $null = parse_app $Application
+    $status = app_status $Application $global
+    $manifest, $bucket = find_manifest $Application $bucket
 }
 
-if (!$manifest) { Stop-ScoopExecution -Message "Could not find manifest for '$(show_app $app $bucket)'." }
+if (!$manifest) { Stop-ScoopExecution -Message "Could not find manifest for '$(show_app $Application $bucket)'" }
 
-$install = install_info $app $status.version $global
+$install = install_info $Application $status.version $global
 $status.installed = $install.bucket -eq $bucket
 $version_output = $manifest.version
 if (!$manifest_file) {
-    $manifest_file = manifest_path $app $bucket
+    $manifest_file = manifest_path $Application $bucket
 }
 
-$currentVersion = Select-CurrentVersion -AppName $app -Global:$global
-$dir = versiondir $app $currentVersion $global
-$original_dir = versiondir $app $manifest.version $global
-$persist_dir = persistdir $app $global
+$currentVersion = Select-CurrentVersion -AppName $Application -Global:$global
+$dir = versiondir $Application $currentVersion $global
+$original_dir = versiondir $Application $manifest.version $global
+$persist_dir = persistdir $Application $global
 
 $architecture = default_architecture
 if ($status.installed) {
-    $manifest_file = manifest_path $app $install.bucket
+    $manifest_file = manifest_path $Application $install.bucket
     if ($install.url) {
         $manifest_file = $install.url
     }
@@ -61,7 +63,7 @@ if ($status.installed) {
     $architecture = $install.architecture
 }
 
-$message = @("Name: $app")
+$message = @("Name: $Application")
 $message += "Version: $version_output"
 if ($manifest.description) { $message += "Description: $($manifest.description)" }
 if ($manifest.homepage) { $message += "Website: $($manifest.homepage)" }
@@ -100,9 +102,9 @@ $message += @('Manifest:', "  $manifest_file")
 # Show installed versions
 if ($status.installed) {
     $message += 'Installed:'
-    $versions = Get-InstalledVersion -AppName $app -Global:$global
+    $versions = Get-InstalledVersion -AppName $Application -Global:$global
     $versions | ForEach-Object {
-        $dir = versiondir $app $_ $global
+        $dir = versiondir $Application $_ $global
         if ($global) { $dir += ' *global*' }
         $message += "  $dir"
     }
@@ -158,7 +160,7 @@ if ($env_add_path) {
 }
 
 # Available versions:
-$vers = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$app" | Get-ChildItem -ErrorAction 'SilentlyContinue' -File |
+$vers = Find-BucketDirectory -Name $bucket | Join-Path -ChildPath "old\$Application" | Get-ChildItem -ErrorAction 'SilentlyContinue' -File |
     Where-Object -Property 'Name' -Match -Value "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
 
 if ($vers.Count -gt 0) { $message += "Available Versions: $($vers.BaseName -join ', ')" }
@@ -168,4 +170,4 @@ Write-UserMessage -Message $message -Output
 # Show notes
 show_notes $manifest $dir $original_dir $persist_dir
 
-exit 0
+exit $ExitCode
