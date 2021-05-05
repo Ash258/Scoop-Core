@@ -36,6 +36,12 @@ TODO: Export:
     "config": {
         ...wholeConfig
     },
+    "aliases": {
+        "name": "xxx",
+        "body": [
+            "xxx"
+        ]
+    },
     environments??
 }
 #>

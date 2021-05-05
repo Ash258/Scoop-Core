@@ -37,8 +37,8 @@ if (!($Command)) {
 } elseif ((commands) -contains $Command) {
     print_help $Command
 } else {
-    $ExitCode = 3
     Write-UserMessage -Message "scoop help: no such command '$Command'" -Output
+    $ExitCode = 3
 }
 
 exit $ExitCode

@@ -20,11 +20,17 @@ function command_path($cmd) {
     if (!(Test-Path $cmd_path)) {
         # Get path from shim
         $shim_path = Join-Path $SCOOP_ROOT_DIRECTORY "shims\scoop-$cmd.ps1"
-        $line = ((Get-Content $shim_path) | Where-Object { $_.StartsWith('$path') })
+        if (!(Test-Path -LiteralPath $shim_path)) {
+            throw [ScoopException] "Shim for alias '$cmd' does not exist" # TerminatingError thrown
+        }
+
+        $cmd_path = $shim_path
+        $line = ((Get-Content -LiteralPath $shim_path -Encoding 'UTF8') | Where-Object { $_.StartsWith('$path') })
         if ($line) {
+            # TODO: Drop Invoke-Expression
             Invoke-Expression -Command "$line"
             $cmd_path = $path
-        } else { $cmd_path = $shim_path }
+        }
     }
 
     return $cmd_path
