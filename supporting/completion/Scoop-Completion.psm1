@@ -88,6 +88,10 @@ $script:SCOOP_PARAMETER_VALUES = @{
         'a'    = '32bit 64bit'
         'arch' = '32bit 64bit'
     }
+    'depends'    = @{
+        'a'    = '32bit 64bit'
+        'arch' = '32bit 64bit'
+    }
     'download'   = @{
         'a'       = '32bit 64bit'
         'arch'    = '32bit 64bit'
