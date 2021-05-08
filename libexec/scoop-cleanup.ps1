@@ -43,7 +43,6 @@ foreach ($a in $Applications) {
     try {
         Clear-InstalledVersion -Application $a[0] -Global:($a[1]) -BeVerbose:$Verbose -Cache:$Cache
     } catch {
-        # TODO: Consider not breaking whole application cleanup
         Write-UserMessage -Message '', $_.Exception.Message -Err
         ++$Problems
         continue
