@@ -100,8 +100,12 @@ function ConvertTo-Manifest {
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
-    $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*"
-    $path = $null
+    $path = $file = $null
+    try {
+        $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*" -ErrorAction 'Stop'
+    } catch {
+        return $path
+    }
 
     if ($file) {
         if ($file.Count -gt 1) { $file = $file[0] }
