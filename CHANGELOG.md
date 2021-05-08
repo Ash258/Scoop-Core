@@ -5,6 +5,7 @@
 ### 0.6-pre3
 
 - Unify help entries of executables
+- **scoop-info**: Fix env_add_path rendering
 - **scoop-alias**: List subcommand now indicates if executable is no longer available
 - **scoop-list**: Do not show error when summary is empty
 - **scoop-utils**: Use correct name of `checkurls` utility
