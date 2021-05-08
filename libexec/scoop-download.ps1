@@ -72,7 +72,7 @@ foreach ($app in $application) {
 
             continue
         }
-        $manifest = parse_json $generated
+        $manifest = ConvertFrom-Manifest -LiteralPath $generated
     }
 
     if (-not $version) { $version = $manifest.version }

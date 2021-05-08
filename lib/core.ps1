@@ -443,8 +443,16 @@ function app_status($app, $global) {
     return $status
 }
 
-# TODO: YAML
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
+function appname_from_url($url) {
+    # Variable from manifest.ps1, which is not dot sourced, it should not be problem, but needs to refactored
+    $appName = (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+    $br = '[/\\]'
+    if ($url -match "${br}bucket${br}old${br}(?<app>.+)${br}(?<version>.+)\.($ALLOWED_MANIFEST_EXTENSION_REGEX)") {
+        $appName = $Matches['app']
+    }
+
+    return $appName
+}
 
 # paths
 function fname($path) { return Split-Path $path -Leaf }
@@ -916,10 +924,14 @@ function applist($apps, $global, $bucket = $null) {
 
 function parse_app([string] $app) {
     # TODO: YAML
-    # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
-    if ($app -match '(?:(?<bucket>[a-zA-Z0-9-.]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
-        return $matches['app'], $matches['bucket'], $matches['version']
+    $br = '[/\\]'
+    if ($app -match "${br}bucket${br}old${br}(?<app>.*?)${br}(?<version>.*?)\.json") {
+        return $Matches['app'], $null, $Matches['version']
+        # if ($app -match "(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*\.$ALLOWED_MANIFESTS_EXTENSIONS_REGEX$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?") {
+    } elseif ($app -match '(?:(?<bucket>[a-zA-Z0-9-]+)\/)?(?<app>.*.json$|[a-zA-Z0-9-_.]+)(?:@(?<version>.*))?') {
+        return $Matches['app'], $Matches['bucket'], $Matches['version']
     }
+
     return $app, $null, $null
 }
 

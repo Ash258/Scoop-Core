@@ -106,7 +106,7 @@ foreach ($sp in $specific_versions) {
         try {
             $specific_versions_paths += generate_user_manifest $app $bucket $version
         } catch {
-            Write-UserMessage -Message $_.Exception.Message -Color DarkRed
+            Write-UserMessage -Message $_.Exception.Message -Color 'DarkRed'
             ++$problems
         }
     }

@@ -4,6 +4,7 @@
 
 ### 0.6-pre3
 
+- **scoop-install**: Support installation of older versions
 - Unify help entries of executables
 - **scoop-info**:
     - Support passing `--arch` and `-a` options
