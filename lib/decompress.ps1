@@ -68,10 +68,13 @@ function Test-ZstdRequirement {
     [OutputType([Boolean])]
     param (
         [Parameter(Mandatory, ParameterSetName = 'URL')]
+        [AllowNull()]
         [String[]] $URL,
         [Parameter(Mandatory, ParameterSetName = 'File')]
         [String] $File
     )
+
+    if ($null -eq $URL) { return $false }
 
     if ($URL) {
         return ($URL | Where-Object { Test-ZstdRequirement -File $_ }).Count -gt 0

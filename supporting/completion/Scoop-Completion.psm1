@@ -43,6 +43,7 @@ $script:SCOOP_SUB_COMMANDS = @{
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
     'cleanup'    = 'g k'
+    'depends'    = 'a'
     'download'   = 's u a b'
     'hold'       = 'g'
     'install'    = 'g i k s a'
@@ -56,6 +57,7 @@ $script:SCOOP_SHORT_PARAMETERS = @{
 }
 $script:SCOOP_LONG_PARAMETERS = @{
     'cleanup'    = 'global cache'
+    'depends'    = 'arch'
     'download'   = 'skip utility arch all-architectures'
     'hold'       = 'global'
     'install'    = 'global independent no-cache skip arch'

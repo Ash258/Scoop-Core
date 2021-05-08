@@ -33,6 +33,7 @@ if ($Options.a -or $Options.arch) {
     }
 }
 
+# TODO: Installed dependencies are not listed. Should they be shown??
 $deps = @(deps $Application $Architecture)
 if ($deps) { $deps[($deps.Length - 1)..0] | Write-UserMessage -Output }
 
