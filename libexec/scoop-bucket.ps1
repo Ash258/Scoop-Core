@@ -1,4 +1,4 @@
-# Usage: scoop bucket [<SUCOMMAND>] [<OPTIONS>] [<NAME> [<REPOSITORY>]]
+# Usage: scoop bucket [<SUBCOMMAND>] [<OPTIONS>] [<NAME> [<REPOSITORY>]]
 # Summary: Manage local scoop buckets.
 # Help: Add, list or remove buckets.
 #
@@ -26,23 +26,24 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'buckets', 'getopt', 'help' | ForEach-Object {
+'core', 'buckets', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$opt, $rest, $err = getopt $args
+$ExitCode = 0
+$Options, $Bucket, $_err = getopt $args
 
-if ($err) { Stop-ScoopExecution -Message "scoop bucket: $err" -ExitCode 2 }
+if ($_err) { Stop-ScoopExecution -Message "scoop bucket: $_err" -ExitCode 2 }
 
-$exitCode = 0
-$Cmd = $rest[0]
-$Name = $rest[1]
-$Repo = $rest[2]
-if (!$Cmd) { $Cmd = 'list' }
+$Operation = $Bucket[0]
+$Name = $Bucket[1]
+$Repo = $Bucket[2]
 
-switch ($Cmd) {
+if (!$Operation) { $Operation = 'list' }
+
+switch ($Operation) {
     'add' {
         if (!$Name) { Stop-ScoopExecution -Message 'Parameter <NAME> is missing' -Usage (my_usage) }
 
@@ -67,6 +68,10 @@ switch ($Cmd) {
     'list' {
         Get-LocalBucket
     }
+    default {
+        Write-UserMessage -Message "Unknown subcommand: '$Operation'" -Err
+        $ExitCode = 2
+    }
 }
 
-exit $exitCode
+exit $ExitCode

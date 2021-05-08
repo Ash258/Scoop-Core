@@ -33,7 +33,7 @@
 #   -h, --help      Show help for this command.
 #   -v, --verbose   Show alias description and table headers (works only for 'list').
 
-'core', 'getopt', 'help', 'Alias' | ForEach-Object {
+'core', 'getopt', 'help', 'Helpers', 'Alias' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -54,6 +54,8 @@ if (!$Operation) { $Operation = 'list' }
 
 switch ($Operation) {
     'add' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <NAME> missing' -Usage (my_usage) }
+
         try {
             Add-ScoopAlias -Name $Name -Command $Command -Description $Description
         } catch {
@@ -65,6 +67,8 @@ switch ($Operation) {
         Write-UserMessage -Message "Alias '$Name' added" -Success
     }
     'rm' {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <NAME> missing' -Usage (my_usage) }
+
         try {
             Remove-ScoopAlias -Name $Name
         } catch {
@@ -79,6 +83,8 @@ switch ($Operation) {
         Get-ScoopAlias -Verbose:$Verbose
     }
     { $_ -in 'edit', 'path' } {
+        if (!$Name) { Stop-ScoopExecution -Message 'Parameter <NAME> missing' -Usage (my_usage) }
+
         try {
             $path = Get-ScoopAliasPath -AliasName $Name
         } catch {
@@ -97,6 +103,10 @@ switch ($Operation) {
             Write-UserMessage -Message "Shim for alias '$Name' does not exist" -Err
             $ExitCode = 3
         }
+    }
+    default {
+        Write-UserMessage -Message "Unknown subcommand: '$Operation'" -Err
+        $ExitCode = 2
     }
 }
 

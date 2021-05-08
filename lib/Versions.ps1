@@ -213,6 +213,53 @@ function Split-Version {
     }
 }
 
+function Clear-InstalledVersion {
+    <#
+    .SYNOPSIS
+        Remove old/not active versions of installed application.
+    .PARAMETER Application
+        Specifies the name of installed application to be cleaned.
+    .PARAMETER Global
+        Specifies to clean globally installed application.
+    .PARAMETER BeVerbose
+        Specifies to be verbose.
+    .PARAMETER Cache
+        Specifies to remove the download cache. Keep the currently active version files.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [String] $Application,
+        [Switch] $Global,
+        [Switch] $BeVerbose,
+        [Switch] $Cache
+    )
+
+    process {
+        $currentVersion = Select-CurrentVersion -AppName $Application -Global:$Global
+        $versions = Get-InstalledVersion -AppName $Application -Global:$Global | Where-Object { $_ -ne $currentVersion }
+
+        if (!$versions) {
+            if ($BeVerbose) { Write-UserMessage -Message "$Application is already clean" -Success }
+            return
+        }
+
+        Write-Host "Removing ${Application}:" -ForegroundColor 'Yellow' -NoNewline
+
+        if ($Cache) { Join-Path $SCOOP_CACHE_DIRECTORY "$Application#*" | Remove-Item -Exclude "$Application#$currentVersion#*" }
+
+        foreach ($ver in $versions) {
+            Write-Host " $ver" -NoNewline
+            $dir = versiondir $Application $ver $Global
+            # Unlink all potential old link before doing recursive Remove-Item
+            unlink_persist_data $dir
+            Remove-Item $dir -ErrorAction 'Stop' -Recurse -Force
+        }
+
+        Write-Host ''
+    }
+}
+
 #region Deprecated
 # This has to stay for mro manifest
 function current_version($app, $global) {
