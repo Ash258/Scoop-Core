@@ -1,4 +1,4 @@
-# Usage: scoop bucket [<SUCOMMAND>] [<OPTIONS>] [<NAME> [<REPOSITORY>]]
+# Usage: scoop bucket [<SUBCOMMAND>] [<OPTIONS>] [<NAME> [<REPOSITORY>]]
 # Summary: Manage local scoop buckets.
 # Help: Add, list or remove buckets.
 #
@@ -26,21 +26,24 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-param($Cmd, $Name, $Repo)
-
-# TODO: getopt adoption
-
-'buckets', 'help' | ForEach-Object {
+'core', 'buckets', 'getopt', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$exitCode = 0
+$ExitCode = 0
+$Options, $Rest, $_err = getopt $args
 
-if (!$Cmd) { $Cmd = 'list' }
+if ($_err) { Stop-ScoopExecution -Message "scoop bucket: $_err" -ExitCode 2 }
 
-switch ($Cmd) {
+$Operation = $Rest[0]
+$Name = $Rest[1]
+$Repo = $Rest[2]
+
+if (!$Operation) { $Operation = 'list' }
+
+switch ($Operation) {
     'add' {
         if (!$Name) { Stop-ScoopExecution -Message 'Parameter <NAME> is missing' -Usage (my_usage) }
 
@@ -67,4 +70,4 @@ switch ($Cmd) {
     }
 }
 
-exit $exitCode
+exit $ExitCode
