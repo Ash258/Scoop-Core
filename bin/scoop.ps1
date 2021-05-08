@@ -1,5 +1,5 @@
 #Requires -Version 5
-param([string] $cmd)
+param([String] $Command)
 
 Set-StrictMode -Off
 
@@ -17,32 +17,34 @@ Upgrade PowerShell: 'https://docs.microsoft.com/en-us/powershell/scripting/insta
 
 Reset-Alias
 
-$exitCode = 0
+$ExitCode = 0
 
-# Powershell automatically bind bash like short parameters as $args, and does not put it in $cmd parameter
+# Powershell automatically bind bash like short parameters as $args, and does not put it in $Command parameter
 # ONLY if:
 # - No command passed
 # - -v or --version passed
-$version = ($cmd -eq '--version') -or (!$cmd -and ($args.Contains('-v')))
+$version = ($Command -eq '--version') -or (!$Command -and ($args.Contains('-v')))
 
 # Scoop itself help should be shown only if explicitly asked:
 # - No version asked
 # - No command passed
 # - /?, /help,, /h, --help, -h passed
-$scoopHelp = !$version -and (!$cmd -or (($cmd -in @($null, '--help', '/?', '/help', '/h')) -or (!$cmd -and ($args.Contains('-h')))))
+$scoopHelp = !$version -and (!$Command -or (($Command -in @($null, '--help', '/?', '/help', '/h')) -or (!$Command -and ($args.Contains('-h')))))
 
 # Valid command execution
-$validCommand = $cmd -and ($cmd -in (commands))
+$validCommand = $Command -and ($Command -in (commands))
 
 # Command help should be shown only if:
 # - No help for scoop asked
-# - $cmd is passed
+# - $Command is passed
 # - --help, -h is in $args
 $commandHelp = !$scoopHelp -and $validCommand -and (($args.Contains('--help')) -or ($args.Contains('-h')))
 
 if ($version) {
-    Write-UserMessage -Message "PowerShell version: $($PSVersionTable.PSVersion)" -Output
-    Write-UserMessage -Message 'Current Scoop (Shovel) version:' -Output
+    Write-UserMessage -Output -Message @(
+        "PowerShell version: $($PSVersionTable.PSVersion)"
+        'Current Scoop (Shovel) version:'
+    )
     Invoke-GitCmd -Command 'VersionLog' -Repository (versiondir 'scoop' 'current')
 
     # TODO: Export to lib/buckets
@@ -57,16 +59,16 @@ if ($version) {
     }
 } elseif ($scoopHelp) {
     Invoke-ScoopCommand 'help'
-    $exitCode = $LASTEXITCODE
+    $ExitCode = $LASTEXITCODE
 } elseif ($commandHelp) {
-    Invoke-ScoopCommand 'help' @{ 'cmd' = $cmd }
-    $exitCode = $LASTEXITCODE
+    Invoke-ScoopCommand 'help' @($Command)
+    $ExitCode = $LASTEXITCODE
 } elseif ($validCommand) {
-    Invoke-ScoopCommand $cmd $args
-    $exitCode = $LASTEXITCODE
+    Invoke-ScoopCommand $Command $args
+    $ExitCode = $LASTEXITCODE
 } else {
-    Write-UserMessage -Message "scoop: '$cmd' isn't a scoop command. See 'scoop help'." -Output
-    $exitCode = 2
+    Write-UserMessage -Message "scoop: '$Command' isn't a scoop command. See 'scoop help'." -Output
+    $ExitCode = 2
 }
 
-exit $exitCode
+exit $ExitCode

@@ -1,9 +1,8 @@
-# Usage: scoop search [query] [options]
-# Summary: Search available apps
-# Help: Searches for apps that are available to install.
+# Usage: scoop search [<OPTIONS>] [<QUERY>]
+# Summary: Search for applications, which are available for installation.
 #
-# If used with [query], shows app names that match the query.
-# Without [query], shows all the available apps.
+# Help: When <QUERY> parameter is not provided, all available applications will be shown.
+# <QUERY> Parameter could be regular expression.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -84,7 +83,7 @@ if (!$localResults -or $Remote) {
             Stop-ScoopExecution 'No matches in remote buckets found'
         }
     } else {
-        Stop-ScoopExecution "GitHub ratelimit reached: Cannot query known repositories, please try again later"
+        Stop-ScoopExecution 'GitHub ratelimit reached: Cannot query known repositories, please try again later'
     }
 }
 

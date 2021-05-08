@@ -461,7 +461,7 @@ function app_status($app, $global) {
     return $status
 }
 
-# TODO: YML
+# TODO: YAML
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 # paths
@@ -843,6 +843,8 @@ function Confirm-InstallationStatus {
     $installed = @()
 
     $Apps | Select-Object -Unique | Where-Object -Property 'Name' -NE -Value 'scoop' | ForEach-Object {
+        # TODO: Adopt Resolve-ManifestInformation
+        # Should not be needed to resolve, as it will contain only valid installed applications
         $app, $null, $null = parse_app $_
         $buc = (app_status $app $Global).bucket
         if ($Global) {
@@ -952,6 +954,9 @@ function show_app($app, $bucket, $version) {
 }
 
 function last_scoop_update() {
+    # TODO: Config refactor
+    # TODO: getopt adoption
+    # $lastUpdate = Invoke-ScoopCommand 'config' @('lastupdate')
     $lastUpdate = Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate' }
 
     if ($null -ne $lastUpdate) {
@@ -972,6 +977,10 @@ function is_scoop_outdated() {
     $res = $true
 
     if ($null -eq $lastUp) {
+        # TODO: Config refactor
+        # TODO: getopt adotion
+        # Invoke-ScoopCommand 'config' @('lastupdate', ($now.ToString($UPDATE_DATE_FORMAT))) | Out-Null
+
         Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate'; 'value' = ($now.ToString($UPDATE_DATE_FORMAT)) } | Out-Null
     } else {
         $res = $lastUp.AddHours(3) -lt $now.ToLocalTime()

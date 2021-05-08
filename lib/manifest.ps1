@@ -100,8 +100,12 @@ function ConvertTo-Manifest {
 function manifest_path($app, $bucket) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
-    $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*"
-    $path = $null
+    $path = $file = $null
+    try {
+        $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*" -ErrorAction 'Stop'
+    } catch {
+        return $path
+    }
 
     if ($file) {
         if ($file.Count -gt 1) { $file = $file[0] }
@@ -155,10 +159,10 @@ function save_installed_manifest($app, $bucket, $dir, $url) {
     if ($url) {
         $wc = New-Object System.Net.Webclient
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        # TODO: YML
+        # TODO: YAML
         Join-Path $dir 'scoop-manifest.json' | Out-UTF8Content -Content ($wc.DownloadString($url))
     } else {
-        # TODO: YML
+        # TODO: YAML
         Copy-Item (manifest_path $app $bucket) (Join-Path $dir 'scoop-manifest.json')
     }
 }

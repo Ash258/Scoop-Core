@@ -40,11 +40,9 @@ function Test-7zipRequirement {
 function Test-LessmsiRequirement {
     <#
     .SYNOPSIS
-        Test if file or url requires lessmsi to be installed.
+        Test if url requires lessmsi to be installed.
     .PARAMETER URL
         Specifies the string representing URL.
-    .PARAMETER File
-        Specifies the filename.
     #>
     [CmdletBinding()]
     [OutputType([Boolean])]
@@ -68,10 +66,13 @@ function Test-ZstdRequirement {
     [OutputType([Boolean])]
     param (
         [Parameter(Mandatory, ParameterSetName = 'URL')]
+        [AllowNull()]
         [String[]] $URL,
         [Parameter(Mandatory, ParameterSetName = 'File')]
         [String] $File
     )
+
+    if (!$File -and ($null -eq $URL)) { return $false }
 
     if ($URL) {
         return ($URL | Where-Object { Test-ZstdRequirement -File $_ }).Count -gt 0

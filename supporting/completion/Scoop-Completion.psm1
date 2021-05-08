@@ -43,8 +43,10 @@ $script:SCOOP_SUB_COMMANDS = @{
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
     'cleanup'    = 'g k'
+    'depends'    = 'a'
     'download'   = 's u a b'
     'hold'       = 'g'
+    'info'       = 'a'
     'install'    = 'g i k s a'
     'list'       = 'i u r'
     'search'     = 'r'
@@ -56,8 +58,10 @@ $script:SCOOP_SHORT_PARAMETERS = @{
 }
 $script:SCOOP_LONG_PARAMETERS = @{
     'cleanup'    = 'global cache'
+    'depends'    = 'arch'
     'download'   = 'skip utility arch all-architectures'
     'hold'       = 'global'
+    'info'       = 'arch'
     'install'    = 'global independent no-cache skip arch'
     'list'       = 'installed updated reverse'
     'search'     = 'remote'
@@ -83,10 +87,18 @@ foreach ($cmd in $SCOOP_COMMANDS) {
     }
 }
 
-$script:supportedArchitectures = '32bit 64bit arm64'
+$script:supportedArchitectures = '64bit 32bit arm64'
 $script:downloadUtilities = 'native aria2'
 $script:SCOOP_PARAMETER_VALUES = @{
     'install'    = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
+    }
+    'depends'    = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
+    }
+    'info'       = @{
         'a'    = $supportedArchitectures
         'arch' = $supportedArchitectures
     }

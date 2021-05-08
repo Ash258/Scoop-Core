@@ -1,29 +1,35 @@
-# Usage: scoop prefix <app> [options]
-# Summary: Returns the path to the specified app
+# Usage: scoop prefix [<OPTIONS>] <APP>
+# Summary: Return the location/path of installed application.
 #
 # Options:
 #   -h, --help      Show help for this command.
 
-param($app)
-
-'core', 'help', 'Helpers', 'manifest', 'buckets' | ForEach-Object {
+'core', 'help', 'Helpers', 'getopt', 'manifest', 'buckets' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
-$exitCode = 0
 
-if (!$app) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+$ExitCode = 0
+$Options, $Application, $_err = getopt $args
 
-# TODO: NO_JUNCTION
-$app_path = versiondir $app 'current' $false
-if (!(Test-Path $app_path)) { $app_path = versiondir $app 'current' $true }
+if ($_err) { Stop-ScoopExecution -Message "scoop prefix: $_err" -ExitCode 2 }
+if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
-if (Test-Path $app_path) {
-    Write-UserMessage -Message $app_path -Output
+# TODO: Test if application is installed first
+#       Same flow as for hold/unhold
+# TODO: Add --global
+# TODO: Respect NO_JUNCTION
+$Application = $Application[0]
+$ApplicationPath = versiondir $Application 'current' $false
+
+if (!(Test-Path $ApplicationPath)) { $ApplicationPath = versiondir $Application 'current' $true }
+
+if (Test-Path $ApplicationPath) {
+    Write-UserMessage -Message $ApplicationPath -Output
 } else {
-    $exitCode = 3
-    Write-UserMessage -Message "Could not find app path for '$app'." -Err
+    Write-UserMessage -Message "'$Application' is not installed" -Err
+    $ExitCode = 3
 }
 
-exit $exitCode
+exit $ExitCode
