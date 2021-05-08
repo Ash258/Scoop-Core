@@ -30,11 +30,11 @@
 - **scoop-search**: Fix search without parameter provided
 - New command `utils` added
 - Native parameter binding for aliases works again
-- **git**: Fix proxy handling
-- **psmodules**: Add global modules to path only if manifest is installed globally
-- **decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
+- **Git**: Fix proxy handling
+- **Psmodules**: Add global modules to path only if module is being installed globally
+- **Decompress**: Support `INNOSETUP_USE_INNOEXTRACT` config option and `Expand-InnoArchive -UseInnoextract`
 - **format**: Extract checkver fixes into own function and add generic adjust property function
-- **schema**
+- **Schema**
     - Add `disable` property to `checkver` and `autoupdate`
         - `-Force` will ignore this property
     - Remove deprecated short properties
@@ -52,16 +52,17 @@
     - Check for main branches adoption (if supported)
     - Check for full shovel adoption
 - **scoop-alias**: First alias addition is correctly registered and created
-- **autoupdate**: Do not autoupdate unless URL is accessible after successful hash extraction
+- **Autoupdate**: Do not autoupdate unless URL is accessible after successful hash extraction
 
 ### 0.6-pre1
 
 - Support YAML typed manifests in some commands
-- **virustotal**: Command now works again with V3 API
+- **scoop-virustotal**: Command now works again with V3 API
     - Requires Api key for all operations
-- **decompress**: Add `Expand-ZstdArchive` function for extracting standalone zstd archives
-- **scoop-install**: Allow modules to be installed globally
-- **scoop-install**: Prevent repeated installation of same manifest/url/local file
+- **Decompress**: Add `Expand-ZstdArchive` function for extracting standalone zstd archives
+- **scoop-install**:
+    - Allow modules to be installed globally
+    - Prevent repeated installation of same manifest/url/local file
 - **binaries**: Support YAML typed manifests
 - General code cleanup and code documentation tweaks
 
@@ -69,34 +70,37 @@
 
 ### 0.5.5-pre5
 
-- **manifests**: Introduce manifest helpers to avoid repeating lines in manifests
-    - `Assert-Administrator`, `Assert-WindowsMinimalVersion`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
-- **install**
+- **scoop-install**
     - Remove mutually exclusivity of `installer.script` and `installer.file`
         - `script` property is executed after `file`
     - Fix `installer.file` exit code from ps1 scripts
     - Fix `installer.keep` inconsitency between powershell scripts and executables
-- **manifests**: Present `pre_download` property
 - **scoop-install**: Fix installlation of different/older versions
 - **scoop-info**: Respect `NO_JUNCTION` config
 - Add changelog to repository
-- **autoupdate**: Initial preparations for array support
-- **manifests**: Add `changelog` property
-    - It will be shown on manifest installation/updates also in `scoop info` output
+- **Autoupdate**: Initial preparations for array support
+- **Manifest**:
+    - Introduce manifest helpers to avoid repeating lines in manifests
+        - `Assert-Administrator`, `Assert-WindowsMinimalVersion`, `Assert-ScoopConfigValue`, `Test-Persistence`, `Edit-File`, `Remove-AppDirItem`, `New-JavaShortcutWrapper`
+        - [See ManifestHelpers "module" for possible parameters](https://github.com/Ash258/Scoop-Core/blob/main/lib/ManifestHelpers.ps1)
+    - Present `pre_download` property
+    - Add `changelog` property
+        - It will be shown on manifest installation/updates and `scoop info` output
 - **scoop-alias**: Add `path` and `edit` subcommands
-- **completion**: Correctly support `&&` and `||`
+- **Completion**: Correctly support `&&` and `||`
 - **scoop-(un)hold**: Support `--global` parameter
-- **persist**: Pre-create nested directories
-- **autoupdate**: Support base64 for all extraction types
+- **Persist**: Pre-create nested directories
+- **Autoupdate**: Support base64 for all extraction types
 - Small code cleanup and refactorings
 
 ### 0.5.5-pre4
 
-- **update**: Ignore merge commits in update log
+- **Update**: Ignore merge commits in update log
 - `scoop --version` reports PowerShell version
-- **depends**: Correctly detect globally installed dependencies
-- **buckets**: Indicate successful bucket removal
-- **buckets**: Indicate inability of bucket removal
+- **Depends**: Correctly detect globally installed dependencies while resolving script dependencies
+- **scoop-bucket**:
+    - Indicate successful bucket removal
+    - Indicate inability of bucket removal
 
 ### 0.5.5-pre3
 
@@ -106,8 +110,8 @@
 
 - `scoop search` reimplemented
 - **scoop-config**: Fix regression from `--help` addition
-- **decompress**: Fix 7zip requirements detection
-- **autoupdate**: Added `$headVersion` and `$tailVersion` substitutes
+- **Decompress**: Fix 7zip requirements detection
+- **Autoupdate**: Added `$headVersion` and `$tailVersion` substitutes
 
 ### 0.5.5-pre1
 
@@ -116,7 +120,7 @@
 
 ### 0.5.5-pre - Abort deprecation 🎉
 
-- `abort` funcion completely eliminated
+- `abort` function completely eliminated
     - One failed manifest installation/update/download/... will not cause whole command to exit prematurelly
 - **lint**: Code fixes
 
@@ -154,18 +158,18 @@
 
 ### Binaries
 
-- `formatjson`: Sort properties and do some automatic fixes
+- `formatjson`: Sort properties and do some automatic fixes for consistent format of manifests
 
 ### Manifests
 
-- `pre|post` uninstaller scripts added
+- `pre|post_uninstaller` properties added
 - `version`, `description`, `homepage`, `license` properties are required
 
 ### General quality of life changes
 
 - Native shell (tab) completion for PowerShell
 - License is shown on installation/update
-- Source bucket of manifest is shown on installation
+- Source bucket of manifest is always shown on installation
 - Git operations no longer change user context
 - Nongit buckets are not updated == invalid repository error will not be shown
 - Update log will not show commits with `[scoop skip]` or `[shovel skip]` in title

@@ -43,6 +43,7 @@
 #
 # MSIEXTRACT_USE_LESSMSI: $true|$false
 #   Prefer lessmsi utility over native msiexec for installation of msi based installers.
+#   This is preferred option and will be default in future.
 #
 # INNOSETUP_USE_INNOEXTRACT: $true|$false
 #   Prefer innoextract utility over innounp for installation of innosetup based installers.
@@ -60,7 +61,7 @@
 #
 # SCOOP_BRANCH: main|NEW
 #   Allow to use different branch than main.
-#   Could be used for testing specific functionalities before global release.
+#   Could be used for testing specific functionalities before stable release.
 #   If you want to receive updates earlier to test new functionalities use NEW branch.
 #
 # show_update_log: $true|$false
