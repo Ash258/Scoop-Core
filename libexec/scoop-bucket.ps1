@@ -33,13 +33,13 @@
 Reset-Alias
 
 $ExitCode = 0
-$Options, $Rest, $_err = getopt $args
+$Options, $Bucket, $_err = getopt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop bucket: $_err" -ExitCode 2 }
 
-$Operation = $Rest[0]
-$Name = $Rest[1]
-$Repo = $Rest[2]
+$Operation = $Bucket[0]
+$Name = $Bucket[1]
+$Repo = $Bucket[2]
 
 if (!$Operation) { $Operation = 'list' }
 
