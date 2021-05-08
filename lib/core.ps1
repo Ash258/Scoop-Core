@@ -443,7 +443,7 @@ function app_status($app, $global) {
     return $status
 }
 
-# TODO: YML
+# TODO: YAML
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 # paths

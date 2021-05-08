@@ -155,10 +155,10 @@ function save_installed_manifest($app, $bucket, $dir, $url) {
     if ($url) {
         $wc = New-Object System.Net.Webclient
         $wc.Headers.Add('User-Agent', (Get-UserAgent))
-        # TODO: YML
+        # TODO: YAML
         Join-Path $dir 'scoop-manifest.json' | Out-UTF8Content -Content ($wc.DownloadString($url))
     } else {
-        # TODO: YML
+        # TODO: YAML
         Copy-Item (manifest_path $app $bucket) (Join-Path $dir 'scoop-manifest.json')
     }
 }
