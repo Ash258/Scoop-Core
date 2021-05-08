@@ -26,7 +26,7 @@
 #   add             Add a new alias.
 #   list            List all already added aliases. Default subcommand when none is provided.
 #   rm              Remove an already added alias.
-#   edit            Open specified alias executable in default system editor.
+#   edit            Open specified alias executable in default system text editor.
 #   path            Show path to the executable of specified alias.
 #
 # Options:
