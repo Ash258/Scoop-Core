@@ -150,12 +150,18 @@ if ($env_set) {
     }
 }
 if ($env_add_path) {
+    # TODO: Should be path rather joined on one line or with multiple PATH=??
+    # Original:
+    # PATH=%PATH%;C:\SCOOP\apps\yarn\current\global\node_modules\.bin
+    # PATH=%PATH%;C:\SCOOP\apps\yarn\current\Yarn\bin
+    # vs:
+    # PATH=%PATH%;C:\SCOOP\apps\yarn\current\global\node_modules\.bin;C:\SCOOP\apps\yarn\current\Yarn\bin
     $env_add_path | Where-Object { $_ } | ForEach-Object {
         $to = "$dir"
         if ($_ -ne '.') {
-            $to = "  PATH=%PATH%;$to\$_"
+            $to = "$to\$_"
         }
-        $message += $to
+        $message += "  PATH=%PATH%;$to"
     }
 }
 
