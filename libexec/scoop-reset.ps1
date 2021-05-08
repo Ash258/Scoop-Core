@@ -1,8 +1,16 @@
-# Usage: scoop reset <app> [options]
-# Summary: Reset an app to resolve conflicts
-# Help: Used to resolve conflicts in favor of a particular app. For example,
-# if you've installed 'python' and 'python27', you can use 'scoop reset' to switch between
+# Usage: scoop reset [<OPTIONS>] <APP>...
+# Summary: Force binaries/shims, shortcuts, environment variables and persisted data to be re-linked.
+# Help: Could be used to resolve conflicts in favor of a particular application(s).
+# For example, if you have installed 'python' and 'python27', you can use 'scoop reset' to switch between
 # using one or the other.
+#
+# When there are multiple installed versions of same application, they could be reset/switched also:
+#    scoop reset bat@0.16.0 => shims will be relinked to use installed version 0.16.0 of application bat
+#    scoop reset bat@0.17.0 => shims will be relinked to use installed version 0.17.0 of application bat
+#
+# 'scoop list' will show currently resetted/switched version.
+#
+# You can use '*' in place of <APP> to reset all installed applications.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -11,11 +19,14 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: Add --global
+
 Reset-Alias
+
 $opt, $apps, $err = getopt $args
 
 if ($err) { Stop-ScoopExecution -Message "scoop reset: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 if ($apps -eq '*') {
     $local = installed_apps $false | ForEach-Object { , @($_, $false) }
@@ -28,6 +39,7 @@ $problems = 0
 foreach ($a in $apps) {
     ($app, $global) = $a
 
+    # TODO: Adopt Resolve-ManifestInformation ???
     $app, $bucket, $version = parse_app $app
 
     # Skip scoop

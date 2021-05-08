@@ -1,18 +1,24 @@
-# Usage: scoop config [rm|show] [name [value]] [options]
-# Summary: Get or set configuration values
-# Help: The scoop configuration file is saved at ~/.config/scoop/config.json.
+# Usage: scoop config [<SUBCOMMAND>] [<OPTIONS>] [<NAME> [<VALUE>]]
+# Summary: Get or set configuration values into scoop configuration file.
+# Help: The scoop configuration file is located at ~/.config/scoop/config.json
 #
 # To get a configuration setting:
-#   scoop config <name>
+#   scoop config <NAME>
 #
 # To set a configuration setting:
-#   scoop config <name> <value>
+#   scoop config <NAME> <VALUE>
 #
 # To remove a configuration setting:
-#   scoop config rm <name>
+#   scoop config rm <NAME>
 #
 # To show full configuration file:
 #   scoop config show
+# or:
+#   scoop config
+#
+# Subcommands:
+#   rm              Remove specified configuration option from configuration file.
+#   show            Show full configuration file in plain form (json). Default subcommand when none is provided.
 #
 # Options:
 #   -h, --help      Show help for this command.
@@ -36,7 +42,10 @@
 #   External 7zip (from path) will be used for archives extraction.
 #
 # MSIEXTRACT_USE_LESSMSI: $true|$false
-#   'lessmsi' will be used for msi files extraction instead of 'msiexec'.
+#   Prefer lessmsi utility over native msiexec for installation of msi based installers.
+#
+# INNOSETUP_USE_INNOEXTRACT: $true|$false
+#   Prefer innoextract utility over innounp for installation of innosetup based installers.
 #
 # NO_JUNCTIONS: $true|$false
 #   The 'current' version alias will not be used.
@@ -93,16 +102,22 @@
 
 param($name, $value)
 
+# TODO: getopt adoption
+
 'core', 'help' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
+# TODO: Add --global - Ash258/Scoop-Core#5
+
 Reset-Alias
 
-if (!$name) { Stop-ScoopExecution -Message 'No parameter provided' -Usage (my_usage) }
+if (!$name) { $name = 'show' }
+
+# TODO: Config refactor
 
 if ($name -eq 'rm') {
-    if (!$value) { Stop-ScoopExecution -Message '''rm'' requires value parameter' -ExitCode 2 }
+    if (!$value) { Stop-ScoopExecution -Message 'Parameter <NAME> is required for ''rm'' subcommand' -Usage (my_usage) }
 
     set_config $value $null | Out-Null
     Write-UserMessage -Message "'$value' has been removed"

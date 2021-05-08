@@ -1,14 +1,13 @@
-# Usage: scoop download <apps> [options]
+# Usage: scoop download [<OPTIONS>] <APP>...
 # Summary: Download manifest files into cache folder.
-#
-# Help: All manifest files will be downloaded into cache folder.
+# Help: All manifest files will be downloaded into cache folder without need to install the application.
 #
 # Options:
 #   -h, --help                      Show help for this command.
-#   -s, --skip                      Skip hash check validation.
-#   -u, --utility <native|aria2>    Force using specific download utility.
+#   -s, --skip                      Skip hash check validation (use with caution!).
+#   -u, --utility <native|aria2>    Force to download with specific utility.
 #   -a, --arch <32bit|64bit>        Use the specified architecture.
-#   -b, --all-architectures         All avaible files across all architectures will be downloaded.
+#   -b, --all-architectures         All available files across all architectures will be downloaded.
 
 'getopt', 'help', 'manifest', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -18,12 +17,12 @@ Reset-Alias
 
 #region Parameter validation
 $opt, $application, $err = getopt $args 'sba:u:' 'skip', 'all-architectures', 'arch=', 'utility='
-if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
+if ($err) { Stop-ScoopExecution -Message "scoop download: $err" -ExitCode 2 }
 
 $checkHash = -not ($opt.s -or $opt.skip)
 $utility = $opt.u, $opt.utility, 'native' | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
 
-if (!$application) { Stop-ScoopExecution -Message 'Parameter <apps> missing' }
+if (!$application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' }
 if (($utility -eq 'aria2') -and (!(Test-HelperInstalled -Helper Aria2))) { Stop-ScoopExecution -Message 'Aria2 is not installed' }
 
 try {
@@ -31,7 +30,7 @@ try {
 } catch {
     Stop-ScoopExecution -Message "$_" -ExitCode 2
 }
-# Add both architectures
+# Add all supported architectures
 if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit' }
 #endregion Parameter validation
 
@@ -41,6 +40,7 @@ foreach ($app in $application) {
     # Prevent leaking variables from previous iteration
     $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
 
+    # TODO: Adopt Resolve-ManifestInformation
     $cleanAppName, $bucket, $version = parse_app $app
     $appName, $manifest, $foundBucket, $url = Find-Manifest $cleanAppName $bucket
     if ($null -eq $bucket) { $bucket = $foundBucket }

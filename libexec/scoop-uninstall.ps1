@@ -1,11 +1,11 @@
-# Usage: scoop uninstall <app> [options]
-# Summary: Uninstall an app
-# Help: e.g. scoop uninstall git
+# Usage: scoop uninstall [<OPTIONS>] <APP>...
+# Summary: Uninstall specified application(s).
 #
 # Options:
 #   -h, --help     Show help for this command.
-#   -g, --global   Uninstall a globally installed app.
-#   -p, --purge    Remove all persistent data.
+#   -g, --global   Uninstall a globally installed application(s).
+#   -p, --purge    Persisted data will be removed.
+#                  Normally when application is being uninstalled, the data defined in persist property/manually persisted are kept.
 
 'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'Versions', 'getopt', 'Uninstall' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
@@ -20,10 +20,10 @@ if ($err) { Stop-ScoopExecution -Message "scoop uninstall: $err" -ExitCode 2 }
 $global = $opt.g -or $opt.global
 $purge = $opt.p -or $opt.purge
 
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <app> missing' -Usage (my_usage) }
+if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 if ($global -and !(is_admin)) {
-    Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall global apps.' -ExitCode 4
+    Stop-ScoopExecution -Message 'Administrator privileges are required to uninstall globally installed applications.' -ExitCode 4
 }
 
 if ($apps -eq 'scoop') {
@@ -40,8 +40,7 @@ if (!$apps) {
 
 $exitCode = 0
 $problems = 0
-# TODO: remove label
-:app_loop foreach ($_ in $apps) {
+foreach ($_ in $apps) {
     ($app, $global, $bucket) = $_
 
     $result = $false

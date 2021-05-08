@@ -38,6 +38,7 @@ function dep_resolve($app, $arch, $resolved, $unresolved) {
     #[out]$resolved
     #[out]$unresolved
 
+    # TODO: Adopt Resolve-ManifestInformation
     $app, $bucket, $null = parse_app $app
     $unresolved += $app
     $null, $manifest, $null, $null = Find-Manifest $app $bucket

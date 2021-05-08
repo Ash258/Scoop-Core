@@ -4,6 +4,12 @@
 
 ### 0.6-pre3
 
+- Unify help entries of executables
+- **scoop-info**:
+    - Support passing `--arch` and `-a` options
+    - Fix env_add_path rendering
+- **scoop-alias**: List subcommand now indicates if executable is no longer available
+- **scoop-list**: Do not show error when summary is empty
 - **scoop-utils**: Use correct name of `checkurls` utility
 - **Completion**: Respect `SCOOP_CACHE` environment for `cache rm` completion
 - **scoop-cache**: Allow multiple apps to be passed as argument

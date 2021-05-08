@@ -1,34 +1,35 @@
-# Usage: scoop which <command> [options]
-# Summary: Locate a shim/executable (similar to 'which' on Linux)
-# Help: Locate the path to a shim/executable that was installed with Scoop (similar to 'which' on Linux)
+# Usage: scoop which [<OPTIONS>] <COMMAND>
+# Summary: Locate the path to a shim/executable of application that was installed with scoop (similar to 'which' on Linux).
 #
 # Options:
 #   -h, --help      Show help for this command.
 
-param([String] $Command)
-
-'core', 'help', 'commands' | ForEach-Object {
+'core', 'help', 'commands', 'getopt' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-if (!$command) { Stop-ScoopExecution -Message 'Parameter <command> missing' -Usage (my_usage) }
+$ExitCode = 0
+$Options, $Command, $_err = getopt $args
+
+if ($_err) { Stop-ScoopExecution -Message "scoop which: $_err" -ExitCode 2 }
+if (!$Command) { Stop-ScoopExecution -Message 'Parameter <COMMAND> missing' -Usage (my_usage) }
 
 try {
-    $gcm = Get-Command $Command -ErrorAction 'Stop'
+    $gcm = Get-Command -Name $Command -ErrorAction 'Stop'
 } catch {
-    Stop-ScoopExecution -Message "Command '$command' not found"
+    Stop-ScoopExecution -Message "'$Command' not found"
 }
 
 $userShims = shimdir $false | Resolve-Path
-$globalShims = shimdir $true # don't resolve: may not exist
-
-$FINAL_PATH = $null
-$exitCode = 0
+$globalShims = shimdir $true # do not resolve, may not exists
+$FinalPath = $null
 
 if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims*") -or ($gcm.Path -like "$globalShims*"))) {
-    $shimText = Get-Content $gcm.Path
+    # This will show path to the real exe instead of the original ps1 file. Is it right?
+    $shimText = Get-Content -LiteralPath $gcm.Path -Encoding 'UTF8'
+    # TODO: Drop Invoke-Expression
     $exePath = ($shimText | Where-Object { $_.StartsWith('$path') }) -split ' ' | Select-Object -Last 1 | Invoke-Expression
 
     # Expand relative path
@@ -38,22 +39,22 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
         $exePath = $gcm.Path
     }
 
-    $FINAL_PATH = friendly_path $exePath
+    $FinalPath = friendly_path $exePath
 } else {
     switch ($gcm.CommandType) {
-        'Application' { $FINAL_PATH = $gcm.Source }
+        'Application' { $FinalPath = $gcm.Source }
         'Alias' {
-            $FINAL_PATH = Invoke-ScoopCommand 'which' @{ 'Command' = $gcm.ResolvedCommandName }
-            $exitCode = $LASTEXITCODE
+            $FinalPath = Invoke-ScoopCommand 'which' @($gcm.ResolvedCommandName)
+            $ExitCode = $LASTEXITCODE
         }
         default {
             Write-UserMessage -Message 'Not a scoop shim'
-            $FINAL_PATH = $gcm.Path
-            $exitCode = 3
+            $FinalPath = $gcm.Path
+            $ExitCode = 3
         }
     }
 }
 
-if ($FINAL_PATH) { Write-UserMessage -Message $FINAL_PATH -Output }
+if ($FinalPath) { Write-UserMessage -Message $FinalPath -Output }
 
-exit $exitCode
+exit $ExitCode
