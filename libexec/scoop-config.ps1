@@ -35,33 +35,34 @@
 #       * To bypass the system proxy and connect directly, use 'none' (with no username or password)
 #
 # default-architecture: 64bit|32bit
-#   Allow to configure preferred architecture for application installation.
-#   If not specified, architecture is determined be system.
+#   Allows to configure preferred architecture for application installation.
+#   If not specified, architecture is determined automatically.
 #
 # 7ZIPEXTRACT_USE_EXTERNAL: $true|$false
 #   External 7zip (from path) will be used for archives extraction.
 #
 # MSIEXTRACT_USE_LESSMSI: $true|$false
 #   Prefer lessmsi utility over native msiexec for installation of msi based installers.
+#   This is preferred option and will be default in future.
 #
 # INNOSETUP_USE_INNOEXTRACT: $true|$false
 #   Prefer innoextract utility over innounp for installation of innosetup based installers.
 #
 # NO_JUNCTIONS: $true|$false
-#   The 'Current' version alias will not be used.
+#   The 'current' version alias will not be used.
 #   Shims and shortcuts will point to specific version instead.
 #
 # debug: $true|$false
-#   Additional and detailed output will be shown.
+#   Additional output will be shown to identify possible source of problems.
 #
 # SCOOP_REPO: http://github.com/lukesampson/scoop
 #   Git repository containining scoop source code.
 #   This configuration is useful for custom tweaked forks.
 #
 # SCOOP_BRANCH: main|NEW
-#   Allow to use different branch than master.
-#   Could be used for testing specific functionalities before released into all users.
-#   If you want to receive updates earlier to test new functionalities use develop (see: 'https://github.com/lukesampson/scoop/issues/2939')
+#   Allow to use different branch than main.
+#   Could be used for testing specific functionalities before stable release.
+#   If you want to receive updates earlier to test new functionalities use NEW branch.
 #
 # show_update_log: $true|$false
 #   Do not show changed commits on 'scoop update'
@@ -69,6 +70,10 @@
 # virustotal_api_key:
 #   API key used for uploading/scanning files using virustotal.
 #   See: 'https://support.virustotal.com/hc/en-us/articles/115002088769-Please-give-me-an-API-key'
+#
+# githubToken:
+#   GitHub API token used for checkver/autoupdate runs to prevent rate limiting.
+#   See: 'https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token'
 #
 # ARIA2 configuration
 # -------------------
@@ -81,7 +86,7 @@
 #   See: 'https://aria2.github.io/manual/en/html/aria2c.html#cmdoption-retry-wait'
 #
 # aria2-split: 5
-#   Number of connections used for downlaod.
+#   Number of connections used for download.
 #   See: 'https://aria2.github.io/manual/en/html/aria2c.html#cmdoption-s'
 #
 # aria2-max-connection-per-server: 5
