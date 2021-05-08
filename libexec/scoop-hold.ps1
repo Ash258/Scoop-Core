@@ -12,40 +12,40 @@
 
 Reset-Alias
 
-$opt, $apps, $err = getopt $args 'g' 'global'
-if ($err) { Stop-ScoopExecution -Message "scoop hold: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+$ExitCode = 0
+$Problems = 0
+$Options, $Applications, $_err = getopt $args 'g' 'global'
 
-$global = $opt.g -or $opt.global
+if ($_err) { Stop-ScoopExecution -Message "scoop hold: $_err" -ExitCode 2 }
+if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
-if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed applications' -ExitCode 4 }
+$Global = $Options.g -or $Options.global
 
-$problems = 0
-$exitCode = 0
+if ($Global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to interact with globally installed applications' -ExitCode 4 }
 
-foreach ($app in $apps) {
+foreach ($app in $Applications) {
     # Not at all installed
     if (!(installed $app)) {
-        Write-UserMessage -Message "'$app' is not installed." -Err
-        ++$problems
+        Write-UserMessage -Message "'$app' is not installed" -Err
+        ++$Problems
         continue
     }
 
     # Global required, but not installed globally
-    if ($global -and (!(installed $app $global))) {
+    if ($Global -and (!(installed $app $Global))) {
         Write-UserMessage -Message "'$app' not installed globally" -Err
-        ++$problems
+        ++$Problems
         continue
     }
 
     # Globally installed, but required locally
-    if (!$global -and ((installed $app $true))) {
+    if (!$Global -and ((installed $app $true))) {
         Write-UserMessage -Message "'$app' installed globally" -Err
-        ++$problems
+        ++$Problems
         continue
     }
 
-    $splat = @{ 'AppName' = $app; 'Global' = $global }
+    $splat = @{ 'AppName' = $app; 'Global' = $Global }
     $info = Get-InstalledApplicationInformation @splat
     $splat.Add('Property', 'hold')
     $splat.Add('InputObject', $info)
@@ -57,9 +57,9 @@ foreach ($app in $apps) {
     }
 
     Set-InstalledApplicationInformationPropertyValue @splat -Value $true -Force
-    Write-UserMessage -Message "$app is now held and cannot be updated anymore." -Success
+    Write-UserMessage -Message "$app is now held and cannot be updated anymore" -Success
 }
 
-if ($problems -gt 0) { $exitCode = 10 + $problems }
+if ($Problems -gt 0) { $ExitCode = 10 + $Problems }
 
-exit $exitCode
+exit $ExitCode

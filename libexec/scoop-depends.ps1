@@ -2,22 +2,39 @@
 # Summary: List dependencies for an application.
 #
 # Options:
-#   -h, --help      Show help for this command.
+#   -h, --help                  Show help for this command.
+#   -a, --arch <32bit|64bit>    Use the specified architecture, if the application's manifest supports it.
 
-'depends', 'install', 'manifest', 'buckets', 'getopt', 'decompress', 'help' | ForEach-Object {
+'core', 'depends', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$opt, $apps, $err = getopt $args 'a:' 'arch='
+$ExitCode = 0
+$Options, $Applications, $_err = getopt $args 'a:' 'arch='
+
+if ($_err) { Stop-ScoopExecution -Message "scoop depends: $_err" -ExitCode 2 }
+
 # TODO: Multiple apps?
-$app = $apps[0]
+$Application = $Applications[0]
+$Architecture = default_architecture
 
-if ($err) { Stop-ScoopExecution -Message "scoop depends: $err" -ExitCode 2 }
-if (!$app) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+if ($Options.a -or $Options.arch) {
+    foreach ($a in @($Options.a, $Options.arch)) {
+        if ($null -eq $a) { continue }
 
-$deps = @(deps $app (default_architecture))
-if ($deps) { $deps[($deps.length - 1)..0] }
+        try {
+            $Architecture = ensure_architecture $a
+        } catch {
+            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
+        }
+    }
+}
 
-exit 0
+# TODO: Installed dependencies are not listed. Should they be shown??
+$deps = @(deps $Application $Architecture)
+if ($deps) { $deps[($deps.Length - 1)..0] | Write-UserMessage -Output }
+
+exit $ExitCode

@@ -10,6 +10,9 @@
 # Then it could be easily executed as it would be normal scoop command:
 #     scoop <NAME>
 #
+# To remove an alias:
+#     scoop alias rm <NAME>
+#
 # To edit an alias inside default system editor:
 #     scoop alias edit <NAME>
 #
@@ -23,7 +26,7 @@
 #   add             Add a new alias.
 #   list            List all already added aliases. Default subcommand when none is provided.
 #   rm              Remove an already added alias.
-#   edit            Open specified alias executable in default system editor.
+#   edit            Open specified alias executable in default system text editor.
 #   path            Show path to the executable of specified alias.
 #
 # Options:
@@ -36,25 +39,26 @@
 
 # TODO: Add --global - Ash258/Scoop-Core#5
 
-$opt, $rem, $err = getopt $args 'v' 'verbose'
-if ($err) { Stop-ScoopExecution -Message "scoop alias: $err" -ExitCode 2 }
+$ExitCode = 0
+$Options, $Alias, $_err = getopt $args 'v' 'verbose'
 
-$exitCode = 0
-$Option = $rem[0]
-$Name = $rem[1]
-$Command = $rem[2]
-$Description = $rem[3]
-$Verbose = $opt.v -or $opt.verbose
+if ($_err) { Stop-ScoopExecution -Message "scoop alias: $_err" -ExitCode 2 }
 
-if (!$Option) { $Option = 'list' }
+$Operation = $Alias[0]
+$Name = $Alias[1]
+$Command = $Alias[2]
+$Description = $Alias[3]
+$Verbose = $Options.v -or $Options.verbose
 
-switch ($Option) {
+if (!$Operation) { $Operation = 'list' }
+
+switch ($Operation) {
     'add' {
         try {
             Add-ScoopAlias -Name $Name -Command $Command -Description $Description
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
-            $exitCode = 3
+            $ExitCode = 3
             break
         }
 
@@ -65,7 +69,7 @@ switch ($Option) {
             Remove-ScoopAlias -Name $Name
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
-            $exitCode = 3
+            $ExitCode = 3
             break
         }
 
@@ -79,21 +83,21 @@ switch ($Option) {
             $path = Get-ScoopAliasPath -AliasName $Name
         } catch {
             Write-UserMessage -Message $_.Exception.Message -Err
-            $exitCode = 3
+            $ExitCode = 3
             break
         }
 
-        if (Test-Path $path -PathType 'Leaf') {
-            if ($Option -eq 'edit') {
+        if (Test-Path -LiteralPath $path -PathType 'Leaf') {
+            if ($Operation -eq 'edit') {
                 Start-Process $path
-            } elseif ($Option -eq 'path') {
+            } elseif ($Operation -eq 'path') {
                 Write-UserMessage -Message $path -Output
             }
         } else {
-            Write-UserMessage -Message "Shim for alias '$Name' does not exist." -Err
-            $exitCode = 3
+            Write-UserMessage -Message "Shim for alias '$Name' does not exist" -Err
+            $ExitCode = 3
         }
     }
 }
 
-exit $exitCode
+exit $ExitCode

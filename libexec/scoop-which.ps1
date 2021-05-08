@@ -10,25 +10,25 @@
 
 Reset-Alias
 
-$Opt, $Command, $err = getopt $args
+$ExitCode = 0
+$Options, $Command, $_err = getopt $args
 
-if ($err) { Stop-ScoopExecution -Message "scoop which: $err" -ExitCode 2 }
+if ($_err) { Stop-ScoopExecution -Message "scoop which: $_err" -ExitCode 2 }
 if (!$Command) { Stop-ScoopExecution -Message 'Parameter <COMMAND> missing' -Usage (my_usage) }
 
 $gcm = $null
 try {
-    $gcm = Get-Command $Command -ErrorAction 'Stop'
+    $gcm = Get-Command -Name $Command -ErrorAction 'Stop'
 } catch {
-    Stop-ScoopExecution -Message "Command '$Command' not found"
+    Stop-ScoopExecution -Message "'$Command' not found"
 }
 
-$ExitCode = 0
-$FinalPath = $null
 $userShims = shimdir $false | Resolve-Path
-$globalShims = shimdir $true # don't resolve: may not exist
+$globalShims = shimdir $true # do not resolve, may not exists
+$FinalPath = $null
 
 if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims*") -or ($gcm.Path -like "$globalShims*"))) {
-    # This will show path to the real exe instead of the original ps1 file. Should it be right?
+    # This will show path to the real exe instead of the original ps1 file. Is it right?
     $shimText = Get-Content -LiteralPath $gcm.Path -Encoding 'UTF8'
     # TODO: Drop Invoke-Expression
     $exePath = ($shimText | Where-Object { $_.StartsWith('$path') }) -split ' ' | Select-Object -Last 1 | Invoke-Expression
