@@ -33,7 +33,7 @@
 #   -h, --help      Show help for this command.
 #   -v, --verbose   Show alias description and table headers (works only for 'list').
 
-'core', 'getopt', 'help', 'Alias' | ForEach-Object {
+'core', 'getopt', 'help', 'Helpers', 'Alias' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -103,6 +103,10 @@ switch ($Operation) {
             Write-UserMessage -Message "Shim for alias '$Name' does not exist" -Err
             $ExitCode = 3
         }
+    }
+    default {
+        Write-UserMessage -Message "Unknown subcommand: '$Operation'" -Err
+        $ExitCode = 2
     }
 }
 

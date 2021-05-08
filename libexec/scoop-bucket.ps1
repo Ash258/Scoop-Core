@@ -26,7 +26,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'buckets', 'getopt', 'help' | ForEach-Object {
+'core', 'buckets', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -67,6 +67,10 @@ switch ($Operation) {
     }
     'list' {
         Get-LocalBucket
+    }
+    default {
+        Write-UserMessage -Message "Unknown subcommand: '$Operation'" -Err
+        $ExitCode = 2
     }
 }
 
