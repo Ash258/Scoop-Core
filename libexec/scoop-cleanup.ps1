@@ -35,6 +35,8 @@ if ($Applications -eq '*') {
         $Applications += applist (installed_apps $true) $true
     }
 } else {
+    # TODO: Since this function does not indicate not installed applications it will lead to confusing messages
+    # where there will be ERROR that application is not installed followed with Everything is shiny and 0 exit code
     $Applications = Confirm-InstallationStatus $Applications -Global:$Global
 }
 
