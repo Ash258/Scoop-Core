@@ -209,14 +209,50 @@ function Get-ManifestFromLookup {
     param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
 
     process {
-        $name = $Query
+        $requestedBucket, $requestedName = $Query -split '/'
+        if ($null -eq $requestedName) {
+            $requestedName = $requestedBucket
+            $requestedBucket = $null
+        }
+        $requestedName, $requestedVersion = $requestedName -split '@'
+
+        $found = @()
+        foreach ($b in Get-LocalBucket) {
+            $really = manifest_path $requestedName $b
+            if ($really) {
+                $found += @{
+                    'Bucket' = $b
+                    'Path'   = $really
+                }
+            }
+        }
+
+        # Pick the first one (as vanilla implementation)
+        # TODO: Let user pick which bucket if there are more
+        $valid = $found[0]
+        if ($requestedBucket) { $valid = $found | Where-Object -Property 'Bucket' -EQ -Value $requestedBucket }
+
+        if (!$valid) { throw [ScoopException] "No manifest found for '$Query'" }
+
+        if ($requestedVersion) {
+            try {
+                $path = manifest_path $requestedName $requestedBucket $requestedVersion
+            } catch {
+                # TODO: Generate
+            }
+        }
+
+        Write-Host "[$requestedBucket]/($requestedName)@($requestedVersion)" -f red
+
+        $name = $requestedName
         $manifest = @{}
-        $manifestFile = Get-Item $name
+        $manifestFile = $path
 
         return @{
-            'Name'     = $name
-            'Manifest' = $manifest
-            'Path'     = $manifestFile
+            'Name'             = $name
+            'Manifest'         = $manifest
+            'Path'             = $manifestFile
+            'CalculatedBucket' = $valid.Bucket
         }
     }
 }
@@ -262,7 +298,7 @@ function Resolve-ManifestInformation {
             $localPath = $res.Path
             $url = $ApplicationQuery
         } elseif ($ApplicationQuery -match $_lookupRegex) {
-            throw 'Not implemented lookup'
+            # throw 'Not implemented lookup'
             $res = Get-ManifestFromLookup -Query $ApplicationQuery
             $applicationName = $res.Name
             $applicationVersion = $res.Manifest.version
@@ -275,7 +311,7 @@ function Resolve-ManifestInformation {
         # TODO: Validate manifest object
         if ($null -eq $manifest.version) {
             debug $manifest
-            throw [ScoopException] "Not a valid manifest" # TerminatingError thrown
+            throw [ScoopException] 'Not a valid manifest' # TerminatingError thrown
         }
 
         return [Ordered] @{
@@ -293,7 +329,7 @@ function Resolve-ManifestInformation {
 
 function appname_from_url($url) { return (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$" }
 
-function manifest_path($app, $bucket) {
+function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
     $path = $file = $null
@@ -306,6 +342,20 @@ function manifest_path($app, $bucket) {
     if ($file) {
         if ($file.Count -gt 1) { $file = $file[0] }
         $path = $file.FullName
+
+        # Look for archived version only if manifest exists
+        if ($version) {
+            $path = $null
+            $versions = @()
+            try {
+                $versions = Get-ChildItem "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
+            } catch {
+                throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app' "
+            }
+            if ($versions.Count -gt 0) {
+                $path = $versions[0].FullName
+            }
+        }
     }
 
     return $path
