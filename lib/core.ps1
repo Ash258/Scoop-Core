@@ -443,9 +443,6 @@ function app_status($app, $global) {
     return $status
 }
 
-# TODO: YAML
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
-
 # paths
 function fname($path) { return Split-Path $path -Leaf }
 function strip_ext($fname) { return $fname -replace '\.[^\.]*$' }
@@ -1156,6 +1153,9 @@ $SCOOP_GLOBAL_ROOT_DIRECTORY = $env:SCOOP_GLOBAL, "$env:ProgramData\scoop" | Whe
 #       multiple users write and access cached files at the same time.
 #       Use at your own risk.
 $SCOOP_CACHE_DIRECTORY = $env:SCOOP_CACHE, "$SCOOP_ROOT_DIRECTORY\cache" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
+
+# Directory for downloaded manifests (mainly)
+$SHOVEL_GENERAL_MANIFESTS_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'manifests'
 
 # Load Scoop config
 $configHome = $env:XDG_CONFIG_HOME, "$env:USERPROFILE\.config" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
