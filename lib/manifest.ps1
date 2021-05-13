@@ -127,7 +127,7 @@ function manifest_path($app, $bucket, $version = $null) {
             }
 
             if ($versions.Count -gt 1) { $versions = $versions[0] }
-            
+
             $path = $versions.FullName
         }
     }
