@@ -239,6 +239,7 @@ function Get-ManifestFromLookup {
                 $path = manifest_path $requestedName $requestedBucket $requestedVersion
             } catch {
                 # TODO: Generate
+                write-host 'issue'
             }
         }
 

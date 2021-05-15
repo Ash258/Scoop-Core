@@ -39,8 +39,15 @@ function Get-LocalBucket {
     .SYNOPSIS
         List all local bucket names.
     #>
+    [CmdletBinding()]
+    param()
 
-    return (Get-ChildItem -Directory $SCOOP_BUCKETS_DIRECTORY).Name
+    process {
+        $bucs = @()
+        $bucs += (Get-ChildItem -LiteralPath $SCOOP_BUCKETS_DIRECTORY -Directory).Name
+
+        return $bucs
+    }
 }
 
 function known_bucket_repos {
