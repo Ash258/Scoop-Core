@@ -308,6 +308,8 @@ function Resolve-ManifestInformation {
             throw 'Not supported way how to provide manifest'
         }
 
+        debug $res
+
         # TODO: Validate manifest object
         if ($null -eq $manifest.version) {
             debug $manifest
