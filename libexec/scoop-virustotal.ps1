@@ -23,9 +23,8 @@
 # Options:
 #   -h, --help                Show help for this command.
 #   -a, --arch <32bit|64bit>  Use the specified architecture, if the manifest supports it.
-#   -s, --scan                For packages where VirusTotal has no information, send download URL
-#                             for analysis (and future retrieval). This requires you to configure
-#                             your virustotal_api_key (see help entry for config command).
+#   -s, --scan                For packages where VirusTotal has no information, send download URL for analysis (and future retrieval).
+#                             This requires you to configure your virustotal_api_key (see help entry for config command).
 #   -n, --no-depends          By default, all dependencies are checked, too.  This flag allows
 #                             to avoid it.
 
@@ -38,24 +37,41 @@
 
 Reset-Alias
 
-$Opt, $Applications, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
-if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
+$ExitCode = 0
+$Options, $Applications, $_err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
+
+if ($_err) { Stop-ScoopExecution -Message "scoop virustotal: $_err" -ExitCode 2 }
 if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required' }
 
-$ExitCode = 0
-$Architecture = ensure_architecture ($opt.a + $opt.arch)
-$DoScan = $Opt.s -or $Opt.scan
-$Independent = $Opt.n -or $Opt.'no-depends'
+$DoScan = $Options.scan -or $Options.s
+$Independent = $Options.'no-depends' -or $Options.n
+$Architecture = default_architecture
 
+if ($Options.a -or $Options.arch) {
+    foreach ($a in @($Options.a, $Options.arch)) {
+        if ($null -eq $a) { continue }
+
+        try {
+            $Architecture = ensure_architecture $a
+        } catch {
+            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
+        }
+    }
+}
+
+# Buildup all installed applications
 if ($Applications -eq '*') {
     $Applications = installed_apps $false
     $Applications += installed_apps $true
 }
+
 if (!$Independent) { $Applications = install_order $Applications $Architecture }
 
 foreach ($app in $Applications) {
     # TODO: Adopt Resolve-ManifestInformation
+    # TOOD: Fix URL/local manifest installations
+    # Should it take installed manifest or remote manifest?
     $manifest, $bucket = find_manifest $app
     if (!$manifest) {
         $ExitCode = $ExitCode -bor $VT_ERR.NoInfo
@@ -69,6 +85,7 @@ foreach ($app in $Applications) {
         if (!$hash) {
             Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
             continue
+            # TODO: Adopt $Options.download
         }
 
         try {

@@ -30,9 +30,9 @@ if ($Query) {
 }
 
 $exitCode = 0
+$localResults = @()
 
 Write-UserMessage -Message 'Searching in local buckets...'
-$localResults = @()
 
 foreach ($bucket in (Get-LocalBucket)) {
     $result = Search-LocalBucket -Bucket $bucket -Query $Query
