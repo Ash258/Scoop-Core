@@ -14,7 +14,6 @@
 Reset-Alias
 
 $opt, $apps, $err = getopt $args 'gp' 'global', 'purge'
-
 if ($err) { Stop-ScoopExecution -Message "scoop uninstall: $err" -ExitCode 2 }
 
 $global = $opt.g -or $opt.global
@@ -40,6 +39,7 @@ if (!$apps) {
 
 $exitCode = 0
 $problems = 0
+
 foreach ($_ in $apps) {
     ($app, $global, $bucket) = $_
 

@@ -30,9 +30,9 @@ if ($Query) {
 }
 
 $exitCode = 0
-
-Write-Host 'Searching in local buckets ...'
 $localResults = @()
+
+Write-UserMessage -Message 'Searching in local buckets...'
 
 foreach ($bucket in (Get-LocalBucket)) {
     $result = Search-LocalBucket -Bucket $bucket -Query $Query
@@ -70,14 +70,14 @@ foreach ($bucket in (Get-LocalBucket)) {
 if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
 if (!$localResults -or $Remote) {
     if (!(Test-GithubApiRateLimitBreached)) {
-        Write-Host 'Searching in remote buckets ...'
+        Write-UserMessage -Message 'Searching in remote buckets ...'
         $remoteResults = Search-AllRemote -Query $Query
 
         if ($remoteResults) {
-            Write-Host "`nResults from other known buckets:`n"
+            Write-UserMessage -Message "`nResults from other known buckets:`n"
             foreach ($r in $remoteResults) {
-                Write-Host "'$($r.bucket)' bucket (Run 'scoop bucket add $($r.bucket)'):"
-                $r.results | ForEach-Object { "    $_" }
+                Write-UserMessage -Message "'$($r.bucket)' bucket (Run 'scoop bucket add $($r.bucket)'):"
+                $r.results | ForEach-Object { Write-UserMessage -Message "    $_" }
             }
         } else {
             Stop-ScoopExecution 'No matches in remote buckets found'

@@ -23,9 +23,8 @@
 # Options:
 #   -h, --help                Show help for this command.
 #   -a, --arch <32bit|64bit>  Use the specified architecture, if the manifest supports it.
-#   -s, --scan                For packages where VirusTotal has no information, send download URL
-#                             for analysis (and future retrieval). This requires you to configure
-#                             your virustotal_api_key (see help entry for config command).
+#   -s, --scan                For packages where VirusTotal has no information, send download URL for analysis (and future retrieval).
+#                             This requires you to configure your virustotal_api_key (see help entry for config command).
 #   -n, --no-depends          By default, all dependencies are checked, too.  This flag allows
 #                             to avoid it.
 
@@ -38,51 +37,68 @@
 
 Reset-Alias
 
-$opt, $apps, $err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
-if ($err) { Stop-ScoopExecution -Message "scoop virustotal: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+$ExitCode = 0
+$Options, $Applications, $_err = getopt $args 'a:sn' 'arch=', 'scan', 'no-depends'
+
+if ($_err) { Stop-ScoopExecution -Message "scoop virustotal: $_err" -ExitCode 2 }
+if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required' }
 
-$architecture = ensure_architecture ($opt.a + $opt.arch)
-$DoScan = $opt.scan -or $opt.s
+$DoScan = $Options.scan -or $Options.s
+$Independent = $Options.'no-depends' -or $Options.n
+$Architecture = default_architecture
 
-if ($apps -eq '*') {
-    $apps = installed_apps $false
-    $apps += installed_apps $true
+if ($Options.a -or $Options.arch) {
+    foreach ($a in @($Options.a, $Options.arch)) {
+        if ($null -eq $a) { continue }
+
+        try {
+            $Architecture = ensure_architecture $a
+        } catch {
+            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
+        }
+    }
 }
-if (!$opt.n -and !$opt.'no-depends') { $apps = install_order $apps $architecture }
 
-$exitCode = 0
+# Buildup all installed applications
+if ($Applications -eq '*') {
+    $Applications = installed_apps $false
+    $Applications += installed_apps $true
+}
 
-foreach ($app in $apps) {
+if (!$Independent) { $Applications = install_order $Applications $Architecture }
+
+foreach ($app in $Applications) {
     # TODO: Adopt Resolve-ManifestInformation
+    # TOOD: Fix URL/local manifest installations
     # Should it take installed manifest or remote manifest?
     $manifest, $bucket = find_manifest $app
     if (!$manifest) {
-        $exitCode = $exitCode -bor $VT_ERR.NoInfo
+        $ExitCode = $ExitCode -bor $VT_ERR.NoInfo
         Write-UserMessage -Message "${app}: manifest not found" -Err
         continue
     }
 
-    foreach ($url in (url $manifest $architecture)) {
-        $hash = hash_for_url $manifest $url $architecture
+    foreach ($url in (url $manifest $Architecture)) {
+        $hash = hash_for_url $manifest $url $Architecture
 
         if (!$hash) {
             Write-UserMessage -Message "${app}: Cannot find hash for $url" -Warning
             continue
+            # TODO: Adopt $Options.download
         }
 
         try {
-            $exitCode = $exitCode -bor (Search-VirusTotal $hash $app)
+            $ExitCode = $ExitCode -bor (Search-VirusTotal $hash $app)
         } catch {
-            $exitCode = $exitCode -bor $VT_ERR.Exception
+            $ExitCode = $ExitCode -bor $VT_ERR.Exception
 
             if ($_.Exception.Message -like '*(404)*') {
                 Submit-ToVirusTotal -Url $url -App $app -DoScan:$DoScan
             } else {
                 if ($_.Exception.Message -match '\(204|429\)') {
                     Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
-                    $exitCode = 3
+                    $ExitCode = 3
                     continue
                 }
                 Write-UserMessage -Message "${app}: VirusTotal request failed: $($_.Exception.Message)"
@@ -91,4 +107,4 @@ foreach ($app in $apps) {
     }
 }
 
-exit $exitCode
+exit $ExitCode
