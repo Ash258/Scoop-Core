@@ -56,7 +56,7 @@ foreach ($app in $Applications) {
     }
 
     Set-InstalledApplicationInformationPropertyValue @splat -Value $false -Force
-    Write-UserMessage -Message "$app is no longer held and can be updated again" -Success
+    Write-UserMessage -Message "'$app' is no longer held and can be updated again" -Success
 }
 
 if ($Problems -gt 0) { $ExitCode = 10 + $Problems }
