@@ -31,9 +31,12 @@ if ($_err) { Stop-ScoopExecution -Message "scoop reset: $_err" -ExitCode 2 }
 if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 if ($Applications -eq '*') {
-    $local = installed_apps $false | ForEach-Object { , @($_, $false) }
-    $global = installed_apps $true | ForEach-Object { , @($_, $true) }
-    $Applications = @($local) + @($global)
+    $Applications = @()
+    foreach ($gl in $true, $false) {
+        installed_apps $gl | ForEach-Object {
+            $Applications += @($_, $true)
+        }
+    }
 }
 
 foreach ($a in $Applications) {
@@ -89,7 +92,7 @@ foreach ($a in $Applications) {
     # unlink all potential old link before re-persisting
     unlink_persist_data $original_dir
     persist_data $manifest $original_dir $persist_dir
-    persist_permission $manifest $global
+    persist_permission $manifest $gl
 }
 
 if ($Problems -gt 0) { $ExitCode = 10 + $Problems }

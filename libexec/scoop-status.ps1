@@ -76,7 +76,7 @@ if ($Outdated) {
 
 if ($Onhold) {
     $ExitCode = 3
-    Write-UserMessage -Message 'These applications are outdated and on hold:' -Color 'DarkCyan'
+    Write-UserMessage -Message 'These applications are outdated and held:' -Color 'DarkCyan'
     $Onhold.Keys | ForEach-Object {
         Write-UserMessage -Message "    ${_}: $($Onhold.$_[0]) -> $($Onhold.$_[1])"
     }
