@@ -2,7 +2,7 @@
 # Summary: Show status and check for available updates for all installed applications.
 # Help: Status command will check these factors and report if any of them is not satisfied:
 #    Scoop installation is up-to-date.
-#    Installed applications use latest version.
+#    Installed applications use the latest version.
 #    Remote manifests of installed applications are available.
 #    All applications are successfully installed.
 #    All runtime dependencies are installed.
