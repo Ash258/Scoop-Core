@@ -52,7 +52,7 @@ foreach ($global in ($true, $false)) {
     $dir = appsdir $global
     if (!(Test-Path -LiteralPath $dir -PathType 'Container')) { continue }
 
-    foreach ($application in (Get-ChildItem $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
+    foreach ($application in (Get-ChildItem -LiteralPath $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
         $app = $application.name
         $status = app_status $app $global
 
