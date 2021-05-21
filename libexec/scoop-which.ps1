@@ -4,7 +4,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'help', 'commands', 'getopt' | ForEach-Object {
+'core', 'commands', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

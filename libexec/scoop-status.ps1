@@ -10,7 +10,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'Helpers', 'GetOpt', 'manifest', 'buckets', 'Versions', 'depends', 'Git' | ForEach-Object {
+'core', 'buckets', 'depends', 'getopt', 'Git', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

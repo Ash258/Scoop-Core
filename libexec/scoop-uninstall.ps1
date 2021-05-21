@@ -7,7 +7,7 @@
 #   -p, --purge    Persisted data will be removed.
 #                  Normally when application is being uninstalled, the data defined in persist property/manually persisted are kept.
 
-'core', 'manifest', 'help', 'Helpers', 'install', 'shortcuts', 'psmodules', 'Versions', 'getopt', 'Uninstall' | ForEach-Object {
+'core', 'getopt', 'help', 'Helpers', 'install', 'manifest', 'psmodules', 'shortcuts', 'Uninstall', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

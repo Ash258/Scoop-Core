@@ -14,7 +14,7 @@
 #   -s, --skip                Skip hash validation (use with caution!).
 #   -q, --quiet               Hide extraneous messages.
 
-'depends', 'Helpers', 'getopt', 'manifest', 'Uninstall', 'Update', 'Versions', 'install' | ForEach-Object {
+'core', 'depends', 'getopt', 'Helpers', 'install', 'manifest', 'Uninstall', 'Update', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 

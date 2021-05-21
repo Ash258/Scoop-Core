@@ -1,24 +1,28 @@
 # Usage: scoop search [<OPTIONS>] [<QUERY>]
 # Summary: Search for applications, which are available for installation.
-#
 # Help: When <QUERY> parameter is not provided, all available applications will be shown.
-# <QUERY> Parameter could be regular expression.
+# <QUERY> parameter could be regular expression.
 #
 # Options:
 #   -h, --help      Show help for this command.
 #   -r, --remote    Force remote search in known buckets using Github API.
-#                       Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
-#                       It only uses manifest name to search.
+#                   Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
+#                   It only uses manifest name to search.
 
-'getopt', 'buckets', 'Helpers', 'Search' | ForEach-Object {
+'core', 'Helpers', 'getopt', 'buckets', 'Search' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-$opt, $Query, $err = getopt $args 'r' 'remote'
-if ($err) { Stop-ScoopExecution -Message "scoop search: $err" -ExitCode 2 }
-$Remote = $opt.r -or $opt.remote
+$ExitCode = 0
+$LocalResults = @()
+$Options, $Query, $_err = getopt $args 'r' 'remote'
+
+if ($_err) { Stop-ScoopExecution -Message "scoop search: $_err" -ExitCode 2 }
+
+$Remote = $Options.r -or $Options.remote
+
 if ($Query) {
     try {
         $Query = New-Object System.Text.RegularExpressions.Regex $Query, 'IgnoreCase'
@@ -29,16 +33,13 @@ if ($Query) {
     $Query = $null
 }
 
-$exitCode = 0
-$localResults = @()
-
 Write-UserMessage -Message 'Searching in local buckets...'
 
 foreach ($bucket in (Get-LocalBucket)) {
     $result = Search-LocalBucket -Bucket $bucket -Query $Query
     if (!$result) { continue }
 
-    $localResults += $result
+    $LocalResults += $result
     foreach ($res in $result) {
         Write-Host "$bucket" -ForegroundColor 'Yellow' -NoNewline
         Write-Host '/' -NoNewline
@@ -67,8 +68,8 @@ foreach ($bucket in (Get-LocalBucket)) {
     }
 }
 
-if (!$localResults) { Write-UserMessage -Message 'No matches in local buckets found' }
-if (!$localResults -or $Remote) {
+if (!$LocalResults) { Write-UserMessage -Message 'No matches in local buckets found' }
+if (!$LocalResults -or $Remote) {
     if (!(Test-GithubApiRateLimitBreached)) {
         Write-UserMessage -Message 'Searching in remote buckets ...'
         $remoteResults = Search-AllRemote -Query $Query
@@ -87,4 +88,4 @@ if (!$localResults -or $Remote) {
     }
 }
 
-exit $exitCode
+exit $ExitCode
