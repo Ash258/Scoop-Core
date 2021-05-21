@@ -69,7 +69,7 @@ foreach ($a in $Applications) {
     }
 
     if ($gl -and !(is_admin)) {
-        Write-UserMessage -Message "'$app' ($version) is a globally installed application. Admini privileges are required to reset it. Skipping" -Warning
+        Write-UserMessage -Message "'$app' ($version) is a globally installed application. Admin privileges are required to reset it. Skipping" -Warning
         ++$Problems
         continue
     }
