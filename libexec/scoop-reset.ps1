@@ -34,7 +34,7 @@ if ($Applications -eq '*') {
     $Applications = @()
     foreach ($gl in $true, $false) {
         installed_apps $gl | ForEach-Object {
-            $Applications += @($_, $true)
+            $Applications += , @($_, $true)
         }
     }
 }
