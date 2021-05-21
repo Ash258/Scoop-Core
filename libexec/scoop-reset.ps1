@@ -60,8 +60,8 @@ foreach ($a in $Applications) {
     if ($null -eq $version) { $version = Select-CurrentVersion -AppName $app -Global:$gl }
 
     $manifest = installed_manifest $app $version $gl
-    # if this is null we know the version they are resetting to
-    # is not installed
+
+    # When there is no manifest it is clear that aplication is not installed with this specific version
     if ($null -eq $manifest) {
         ++$Problems
         Write-UserMessage -Message "'$app ($version)' is not installed" -Err
@@ -89,7 +89,7 @@ foreach ($a in $Applications) {
     env_add_path $manifest $dir $gl $architecture
     env_set $manifest $dir $gl $architecture
 
-    # unlink all potential old link before re-persisting
+    # Unlink all potential old link before re-persisting
     unlink_persist_data $original_dir
     persist_data $manifest $original_dir $persist_dir
     persist_permission $manifest $gl
