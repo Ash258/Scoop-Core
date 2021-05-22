@@ -34,7 +34,7 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $path | Should -Be $null
         $path = $null
 
-        $path = manifest_path 'ahoj' 'alfa'
+        $path = manifest_path 'ahoj' 'main'
         $path | Should -Be $null
         $path = $null
     }
