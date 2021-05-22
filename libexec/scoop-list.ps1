@@ -49,7 +49,7 @@ if ($OrderInstalled) {
     $SortSplat.Property = { $_.gci.CreationTime }
 } elseif ($OrderUpdated) {
     $SortSplat.Property = {
-        $new = Join-Path $_.gci.Fullname '*\scoop-install.json' | Get-ChildItem
+        $new = Join-Path $_.gci.FullName '*\scoop-install.json' | Get-ChildItem
         $new | Sort-Object -Property 'LastWriteTimeUtc' | Select-Object -ExpandProperty 'LastWriteTimeUtc' -Last 1
     }
 }
