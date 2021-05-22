@@ -98,7 +98,7 @@ function ConvertTo-Manifest {
 }
 
 # TODO: YAML
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$'  }
+function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
@@ -121,7 +121,7 @@ function manifest_path($app, $bucket, $version = $null) {
             $versions = @()
 
             try {
-                $versions = Get-ChildItem "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
+                $versions = Get-ChildItem -LiteralPath "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
             } catch {
                 throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app'"
             }
