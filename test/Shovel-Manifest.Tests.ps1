@@ -70,5 +70,9 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $path = $null
 
         { manifest_path 'cosi' 'main' | New-VersionedManifest -Version '22222' 6>$null } | Should -Throw 'Cannot generate manifest with version ''22222'''
+
+        $path = manifest_path 'broken_wget' 'main'
+        { New-VersionedManifest -LiteralPat $path -Version '22222' 6>$null } | Should -Throw "Invalid manifest '$path'"
+        $path = $null
     }
 }
