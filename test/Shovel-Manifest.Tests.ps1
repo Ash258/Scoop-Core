@@ -6,6 +6,7 @@
 Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
     BeforeAll {
         $working_dir = (setup_working 'manifest' | Resolve-Path).Path
+        Move-Item "$working_dir\*.*" "$working_dir\bucket"
         $SCOOP_BUCKETS_DIRECTORY = $working_dir | Split-Path
 
         Copy-Item $working_dir "$SCOOP_BUCKETS_DIRECTORY\ash258.ash258" -Force -Recurse
@@ -15,6 +16,10 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
     It 'manifest_path' {
         $path = manifest_path 'cosi' 'manifest'
         $path | Should -Be "$working_dir\bucket\cosi.yaml"
+        $path = $null
+
+        $path = manifest_path 'wget' 'manifest'
+        $path | Should -Be "$working_dir\bucket\wget.json"
         $path = $null
 
         $path = manifest_path 'pwsh' 'ash258.ash258'
@@ -45,6 +50,9 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
 
         $path = manifest_path 'pwsh' 'ash258.ash258' '2222'
         $path | Should -Be $null
+        $path = $null
+
+        { manifest_path 'wget' 'ash258.ash258' '2222' } | Should -Throw 'Bucket ''ash258.ash258'' does not contain archived version ''2222'' for ''wget'''
         $path = $null
     }
 }
