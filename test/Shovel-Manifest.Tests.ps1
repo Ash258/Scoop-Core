@@ -10,8 +10,6 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
 
         Copy-Item $working_dir "$SCOOP_BUCKETS_DIRECTORY\ash258.ash258" -Force -Recurse
         Copy-Item $working_dir "$SCOOP_BUCKETS_DIRECTORY\main" -Force -Recurse
-
-        $SCOOP_BUCKETS_DIRECTORY | Out-Null # PowerShell/PSScriptAnalyzer#1472
     }
 
     It 'manifest_path' {
