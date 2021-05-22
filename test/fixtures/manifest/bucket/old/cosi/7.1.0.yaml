@@ -13,4 +13,3 @@ bin: pwsh.exe
 shortcuts:
 - - pwsh.exe
   - PowerShell Core
-

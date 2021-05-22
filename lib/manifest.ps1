@@ -336,6 +336,7 @@ function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
     $path = $file = $null
+
     try {
         $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*" -ErrorAction 'Stop'
     } catch {
@@ -350,18 +351,66 @@ function manifest_path($app, $bucket, $version = $null) {
         if ($version) {
             $path = $null
             $versions = @()
+
             try {
-                $versions = Get-ChildItem "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
+                $versions = Get-ChildItem -LiteralPath "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
             } catch {
-                throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app' "
+                throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app'"
             }
-            if ($versions.Count -gt 0) {
-                $path = $versions[0].FullName
-            }
+
+            if ($versions.Count -gt 1) { $versions = $versions[0] }
+
+            $path = $versions.FullName
         }
     }
 
     return $path
+}
+
+function New-VersionedManifest {
+    <#
+    .SYNOPSIS
+        Generate new manifest with specified version.
+    .DESCRIPTION
+        Path to the new manifest will be returned.
+        Generated manifests will be saved into $env:SCOOP\manifests and named as '<OriginalName>-<Random>-<Random>.<OriginalExtension>'
+    .PARAMETER Path
+        Specifies the path to the original manifest.
+    .PARAMETER Version
+        Specifies the version to which manifest should be updated.
+    #>
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('LiteralPath')]
+        [System.IO.FileInfo] $Path,
+        [Parameter(Mandatory)]
+        [String] $Version
+    )
+
+    process {
+        $manifest = $newManifest = $null
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $Path
+        } catch {
+            throw [ScoopException] "Invalid manifest '$Path'"
+        }
+
+        $name = "$($Path.BaseName)-$(Get-Random)-$(Get-Random)$($Path.Extension)"
+        $outPath = Confirm-DirectoryExistence -LiteralPath $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Join-Path -ChildPath $name
+
+        try {
+            $newManifest = Invoke-Autoupdate $Path.Basename $null $manifest $Version $(${ }) $Path.Extension -IgnoreArchive
+            if ($null -eq $newManifest) { throw 'trigger' }
+        } catch {
+            throw [ScoopException] "Cannot generate manifest with version '$Version'"
+        }
+
+        ConvertTo-Manifest -Path $outpath -Manifest $newManifest
+
+        return $outPath
+    }
 }
 
 function parse_json {

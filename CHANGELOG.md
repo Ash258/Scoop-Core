@@ -2,6 +2,9 @@
 
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
+- Add additional debug for jsonpath/xpath evaluation
+- **scoop-bucket**: Fix edge case when there are no buckets added
+
 ### 0.6-pre3
 
 - Unify help entries of executables

@@ -44,7 +44,11 @@ function Get-LocalBucket {
 
     process {
         $bucs = @()
-        $bucs += (Get-ChildItem -LiteralPath $SCOOP_BUCKETS_DIRECTORY -Directory).Name
+        try {
+            $bucs += (Get-ChildItem -LiteralPath $SCOOP_BUCKETS_DIRECTORY -ErrorAction 'Stop' -Directory).Name
+        } catch {
+            $bucs = @() # Edge case which should never happen as there will always be main bucket, but it will prevent possible issues
+        }
 
         return $bucs
     }

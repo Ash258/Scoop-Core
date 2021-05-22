@@ -15,7 +15,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'manifest', 'help', 'getopt', 'install', 'Versions', 'shortcuts' | ForEach-Object {
+'core', 'getopt', 'help', 'Helpers', 'install', 'manifest', 'shortcuts', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -23,21 +23,24 @@
 
 Reset-Alias
 
-$opt, $apps, $err = getopt $args
+$ExitCode = 0
+$Problems = 0
+$Options, $Applications, $_err = getopt $args
 
-if ($err) { Stop-ScoopExecution -Message "scoop reset: $err" -ExitCode 2 }
-if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
+if ($_err) { Stop-ScoopExecution -Message "scoop reset: $_err" -ExitCode 2 }
+if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
-if ($apps -eq '*') {
-    $local = installed_apps $false | ForEach-Object { , @($_, $false) }
-    $global = installed_apps $true | ForEach-Object { , @($_, $true) }
-    $apps = @($local) + @($global)
+if ($Applications -eq '*') {
+    $Applications = @()
+    foreach ($gl in $true, $false) {
+        installed_apps $gl | ForEach-Object {
+            $Applications += , @($_, $true)
+        }
+    }
 }
 
-$exitCode = 0
-$problems = 0
-foreach ($a in $apps) {
-    ($app, $global) = $a
+foreach ($a in $Applications) {
+    ($app, $gl) = $a
 
     # TODO: Adopt Resolve-ManifestInformation ???
     $app, $bucket, $version = parse_app $app
@@ -45,53 +48,53 @@ foreach ($a in $apps) {
     # Skip scoop
     if ($app -eq 'scoop') { continue }
 
-    # Set global flag when running reset command on specific app
-    if (($null -eq $global) -and (installed $app $true)) { $global = $true }
-
     if (!(installed $app)) {
-        ++$problems
-        Write-UserMessage -Message "'$app' isn't installed" -Err
+        ++$Problems
+        Write-UserMessage -Message "'$app' is not installed" -Err
         continue
     }
 
-    if ($null -eq $version) { $version = Select-CurrentVersion -AppName $app -Global:$global }
+    # Set global flag when running reset command on specific app
+    # TODO: This cannot be done automatically as user does not have admin rights most likely
+    if (($null -eq $gl) -and (installed $app $true)) { $gl = $true }
+    if ($null -eq $version) { $version = Select-CurrentVersion -AppName $app -Global:$gl }
 
-    $manifest = installed_manifest $app $version $global
-    # if this is null we know the version they're resetting to
-    # is not installed
+    $manifest = installed_manifest $app $version $gl
+
+    # When there is no manifest it is clear that aplication is not installed with this specific version
     if ($null -eq $manifest) {
-        ++$problems
-        Write-UserMessage -Message "'$app ($version)' isn't installed" -Err
+        ++$Problems
+        Write-UserMessage -Message "'$app ($version)' is not installed" -Err
         continue
     }
 
-    if ($global -and !(is_admin)) {
-        Write-UserMessage -Message "'$app' ($version) is a global app. You need admin rights to reset it. Skipping." -Warning
-        ++$problems
+    if ($gl -and !(is_admin)) {
+        Write-UserMessage -Message "'$app' ($version) is a installed globally. Admin privileges are required to reset it. Skipping" -Warning
+        ++$Problems
         continue
     }
 
-    Write-UserMessage -Message "Resetting $app ($version)."
+    Write-UserMessage -Message "Resetting $app ($version)"
 
-    $dir = Resolve-Path (versiondir $app $version $global)
+    $dir = Resolve-Path (versiondir $app $version $gl)
     $original_dir = $dir
-    $persist_dir = persistdir $app $global
+    $persist_dir = persistdir $app $gl
 
-    $install = install_info $app $version $global
+    $install = install_info $app $version $gl
     $architecture = $install.architecture
 
     $dir = link_current $dir
-    create_shims $manifest $dir $global $architecture
-    create_startmenu_shortcuts $manifest $dir $global $architecture
-    env_add_path $manifest $dir $global $architecture
-    env_set $manifest $dir $global $architecture
+    create_shims $manifest $dir $gl $architecture
+    create_startmenu_shortcuts $manifest $dir $gl $architecture
+    env_add_path $manifest $dir $gl $architecture
+    env_set $manifest $dir $gl $architecture
 
-    # unlink all potential old link before re-persisting
+    # Unlink all potential old link before re-persisting
     unlink_persist_data $original_dir
     persist_data $manifest $original_dir $persist_dir
-    persist_permission $manifest $global
+    persist_permission $manifest $gl
 }
 
-if ($problems -gt 0) { $exitCode = 10 + $problems }
+if ($Problems -gt 0) { $ExitCode = 10 + $Problems }
 
-exit $exitCode
+exit $ExitCode
