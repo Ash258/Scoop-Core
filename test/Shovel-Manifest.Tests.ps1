@@ -71,20 +71,4 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
 
         { manifest_path 'cosi' 'main' | New-VersionedManifest -Version '22222' 6>$null } | Should -Throw 'Cannot generate manifest with version ''22222'''
     }
-
-    It 'New-VersionedManifest' {
-        $path = manifest_path 'pwsh' 'ash258.ash258'
-        $new = New-VersionedManifest -LiteralPath $path -Version '7.1.0' 6>$null
-        $new | Should -BeLike "$env:SCOOP\manifests\pwsh-*.json"
-        (ConvertFrom-Manifest -LiteralPath $new).version | Should -Be '7.1.0'
-        $path = $null
-
-        $path = manifest_path 'cosi' 'main'
-        $new = New-VersionedManifest -LiteralPath $path -Version '6.2.3' 6>$null
-        $new | Should -BeLike "$env:SCOOP\manifests\cosi-*.yaml"
-        (ConvertFrom-Manifest -LiteralPath $new).version | Should -Be '6.2.3'
-        $path = $null
-
-        { manifest_path 'cosi' 'main' | New-VersionedManifest -Version '22222' *>$null } | Should -Throw 'Cannot generate manifest with version ''22222'''
-    }
 }
