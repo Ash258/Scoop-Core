@@ -31,6 +31,9 @@ $SortSplat = @{ 'Property' = { $_.name }; 'Descending' = $Reverse }
 $Applications = @()
 foreach ($gl in @($true, $false)) {
     $a = appsdir $gl
+
+    if (!(Test-Path -LiteralPath $a)) { continue }
+
     foreach ($i in installed_apps $gl) {
         $Applications += @{
             'name'   = $i
@@ -40,7 +43,7 @@ foreach ($gl in @($true, $false)) {
     }
 }
 
-if (!$Applications) { Stop-ScoopExecution -Message 'No application installed' -ExitCode 0 }
+if (!$Applications) { Stop-ScoopExecution -Message 'No application installed' -ExitCode 0 -SkipSeverity }
 
 if ($OrderInstalled) {
     $SortSplat.Property = { $_.gci.CreationTime }
