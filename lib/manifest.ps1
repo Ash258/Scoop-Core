@@ -97,10 +97,14 @@ function ConvertTo-Manifest {
     }
 }
 
-function manifest_path($app, $bucket) {
+# TODO: YAML
+function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
+
+function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
     $path = $file = $null
+
     try {
         $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*" -ErrorAction 'Stop'
     } catch {
@@ -110,6 +114,22 @@ function manifest_path($app, $bucket) {
     if ($file) {
         if ($file.Count -gt 1) { $file = $file[0] }
         $path = $file.FullName
+
+        # Look for archived version only if manifest exists
+        if ($version) {
+            $path = $null
+            $versions = @()
+
+            try {
+                $versions = Get-ChildItem -LiteralPath "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
+            } catch {
+                throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app'"
+            }
+
+            if ($versions.Count -gt 1) { $versions = $versions[0] }
+
+            $path = $versions.FullName
+        }
     }
 
     return $path

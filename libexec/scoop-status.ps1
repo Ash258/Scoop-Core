@@ -1,113 +1,112 @@
-# Usage: scoop status [options]
-# Summary: Show status and check for new app versions
+# Usage: scoop status [<OPTIONS>]
+# Summary: Show status and check for available updates for all installed applications.
+# Help: Status command will check these factors and report if any of them is not satisfied:
+#    Scoop installation is up-to-date.
+#    Installed applications use the latest version.
+#    Remote manifests of installed applications are available.
+#    All applications are successfully installed.
+#    All runtime dependencies are installed.
 #
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'Helpers', 'manifest', 'buckets', 'Versions', 'depends', 'Git' | ForEach-Object {
+'core', 'buckets', 'depends', 'getopt', 'Git', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
 Reset-Alias
 
-# check if scoop needs updating
-$currentdir = versiondir 'scoop' 'current'
-$needs_update = $false
+$ExitCode = 0
+$Failed = @()
+$Outdated = @()
+$Removed = @()
+$MissingDependencies = @()
+$Onhold = @()
+$null, $null, $_err = getopt $args
 
-if (Join-Path $currentdir '.git' | Test-Path -PathType 'Container') {
-    $target = @{ 'Repository' = $currentdir }
+if ($_err) { Stop-ScoopExecution -Message "scoop status: $_err" -ExitCode 2 }
+
+# Check if scoop needs updating
+$ScoopInstallationDirectory = versiondir 'scoop' 'current'
+$UpdateRequired = $false
+
+if (Join-Path $ScoopInstallationDirectory '.git' | Test-Path -PathType 'Container') {
+    $target = @{ 'Repository' = $ScoopInstallationDirectory }
 
     Invoke-GitCmd @target -Command 'fetch' -Argument '--quiet', 'origin' -Proxy
     $commits = Invoke-GitCmd @target -Command 'log' -Argument '--oneline', """HEAD..origin/$(get_config 'SCOOP_BRANCH' 'main')"""
 
-    if ($commits) { $needs_update = $true }
+    if ($commits) { $UpdateRequired = $true }
 } else {
-    $needs_update = $true
+    $UpdateRequired = $true
 }
 
-if ($needs_update) {
-    Write-UserMessage -Message "Scoop is out of date. Run 'scoop update' to get the latest changes." -Warning
+if ($UpdateRequired) {
+    Write-UserMessage -Message "Scoop is out of date. Run 'scoop update' to get the latest changes" -Warning
 } else {
-    Write-UserMessage -Message 'Scoop is up to date.' -Success
+    Write-UserMessage -Message 'Scoop is up to date' -Success
 }
 
-$failed = @()
-$outdated = @()
-$removed = @()
-$missing_deps = @()
-$onhold = @()
-$exitCode = 0
-
-# local and global apps
+# Local and global applications
 foreach ($global in ($true, $false)) {
     $dir = appsdir $global
-    if (!(Test-Path $dir)) { continue }
+    if (!(Test-Path -LiteralPath $dir -PathType 'Container')) { continue }
 
-    foreach ($application in (Get-ChildItem $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
+    foreach ($application in (Get-ChildItem -LiteralPath $dir | Where-Object -Property 'Name' -NE -Value 'scoop')) {
         $app = $application.name
         $status = app_status $app $global
-        if ($status.failed) {
-            $failed += @{ $app = $status.version }
-        }
-        if ($status.removed) {
-            $removed += @{ $app = $status.version }
-        }
+
+        if ($status.failed) { $Failed += @{ $app = $status.version } }
+        if ($status.removed) { $Removed += @{ $app = $status.version } }
+        if ($status.missing_deps) { $MissingDependencies += , (@($app) + @($status.missing_deps)) }
         if ($status.outdated) {
-            $outdated += @{ $app = @($status.version, $status.latest_version) }
-            if ($status.hold) {
-                $onhold += @{ $app = @($status.version, $status.latest_version) }
-            }
-        }
-        if ($status.missing_deps) {
-            $missing_deps += , (@($app) + @($status.missing_deps))
+            $Outdated += @{ $app = @($status.version, $status.latest_version) }
+            if ($status.hold) { $Onhold += @{ $app = @($status.version, $status.latest_version) } }
         }
     }
 }
 
-if ($outdated) {
-    $exitCode = 3
+if ($Outdated) {
+    $ExitCode = 3
     Write-UserMessage -Message 'Updates are available for:' -Color 'DarkCyan'
-    $outdated.keys | ForEach-Object {
-        $versions = $outdated.$_
-        "    ${_}: $($versions[0]) -> $($versions[1])"
+    $Outdated.Keys | ForEach-Object {
+        Write-UserMessage -Message "    ${_}: $($Outdated.$_[0]) -> $($Outdated.$_[1])"
     }
 }
 
-if ($onhold) {
-    Write-UserMessage -Message 'These apps are outdated and on hold:' -Color 'DarkCyan'
-    $onhold.keys | ForEach-Object {
-        $versions = $onhold.$_
-        "    ${_}: $($versions[0]) -> $($versions[1])"
+if ($Onhold) {
+    $ExitCode = 3
+    Write-UserMessage -Message 'These applications are outdated and held:' -Color 'DarkCyan'
+    $Onhold.Keys | ForEach-Object {
+        Write-UserMessage -Message "    ${_}: $($Onhold.$_[0]) -> $($Onhold.$_[1])"
     }
 }
 
-if ($removed) {
-    $exitCode = 3
-    Write-UserMessage -Message 'These app manifests have been removed:' -Color 'DarkCyan'
-    $removed.keys | ForEach-Object {
-        "    $_"
+if ($Removed) {
+    $ExitCode = 3
+    Write-UserMessage -Message 'These application manifests have been removed:' -Color 'DarkCyan'
+    $Removed.Keys | ForEach-Object {
+        Write-UserMessage -Message "    $_"
     }
 }
 
-if ($failed) {
-    $exitCode = 3
-    Write-UserMessage 'These apps failed to install:' -Color 'DarkCyan'
-    $failed.keys | ForEach-Object {
-        "    $_"
+if ($Failed) {
+    $ExitCode = 3
+    Write-UserMessage -Message 'These applications failed to install:' -Color 'DarkCyan'
+    $Failed.Keys | ForEach-Object {
+        Write-UserMessage -Message "    $_"
     }
 }
 
-if ($missing_deps) {
-    $exitCode = 3
-    Write-UserMessage 'Missing runtime dependencies:' -Color 'DarkCyan'
-    $missing_deps | ForEach-Object {
+if ($MissingDependencies) {
+    $ExitCode = 3
+    Write-UserMessage -Message 'Missing runtime dependencies:' -Color 'DarkCyan'
+    $MissingDependencies | ForEach-Object {
         $app, $deps = $_
-        "    '$app' requires '$([String]::Join(', ', $deps))'"
+        Write-UserMessage -Message "    '$app' requires '$($deps -join ', ')'"
     }
 }
 
-if (!$old -and !$removed -and !$failed -and !$missing_deps -and !$needs_update) {
-    Write-UserMessage -Message 'Everything is ok!' -Success
-}
+if (!$UpdateRequired -and !$Removed -and !$Failed -and !$MissingDependencies -and !$Outdated) { Write-UserMessage -Message 'Everything is ok!' -Success }
 
-exit $exitCode
+exit $ExitCode
