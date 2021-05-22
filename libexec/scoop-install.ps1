@@ -18,7 +18,7 @@
 #   -k, --no-cache            Do not use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).
 
-'Helpers', 'core', 'manifest', 'buckets', 'decompress', 'install', 'shortcuts', 'psmodules', 'Update', 'Versions', 'help', 'getopt', 'depends' | ForEach-Object {
+'core', 'buckets', 'decompress', 'depends', 'getopt', 'help', 'Helpers', 'manifest', 'shortcuts', 'psmodules', 'Update', 'Versions', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
