@@ -136,11 +136,24 @@ function manifest_path($app, $bucket, $version = $null) {
 }
 
 function New-VersionedManifest {
+    <#
+    .SYNOPSIS
+        Generate new manifest with specified version.
+    .DESCRIPTION
+        Path to the new manifest will be returned.
+        Generated manifests will be saved into $env:SCOOP\manifests and named as '<OriginalName>-<Random>-<Random>.<OriginalExtension>'
+    .PARAMETER Path
+        Specifies the path to the original manifest.
+    .PARAMETER Version
+        Specifies the version to which manifest should be updated.
+    #>
     [CmdletBinding()]
+    [OutputType([String])]
     param(
         [Parameter(Mandatory, ValueFromPipeline)]
         [Alias('LiteralPath')]
         [System.IO.FileInfo] $Path,
+        [Parameter(Mandatory)]
         [String] $Version
     )
 
