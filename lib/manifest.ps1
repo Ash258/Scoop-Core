@@ -138,7 +138,7 @@ function manifest_path($app, $bucket, $version = $null) {
 function New-VersionedManifest {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ValueFromPipeline)]
         [Alias('LiteralPath')]
         [System.IO.FileInfo] $Path,
         [String] $Version

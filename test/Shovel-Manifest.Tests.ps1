@@ -68,5 +68,7 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         $new | Should -BeLike "$env:SCOOP\manifests\cosi-*.yaml"
         (ConvertFrom-Manifest -LiteralPath $new).version | Should -Be '6.2.3'
         $path = $null
+
+        { manifest_path 'cosi' 'main' | New-VersionedManifest -Version '22222' *>$null } | Should -Throw 'Cannot generate manifest with version ''22222'''
     }
 }
