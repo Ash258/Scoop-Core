@@ -55,4 +55,18 @@ Describe 'Resolve-ManifestInformation' -Tag 'Scoop' {
         { manifest_path 'wget' 'ash258.ash258' '2222' } | Should -Throw 'Bucket ''ash258.ash258'' does not contain archived version ''2222'' for ''wget'''
         $path = $null
     }
+
+    It 'New-VersionedManifest' {
+        $path = manifest_path 'pwsh' 'ash258.ash258'
+        $new = New-VersionedManifest -LiteralPath $path -Version '7.1.0' 6>$null
+        $new | Should -BeLike "$env:SCOOP\manifests\pwsh-*.json"
+        (ConvertFrom-Manifest -LiteralPath $new).version | Should -Be '7.1.0'
+        $path = $null
+
+        $path = manifest_path 'cosi' 'main'
+        $new = New-VersionedManifest -LiteralPath $path -Version '6.2.3' 6>$null
+        $new | Should -BeLike "$env:SCOOP\manifests\cosi-*.yaml"
+        (ConvertFrom-Manifest -LiteralPath $new).version | Should -Be '6.2.3'
+        $path = $null
+    }
 }

@@ -145,19 +145,18 @@ function New-VersionedManifest {
     )
 
     process {
-        $manifest = $gci = $newManifest = $null
+        $manifest = $newManifest = $null
         try {
-            # $gci = Get-Item -LiteralPath $Path
             $manifest = ConvertFrom-Manifest -LiteralPath $Path
         } catch {
             throw [ScoopException] "Invalid manifest '$Path'"
         }
 
-        $name = "$($gci.BaseName)-$(Get-Random)-$(Get-Random)$($gci.Extension)"
+        $name = "$($Path.BaseName)-$(Get-Random)-$(Get-Random)$($Path.Extension)"
         $outPath = Confirm-DirectoryExistence -LiteralPath $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Join-Path -ChildPath $name
 
         try {
-            $newManifest = Invoke-Autoupdate $gci.Basename $null $manifest $Version $(${ }) $gci.Extension -IgnoreArchive
+            $newManifest = Invoke-Autoupdate $Path.Basename $null $manifest $Version $(${ }) $Path.Extension -IgnoreArchive
             if ($null -eq $newManifest) { throw 'trigger' }
         } catch {
             throw [ScoopException] "Cannot generate manifest with version '$Version'"
