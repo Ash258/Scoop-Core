@@ -131,7 +131,6 @@ Describe 'Manifests operations' -Tag 'Scoop' {
         }
 
         Describe 'Get-RemoteManifest' {
-
             It 'should handle https manifest' {
                 # TODO: Mockup to not download the file
                 $result = Resolve-ManifestInformation 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/068225b07cad6baeb46eb1adc26f8207fa423508/bucket/aaaaa.json'
