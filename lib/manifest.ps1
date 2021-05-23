@@ -97,8 +97,7 @@ function ConvertTo-Manifest {
     }
 }
 
-# TODO: YAML
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
+function appname_from_url($url) { return (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$" }
 
 function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
@@ -178,6 +177,99 @@ function New-VersionedManifest {
         ConvertTo-Manifest -Path $outpath -Manifest $newManifest
 
         return $outPath
+    }
+}
+
+#region Resolve Helpers
+$_br = '[/\\]'
+$_archivedManifestRegex = "${_br}bucket${_br}old${_br}(?<manifestName>.+?)${_br}(?<manifestVersion>.+?)\.(?<manifestExtension>$ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+#endregion Resolve Helpers
+
+function Get-LocalManifest {
+    <#
+    .SYNOPSIS
+        Get "metadata" about local manifest with support for archived manifests.
+    .PARAMETER Query
+        Specifies the file path where manifest is stored.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
+
+    process {
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $Query
+        } catch {
+            throw [ScoopException] "File is not a valid manifest ($($_.Exception.Message))" # TerminatingError thrown
+        }
+
+        $localPath = Get-Item -LiteralPath $Query
+        $applicationName = $localPath.BaseName
+
+        # Check if archived version was provided
+        if ($localPath.FullName -match $_archivedManifestRegex) {
+            $applicationName = $Matches['manifestName']
+        }
+
+        return @{
+            'Name'     = $applicationName
+            'Manifest' = $manifest
+            'Path'     = $localPath
+        }
+    }
+}
+
+function Resolve-ManifestInformation {
+    <#
+    .SYNOPSIS
+        Find and parse manifest file according to search query. Return universal object with all relevant information about manifest.
+    .PARAMETER ApplicationQuery
+        Specifies the string used for looking for manifest.
+    .EXAMPLE
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh@7.2.0'
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh@6.1.3'
+        Resolve-ManifestInformation -ApplicationQuery '.\bucket\old\cosi\7.1.0.yaml'
+        Resolve-ManifestInformation -ApplicationQuery '.\cosi.yaml'
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/alfa.yaml'
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/old/alfa/0.0.15-12060.yaml'
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $ApplicationQuery)
+
+    process {
+        $manifest = $applicationName = $applicationVersion = $bucket = $localPath = $url = $calcBucket = $calcURL = $null
+
+        if (Test-Path -LiteralPath $ApplicationQuery) {
+            $res = Get-LocalManifest -Query $ApplicationQuery
+            $applicationName = $res.Name
+            $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
+            $localPath = $res.Path
+        } else {
+            throw 'Not supported way how to provide manifest'
+        }
+
+        debug $res
+
+        # TODO: Validate manifest object
+        if ($null -eq $manifest.version) {
+            debug $manifest
+            throw [ScoopException] 'Not a valid manifest' # TerminatingError thrown
+        }
+
+        return [Ordered] @{
+            'ApplicationName'  = $applicationName
+            'Version'          = $applicationVersion
+            'Bucket'           = $bucket
+            'ManifestObject'   = $manifest
+            'Url'              = $url
+            'LocalPath'        = $localPath
+            'CalculatedUrl'    = $calcURL
+            'CalculatedBucket' = $calcBucket
+        }
     }
 }
 
