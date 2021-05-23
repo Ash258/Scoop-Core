@@ -100,58 +100,46 @@ function ConvertTo-Manifest {
 function New-VersionedManifest {
     <#
     .SYNOPSIS
-        Download manifest from provided URL
-    .PARAMETER URL
-        Specifies the URL pointing to manifest.
+        Generate new manifest with specified version.
+    .DESCRIPTION
+        Path to the new manifest will be returned.
+        Generated manifests will be saved into $env:SCOOP\manifests and named as '<OriginalName>-<Random>-<Random>.<OriginalExtension>'
+    .PARAMETER Path
+        Specifies the path to the original manifest.
+    .PARAMETER Version
+        Specifies the version to which manifest should be updated.
     #>
     [CmdletBinding()]
-    [OutputType([System.Collections.Hashtable])]
-    param([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('LiteralPath')]
+        [System.IO.FileInfo] $Path,
+        [Parameter(Mandatory)]
+        [String] $Version
+    )
 
     process {
-        $str = $null
+        $manifest = $newManifest = $null
         try {
-            # TODO: Implement proxy
-            $wc = New-Object System.Net.Webclient
-            $wc.Headers.Add('User-Agent', (Get-UserAgent))
-            $str = $wc.DownloadString($URL)
-        } catch [System.Management.Automation.MethodInvocationException] {
-            Write-UserMessage -Message "${URL}: $($_.Exception.InnerException.Message)" -Warning
+            $manifest = ConvertFrom-Manifest -LiteralPath $Path
         } catch {
-            throw $_.Exception.Message
-        }
-        if (!$str) {
-            throw [ScoopException] "'$URL' does not contain valid manifest" # TerminatingError thrown
+            throw [ScoopException] "Invalid manifest '$Path'"
         }
 
-        Confirm-DirectoryExistence -Directory $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Out-Null
+        $name = "$($Path.BaseName)-$(Get-Random)-$(Get-Random)$($Path.Extension)"
+        $outPath = Confirm-DirectoryExistence -LiteralPath $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Join-Path -ChildPath $name
 
-        # Parse name and extension from URL
-        $name = Split-Path $URL -Leaf
-        $extension = ($name -split '\.')[-1]
-        $name = $name -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
-        if ($URL -match $_archivedManifestRegex) {
-            $name = $Matches['manifestName']
-            $extension = $Matches['manifestExtension']
+        try {
+            $newManifest = Invoke-Autoupdate $Path.Basename $null $manifest $Version $(${ }) $Path.Extension -IgnoreArchive
+            if ($null -eq $newManifest) { throw 'trigger' }
+        } catch {
+            throw [ScoopException] "Cannot generate manifest with version '$Version'"
         }
 
-        $outName = "$name-$(Get-Random)-$(Get-Random).$extension"
-        $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$outName"
-        if (Test-Path $manifestFile) {
-            $new = Get-Random
-            # TODO: Sanitize contextual renaming of already installed manifests
-            Write-UserMessage -Message "Manifest file '$manifestFile' already exists. Renaming to $new" -Warning
-            Rename-Item $manifestFile "$new.$extension"
-        }
-        Out-UTF8File -Path $manifestFile -Content $str
+        ConvertTo-Manifest -Path $outpath -Manifest $newManifest
 
-        $manifest = ConvertFrom-Manifest -Path $manifestFile
-
-        return @{
-            'Name'     = $name
-            'Manifest' = $manifest
-            'Path'     = Get-Item -LiteralPath $manifestFile
-        }
+        return $outPath
     }
 }
 
@@ -319,7 +307,6 @@ function Get-ManifestFromLookup {
 #endregion Resolve Helpers
 
 function Resolve-ManifestInformation {
-
     <#
     .SYNOPSIS
         Find and parse manifest file according to search query. Return universal object with all relevant information about manifest.
