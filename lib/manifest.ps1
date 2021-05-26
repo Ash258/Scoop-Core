@@ -152,6 +152,9 @@ $_applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
 $_versionLookup = '@(?<version>.+)'
 $_lookupRegex = "^($_bucketLookup/)?$_applicationLookup($_versionLookup)?$"
 
+$_localAdditionalSeed = '258258--'
+$_localDownloadedRegex = "^$_applicationLookup-$_localAdditionalSeed.*\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
 function Get-LocalManifest {
     <#
     .SYNOPSIS
@@ -177,6 +180,10 @@ function Get-LocalManifest {
         if ($localPath.FullName -match $_archivedManifestRegex) {
             $applicationName = $Matches['manifestName']
         }
+        # Check if downloaded manfiest was provided
+        if ($localPath.Name -match $_localDownloadedRegex) {
+            $applicationName = $Matches['app']
+        }
 
         return @{
             'Name'     = $applicationName
@@ -189,7 +196,7 @@ function Get-LocalManifest {
 function Get-RemoteManifest {
     <#
     .SYNOPSIS
-        Download manifest from provided URL
+        Download manifest from provided URL.
     .PARAMETER URL
         Specifies the URL pointing to manifest.
     #>
@@ -209,6 +216,7 @@ function Get-RemoteManifest {
         } catch {
             throw $_.Exception.Message
         }
+
         if (!$str) {
             throw [ScoopException] "'$URL' does not contain valid manifest" # TerminatingError thrown
         }
@@ -219,18 +227,23 @@ function Get-RemoteManifest {
         $name = Split-Path $URL -Leaf
         $extension = ($name -split '\.')[-1]
         $name = $name -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
         if ($URL -match $_archivedManifestRegex) {
             $name = $Matches['manifestName']
             $extension = $Matches['manifestExtension']
         }
 
-        $outName = "$name-$(Get-Random)-$(Get-Random).$extension"
-        $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$outName"
+        $rand = "$(Get-Random)-$(Get-Random)"
+        $outName = "$name-$rand.$extension"
+        $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY $outName
+
+        # This use case should never happen. The probability should be really low.
         if (Test-Path $manifestFile) {
-            $new = Get-Random
-            # TODO: Sanitize contextual renaming of already installed manifests
-            Write-UserMessage -Message "Manifest file '$manifestFile' already exists. Renaming to $new" -Warning
-            Rename-Item $manifestFile "$new.$extension"
+            $new = "$name-$_localAdditionalSeed$rand"
+            Write-UserMessage -Message "Downloaded manifest file with name '$outName' already exists. Using '$new.$extension'." -Warning
+            # TODO: Consider while loop when it could be considered as real issue
+
+            $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$new.$extension"
         }
         Out-UTF8File -Path $manifestFile -Content $str
 
