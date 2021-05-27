@@ -239,14 +239,14 @@ function Get-RemoteManifest {
 
         # This use case should never happen. The probability should be really low.
         if (Test-Path $manifestFile) {
-            $new = "$name-$rand-$(Get-Random)"
-            Write-UserMessage -Message "Downloaded manifest file with name '$outName' already exists. Using '$new.$extension'." -Warning
             # TODO: Consider while loop when it could be considered as real issue
-
+            $new = "$name-$rand-$(Get-Random)"
             $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$new.$extension"
-        }
-        Out-UTF8File -Path $manifestFile -Content $str
 
+            Write-UserMessage -Message "Downloaded manifest file with name '$outName' already exists. Using '$new.$extension'." -Warning
+        }
+
+        Out-UTF8File -Path $manifestFile -Content $str
         $manifest = ConvertFrom-Manifest -Path $manifestFile
 
         return @{
