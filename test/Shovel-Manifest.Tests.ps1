@@ -171,7 +171,7 @@ Describe 'Manifests operations' -Tag 'Scoop' {
                 $resultNew.ApplicationName | Should -Be 'alfa'
                 $resultNew.LocalPath.Basename | Should -BeLike 'alfa-258258--*'
                 $resultNew.Version | Should -Be '0.0.15-12154'
-                $result = $null
+                $result = $resultNew = $null
             }
         }
 
