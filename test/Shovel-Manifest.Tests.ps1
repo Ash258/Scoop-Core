@@ -168,7 +168,6 @@ Describe 'Manifests operations' -Tag 'Scoop' {
                 $result.ManifestObject.checkver.github | Should -Be 'https://github.com/RPCS3/rpcs3-binaries-win'
 
                 $resultNew = Resolve-manifestInformation $result.LocalPath
-                Write-Host -f red $resultNew.ApplicationName, $resultNew.LocalPath
                 $resultNew.ApplicationName | Should -Be 'alfa'
                 $resultNew.LocalPath.Basename | Should -BeLike 'alfa-258258--*'
                 $resultNew.Version | Should -Be '0.0.15-12154'
