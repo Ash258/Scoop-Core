@@ -177,37 +177,117 @@ Describe 'Manifests operations' -Tag 'Scoop' {
 
         Describe 'Get-ManifestFromLookup' {
             It 'Simple lookup' {
-                '' | Should -Be ''
-                # $result = Resolve-ManifestInformation 'pwsh'
-                # $result.ApplicationName | Should -Be 'pwsh'
-                # $result.Version | Should -Be '7.1.3'
-                # $result.ManifestObject.bin | Should -Be 'pwsh.exe'
-                # $result = $null
+                $result = Resolve-ManifestInformation 'pwsh'
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '7.1.3'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'cosi'
+                $result.ApplicationName | Should -Be 'cosi'
+                $result.Version | Should -Be '7.1.3'
+                $result.ManifestObject.checkver | Should -Be 'github'
+                $result = $null
             }
 
             It 'Simple versioned lookup' {
-                '' | Should -Be ''
-                # { $result = Resolve-ManifestInformation 'pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
+                $result = Resolve-ManifestInformation 'pwsh@6.2.3'
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '6.2.3'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'cosi@7.1.0'
+                $result.ApplicationName | Should -Be 'cosi'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result.Version | Should -Be '7.1.0'
+                $result.ManifestObject.homepage | Should -Be 'https://github.com/PowerShell/PowerShell'
+                $result = $null
+
+                { Resolve-ManifestInformation 'tryharder' } | Should -Throw 'No manifest found for ''tryharder'''
             }
 
             It 'Specific bucket lookup' {
-                '' | Should -Be ''
-                # { $result = Resolve-ManifestInformation 'main/pwsh' } | Should -Throw 'Not implemented lookup'
-                # { $result = Resolve-ManifestInformation 'ash258.ash258/pwsh' } | Should -Throw 'Not implemented lookup'
+                $result = Resolve-ManifestInformation 'main/pwsh'
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '7.1.3'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result.Bucket | Should -Be 'main'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'ash258.ash258/cosi'
+                $result.ApplicationName | Should -Be 'cosi'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result.Version | Should -Be '7.1.3'
+                $result.ManifestObject.checkver | Should -Be 'github'
+                $result = $null
+
+                { Resolve-ManifestInformation 'nonexistent/cosi' } | Should -Throw '''nonexistent'' cannot be found'
+                { Resolve-ManifestInformation 'main/tryharder' } | Should -Throw 'No manifest found for ''main/tryharder'''
             }
 
             It 'Specific bucket lookup with existing versioned manifest' {
-                '' | Should -Be ''
-                # { $result = Resolve-ManifestInformation 'main/pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
-                # { $result = Resolve-ManifestInformation 'ash258.ash258/pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
+                $result = Resolve-ManifestInformation 'ash258.ash258/pwsh@6.2.3'
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '6.2.3'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'main/cosi@7.1.0'
+                $result.ApplicationName | Should -Be 'cosi'
+                $result.Bucket | Should -Be 'main'
+                $result.Version | Should -Be '7.1.0'
+                $result.ManifestObject.homepage | Should -Be 'https://github.com/PowerShell/PowerShell'
+                $result = $null
+
+                { Resolve-ManifestInformation 'main/pwsh@6.8.0' 6>$null } | Should -Throw 'Cannot generate manifest with version ''6.8.0'''
+                { Resolve-ManifestInformation 'ash258.ash258/cosi@8' 6>$null } | Should -Throw 'Cannot generate manifest with version ''8'''
             }
 
             It 'Simple lookup with version generation' {
-                '' | Should -Be ''
+                $result = Resolve-ManifestInformation 'pwsh@7.0.6' 6>$null
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '7.0.6'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result.LocalPath.Extension | Should -BeLike '.json'
+                $result.LocalPath.BaseName | Should -BeLike 'pwsh-258258--*'
+                $result.LocalPath.Directory.BaseName | Should -BeLike 'manifests'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'cosi@6.2.3' 6>$null
+                $result.ApplicationName | Should -Be 'cosi'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result.LocalPath.Extension | Should -BeLike '.yaml'
+                $result.LocalPath.BaseName | Should -BeLike 'cosi-258258--*'
+                $result.LocalPath.Directory.BaseName | Should -BeLike 'manifests'
+                $result.Version | Should -Be '6.2.3'
+                $result.ManifestObject.homepage | Should -Be 'https://github.com/PowerShell/PowerShell'
+                $result = $null
             }
 
             It 'Specific bucket lookup with version generation' {
-                '' | Should -Be ''
+                $result = Resolve-ManifestInformation 'main/pwsh@7.0.6' 6>$null
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Version | Should -Be '7.0.6'
+                $result.Bucket | Should -Be 'main'
+                $result.LocalPath.Extension | Should -BeLike '.json'
+                $result.LocalPath.BaseName | Should -BeLike 'pwsh-258258--*'
+                $result.LocalPath.Directory.BaseName | Should -BeLike 'manifests'
+                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                $result = $null
+
+                $result = Resolve-ManifestInformation 'ash258.ash258/pwsh@7.0.6' 6>$null
+                $result.ApplicationName | Should -Be 'pwsh'
+                $result.Bucket | Should -Be 'ash258.ash258'
+                $result.LocalPath.Extension | Should -BeLike '.json'
+                $result.LocalPath.BaseName | Should -BeLike 'pwsh-258258--*'
+                $result.LocalPath.Directory.BaseName | Should -BeLike 'manifests'
+                $result.Version | Should -Be '7.0.6'
+                $result.ManifestObject.homepage | Should -Be 'https://github.com/PowerShell/PowerShell'
+                $result = $null
             }
         }
 

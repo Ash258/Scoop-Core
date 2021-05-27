@@ -127,7 +127,7 @@ function New-VersionedManifest {
             throw [ScoopException] "Invalid manifest '$Path'"
         }
 
-        $name = "$($Path.BaseName)-$(Get-Random)-$(Get-Random)$($Path.Extension)"
+        $name = "$($Path.BaseName)-$_localAdditionalSeed$(Get-Random)-$(Get-Random)$($Path.Extension)"
         $outPath = Confirm-DirectoryExistence -LiteralPath $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Join-Path -ChildPath $name
 
         try {
@@ -269,6 +269,7 @@ function Get-ManifestFromLookup {
     param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
 
     process {
+        # Get all requested information
         $requestedBucket, $requestedName = $Query -split '/'
         if ($null -eq $requestedName) {
             $requestedName = $requestedBucket
@@ -276,8 +277,13 @@ function Get-ManifestFromLookup {
         }
         $requestedName, $requestedVersion = $requestedName -split '@'
 
+        # Local manifest with specific name in all buckets
         $found = @()
-        foreach ($b in Get-LocalBucket) {
+        $buckets = Get-LocalBucket
+
+        if ($requestedBucket -and ($requestedBucket -notin $buckets)) { throw [ScoopException] "'$requestedBucket' cannot be found" }
+
+        foreach ($b in $buckets) {
             $really = manifest_path $requestedName $b
             if ($really) {
                 $found += @{
@@ -294,26 +300,41 @@ function Get-ManifestFromLookup {
 
         if (!$valid) { throw [ScoopException] "No manifest found for '$Query'" }
 
+        $manifestBucket = $valid.Bucket
+        $manifestPath = $valid.Path
+
+        # Select versioned manifest or generate it
         if ($requestedVersion) {
             try {
-                $path = manifest_path $requestedName $requestedBucket $requestedVersion
+                $path = manifest_path -app $requestedName -bucket $requestedBucket -version $requestedVersion
+                if ($null -eq $path) { throw 'trigger' }
+                $manifestPath = $path
             } catch {
-                # TODO: Generate
-                Write-Host 'issue'
+                $mess = if ($requestedBucket) { " in '$requestedBucket'" } else { '' }
+                Write-UserMessage -Message "There is no archived version of manifest '$requestedName'$mes. Trying to generate the manifest" -Warning
+
+                $generated = $null
+                try {
+                    $generated = New-VersionedManifest -Path $manifestPath -Version $requestedVersion
+                } catch {
+                    throw [ScoopException] $_.Exception.Message
+                }
+
+                # This should not happen.
+                if (!(Test-Path -LiteralPath $generated)) { throw [ScoopException] 'Generated manifest cannot be found' }
+
+                $manifestPath = $generated
             }
         }
 
-        Write-Host "[$requestedBucket]/($requestedName)@($requestedVersion)" -f red
-
         $name = $requestedName
-        $manifest = @{}
-        $manifestFile = $path
+        $manifest = ConvertFrom-Manifest -LiteralPath $manifestPath
 
         return @{
-            'Name'             = $name
-            'Manifest'         = $manifest
-            'Path'             = $manifestFile
-            'CalculatedBucket' = $valid.Bucket
+            'Name'     = $name
+            'Bucket'   = $manifestBucket
+            'Manifest' = $manifest
+            'Path'     = (Get-Item -LiteralPath $manifestPath)
         }
     }
 }
@@ -359,12 +380,12 @@ function Resolve-ManifestInformation {
             $localPath = $res.Path
             $url = $ApplicationQuery
         } elseif ($ApplicationQuery -match $_lookupRegex) {
-            # throw 'Not implemented lookup'
             $res = Get-ManifestFromLookup -Query $ApplicationQuery
             $applicationName = $res.Name
             $applicationVersion = $res.Manifest.version
             $manifest = $res.Manifest
             $localPath = $res.Path
+            $bucket = $res.Bucket
         } else {
             throw 'Not supported way how to provide manifest'
         }
