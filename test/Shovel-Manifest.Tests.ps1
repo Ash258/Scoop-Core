@@ -176,29 +176,38 @@ Describe 'Manifests operations' -Tag 'Scoop' {
         }
 
         Describe 'Get-ManifestFromLookup' {
-            It 'should handle manifest lookup' {
-                $result = Resolve-ManifestInformation 'pwsh'
-                $result.ApplicationName | Should -Be 'pwsh'
-                $result.Version | Should -Be '7.1.3'
-                $result.ManifestObject.bin | Should -Be 'pwsh.exe'
-                $result = $null
+            It 'Simple lookup' {
+                '' | Should -Be ''
+                # $result = Resolve-ManifestInformation 'pwsh'
+                # $result.ApplicationName | Should -Be 'pwsh'
+                # $result.Version | Should -Be '7.1.3'
+                # $result.ManifestObject.bin | Should -Be 'pwsh.exe'
+                # $result = $null
             }
 
-            It 'should handle manifest lookup with version' {
+            It 'Simple versioned lookup' {
                 '' | Should -Be ''
                 # { $result = Resolve-ManifestInformation 'pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
             }
 
-            It 'should handle bucket/manifest lookup' {
+            It 'Specific bucket lookup' {
                 '' | Should -Be ''
                 # { $result = Resolve-ManifestInformation 'main/pwsh' } | Should -Throw 'Not implemented lookup'
                 # { $result = Resolve-ManifestInformation 'ash258.ash258/pwsh' } | Should -Throw 'Not implemented lookup'
             }
 
-            It 'should handle bucket/manifest lookup with version' {
+            It 'Specific bucket lookup with existing versioned manifest' {
                 '' | Should -Be ''
                 # { $result = Resolve-ManifestInformation 'main/pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
                 # { $result = Resolve-ManifestInformation 'ash258.ash258/pwsh@7.2.3' } | Should -Throw 'Not implemented lookup'
+            }
+
+            It 'Simple lookup with version generation' {
+                '' | Should -Be ''
+            }
+
+            It 'Specific bucket lookup with version generation' {
+                '' | Should -Be ''
             }
         }
 
