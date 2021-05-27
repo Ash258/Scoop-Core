@@ -152,7 +152,7 @@ $_applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
 $_versionLookup = '@(?<version>.+)'
 $_lookupRegex = "^($_bucketLookup/)?$_applicationLookup($_versionLookup)?$"
 
-$_localAdditionalSeed = '258258--'
+$_localAdditionalSeed = '258258--' # Everything before this seed and dash is considered as manifest name
 $_localDownloadedRegex = "^$_applicationLookup-$_localAdditionalSeed.*\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
 
 function Get-LocalManifest {
@@ -233,13 +233,13 @@ function Get-RemoteManifest {
             $extension = $Matches['manifestExtension']
         }
 
-        $rand = "$(Get-Random)-$(Get-Random)"
+        $rand = "$_localAdditionalSeed$(Get-Random)-$(Get-Random)"
         $outName = "$name-$rand.$extension"
         $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY $outName
 
         # This use case should never happen. The probability should be really low.
         if (Test-Path $manifestFile) {
-            $new = "$name-$_localAdditionalSeed$rand"
+            $new = "$name-$rand-$(Get-Random)"
             Write-UserMessage -Message "Downloaded manifest file with name '$outName' already exists. Using '$new.$extension'." -Warning
             # TODO: Consider while loop when it could be considered as real issue
 

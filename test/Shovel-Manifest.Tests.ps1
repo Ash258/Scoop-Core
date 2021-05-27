@@ -133,7 +133,7 @@ Describe 'Manifests operations' -Tag 'Scoop' {
         Describe 'Get-RemoteManifest' {
             # TODO: Mockup to not download the file
 
-            It 'should handle https manifest' {
+            It 'Direct manifest URL' {
                 $result = Resolve-ManifestInformation 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/068225b07cad6baeb46eb1adc26f8207fa423508/bucket/aaaaa.json'
                 $result.ApplicationName | Should -Be 'aaaaa'
                 $result.Version | Should -Be '0.0.15-12154'
@@ -147,7 +147,7 @@ Describe 'Manifests operations' -Tag 'Scoop' {
                 $result = $null
             }
 
-            It 'should handle https with archived version' {
+            It 'Versioned manifest URL' {
                 $result = Resolve-ManifestInformation 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/068225b07cad6baeb46eb1adc26f8207fa423508/bucket/old/alfa/0.0.15-12060.yaml'
                 $result.ApplicationName | Should -Be 'alfa'
                 $result.Version | Should -Be '0.0.15-12060'
@@ -158,6 +158,20 @@ Describe 'Manifests operations' -Tag 'Scoop' {
                 $result.ApplicationName | Should -Be 'aaaaa'
                 $result.Version | Should -Be '0.0.15-11936'
                 $result.ManifestObject.bin | Should -Be 'rpcs3.exe'
+                $result = $null
+            }
+
+            It 'Downloaded manifest load' {
+                $result = Resolve-ManifestInformation 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/184d2f072798441e8eb03a655dea16f2695ee699/bucket/alfa.yaml'
+                $result.ApplicationName | Should -Be 'alfa'
+                $result.Version | Should -Be '0.0.15-12154'
+                $result.ManifestObject.checkver.github | Should -Be 'https://github.com/RPCS3/rpcs3-binaries-win'
+
+                $resultNew = Resolve-manifestInformation $result.LocalPath
+                Write-Host -f red $resultNew.ApplicationName, $resultNew.LocalPath
+                $resultNew.ApplicationName | Should -Be 'alfa'
+                $resultNew.LocalPath.Basename | Should -BeLike 'alfa-258258--*'
+                $resultNew.Version | Should -Be '0.0.15-12154'
                 $result = $null
             }
         }
