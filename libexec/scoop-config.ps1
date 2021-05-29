@@ -130,6 +130,7 @@ if ($Name -eq 'rm') {
     Write-UserMessage -Message "'$Name' has been set to '$Value'"
 } else {
     $mes = get_config $Name "'$Name' is not set"
+    # TODO: Convert result to json if it is not string
 
     Write-UserMessage -Message $mes -Output
 }
