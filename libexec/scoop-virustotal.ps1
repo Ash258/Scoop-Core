@@ -25,7 +25,7 @@
 #   -a, --arch <32bit|64bit>  Use the specified architecture, if the manifest supports it.
 #   -s, --scan                For packages where VirusTotal has no information, send download URL for analysis (and future retrieval).
 #                             This requires you to configure your virustotal_api_key (see help entry for config command).
-#   -n, --no-depends          By default, all dependencies are checked, too.  This flag allows
+#   -n, --no-depends          By default, all dependencies are checked, too. This flag allows
 #                             to avoid it.
 
 'core', 'depends', 'getopt', 'help', 'Helpers', 'VirusTotal' | ForEach-Object {
@@ -46,19 +46,7 @@ if (!$VT_API_KEY) { Stop-ScoopExecution -Message 'Virustotal API Key is required
 
 $DoScan = $Options.scan -or $Options.s
 $Independent = $Options.'no-depends' -or $Options.n
-$Architecture = default_architecture
-
-if ($Options.a -or $Options.arch) {
-    foreach ($a in @($Options.a, $Options.arch)) {
-        if ($null -eq $a) { continue }
-
-        try {
-            $Architecture = ensure_architecture $a
-        } catch {
-            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
-        }
-    }
-}
+$Architecture = Resolve-ArchitectureParameter -Architecture $Options.a, $Options.arch
 
 # Buildup all installed applications
 if ($Applications -eq '*') {

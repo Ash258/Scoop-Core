@@ -18,20 +18,9 @@ if ($_err) { Stop-ScoopExecution -Message "scoop depends: $_err" -ExitCode 2 }
 
 # TODO: Multiple apps?
 $Application = $Applications[0]
-$Architecture = default_architecture
+$Architecture = Resolve-ArchitectureParameter -Architecture $Options.a, $Options.arch
 
 if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
-if ($Options.a -or $Options.arch) {
-    foreach ($a in @($Options.a, $Options.arch)) {
-        if ($null -eq $a) { continue }
-
-        try {
-            $Architecture = ensure_architecture $a
-        } catch {
-            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
-        }
-    }
-}
 
 # TODO: Installed dependencies are not listed. Should they be shown??
 $deps = @(deps $Application $Architecture)
