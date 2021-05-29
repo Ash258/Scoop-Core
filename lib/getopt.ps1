@@ -27,6 +27,7 @@ function getopt($argv, $shortopts, $longopts) {
         if ($arg -is [array]) { $rem += , $arg; continue }
         if ($arg -is [int]) { $rem += $arg; continue }
         if ($arg -is [decimal]) { $rem += $arg; continue }
+        if ($arg -is [boolean]) { $rem += $arg; continue }
 
         if ($arg.startswith('--')) {
             $name = $arg.substring(2)
