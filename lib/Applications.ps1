@@ -11,7 +11,7 @@ function Get-InstalledApplicationInformation {
         Specifies the application name.
     .PARAMETER Version
         Specifies the version of the application.
-        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTION and different version)
+        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTIONS and different version)
     .PARAMETER Global
         Specifies globally installed application.
     #>
@@ -51,7 +51,7 @@ function Get-InstalledApplicationInformationPropertyValue {
         Specifies the application name.
     .PARAMETER Version
         Specifies the version of the application.
-        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTION and different version)
+        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTIONS and different version)
     .PARAMETER Global
         Specifies globally installed application.
     .PARAMETER Property
@@ -91,7 +91,7 @@ function Set-InstalledApplicationInformationPropertyValue {
         Specifies the application name.
     .PARAMETER Version
         Specifies the version of application.
-        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTION and different version)
+        Use 'CURRENT_' to lookup for the currently used version. (Respecting NO_JUNCTIONS and different version)
     .PARAMETER Global
         Specifies globally installed application.
     .PARAMETER Property

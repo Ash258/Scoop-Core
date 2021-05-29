@@ -79,7 +79,7 @@
     - Fix `installer.file` exit code from ps1 scripts
     - Fix `installer.keep` inconsitency between powershell scripts and executables
 - **scoop-install**: Fix installlation of different/older versions
-- **scoop-info**: Respect `NO_JUNCTION` config
+- **scoop-info**: Respect `NO_JUNCTIONS` config
 - Add changelog to repository
 - **Autoupdate**: Initial preparations for array support
 - **Manifest**:

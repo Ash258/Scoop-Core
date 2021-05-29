@@ -50,7 +50,7 @@
 #
 # NO_JUNCTIONS: $true|$false
 #   The 'current' version alias will not be used.
-#   Shims and shortcuts will point to specific version instead.
+#   Shims, shortcuts and environment variables will point to specific version instead.
 #
 # debug: $true|$false
 #   Additional output will be shown to identify possible source of problems.

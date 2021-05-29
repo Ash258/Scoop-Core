@@ -309,7 +309,7 @@ function Get-AppFilePath {
         [String] $File
     )
 
-    # TODO: Support NO_JUNCTION
+    # TODO: Support NO_JUNCTIONS
     # Normal path to file
     $path = versiondir $App 'current' $false | Join-Path -ChildPath $File
     if (Test-Path $path) { return $path }

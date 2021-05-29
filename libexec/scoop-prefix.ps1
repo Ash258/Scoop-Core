@@ -19,7 +19,7 @@ if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usa
 # TODO: Test if application is installed first
 #       Same flow as for hold/unhold
 # TODO: Add --global
-# TODO: Respect NO_JUNCTION
+# TODO: Respect NO_JUNCTIONS
 $Application = $Application[0]
 $ApplicationPath = versiondir $Application 'current' $false
 
