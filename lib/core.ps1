@@ -988,7 +988,7 @@ function Invoke-VariableSubstitution {
         if ($null -ne $newEntity) {
             switch ($newEntity.GetType().Name) {
                 'String' {
-                    $Substitutes.GetEnumerator() | ForEach-Object {
+                    $Substitutes.GetEnumerator() | Sort-Object { $_.Name.Length } -Descending | ForEach-Object {
                         $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
                         $curly = '${' + $_.Name.TrimStart('$') + '}'
 

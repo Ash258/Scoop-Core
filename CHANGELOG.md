@@ -2,6 +2,10 @@
 
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
+### 0.6-pre4
+
+- **Checkver**: Stabilize substitutions resolve
+    - i.e: `$urlNoExt` sometimes was faulty resolved as `${url}NoExt`
 - Add additional debug for jsonpath/xpath evaluation
 - **scoop-bucket**: Fix edge case when there are no buckets added
 
