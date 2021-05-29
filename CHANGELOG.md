@@ -2,6 +2,9 @@
 
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
+- Add additional debug for jsonpath/xpath evaluation
+- **scoop-bucket**: Fix edge case when there are no buckets added
+
 ### 0.6-pre3
 
 - Unify help entries of executables
@@ -98,7 +101,7 @@
 - **Update**: Ignore merge commits in update log
 - `scoop --version` reports PowerShell version
 - **Depends**: Correctly detect globally installed dependencies while resolving script dependencies
-- **Buckets**:
+- **scoop-bucket**:
     - Indicate successful bucket removal
     - Indicate inability of bucket removal
 

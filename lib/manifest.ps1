@@ -97,10 +97,238 @@ function ConvertTo-Manifest {
     }
 }
 
-function manifest_path($app, $bucket) {
+function New-VersionedManifest {
+    <#
+    .SYNOPSIS
+        Generate new manifest with specified version.
+    .DESCRIPTION
+        Path to the new manifest will be returned.
+        Generated manifests will be saved into $env:SCOOP\manifests and named as '<OriginalName>-<Random>-<Random>.<OriginalExtension>'
+    .PARAMETER Path
+        Specifies the path to the original manifest.
+    .PARAMETER Version
+        Specifies the version to which manifest should be updated.
+    #>
+    [CmdletBinding()]
+    [OutputType([String])]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline)]
+        [Alias('LiteralPath')]
+        [System.IO.FileInfo] $Path,
+        [Parameter(Mandatory)]
+        [String] $Version
+    )
+
+    process {
+        $manifest = $newManifest = $null
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $Path
+        } catch {
+            throw [ScoopException] "Invalid manifest '$Path'"
+        }
+
+        $name = "$($Path.BaseName)-$(Get-Random)-$(Get-Random)$($Path.Extension)"
+        $outPath = Confirm-DirectoryExistence -LiteralPath $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Join-Path -ChildPath $name
+
+        try {
+            $newManifest = Invoke-Autoupdate $Path.Basename $null $manifest $Version $(${ }) $Path.Extension -IgnoreArchive
+            if ($null -eq $newManifest) { throw 'trigger' }
+        } catch {
+            throw [ScoopException] "Cannot generate manifest with version '$Version'"
+        }
+
+        ConvertTo-Manifest -Path $outpath -Manifest $newManifest
+
+        return $outPath
+    }
+}
+
+#region Resolve Helpers
+$_br = '[/\\]'
+$_archivedManifestRegex = "${_br}bucket${_br}old${_br}(?<manifestName>.+?)${_br}(?<manifestVersion>.+?)\.(?<manifestExtension>$ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
+$_bucketLookup = '(?<bucket>[a-zA-Z\d.-]+)'
+$_applicationLookup = '(?<app>[a-zA-Z\d_.-]+)'
+$_versionLookup = '@(?<version>.+)'
+$_lookupRegex = "^($_bucketLookup/)?$_applicationLookup($_versionLookup)?$"
+
+$_localAdditionalSeed = '258258--' # Everything before this seed and dash is considered as manifest name
+$_localDownloadedRegex = "^$_applicationLookup-$_localAdditionalSeed.*\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
+function Get-LocalManifest {
+    <#
+    .SYNOPSIS
+        Get "metadata" about local manifest with support for archived manifests.
+    .PARAMETER Query
+        Specifies the file path where manifest is stored.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $Query)
+
+    process {
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $Query
+        } catch {
+            throw [ScoopException] "File is not a valid manifest ($($_.Exception.Message))" # TerminatingError thrown
+        }
+
+        $localPath = Get-Item -LiteralPath $Query
+        $applicationName = $localPath.BaseName
+
+        # Check if archived version was provided
+        if ($localPath.FullName -match $_archivedManifestRegex) {
+            $applicationName = $Matches['manifestName']
+        }
+        # Check if downloaded manfiest was provided
+        if ($localPath.Name -match $_localDownloadedRegex) {
+            $applicationName = $Matches['app']
+        }
+
+        return @{
+            'Name'     = $applicationName
+            'Manifest' = $manifest
+            'Path'     = $localPath
+        }
+    }
+}
+
+function Get-RemoteManifest {
+    <#
+    .SYNOPSIS
+        Download manifest from provided URL.
+    .PARAMETER URL
+        Specifies the URL pointing to manifest.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Collections.Hashtable])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $URL)
+
+    process {
+        $str = $null
+        try {
+            # TODO: Implement proxy
+            $wc = New-Object System.Net.Webclient
+            $wc.Headers.Add('User-Agent', (Get-UserAgent))
+            $str = $wc.DownloadString($URL)
+        } catch [System.Management.Automation.MethodInvocationException] {
+            Write-UserMessage -Message "${URL}: $($_.Exception.InnerException.Message)" -Warning
+        } catch {
+            throw $_.Exception.Message
+        }
+
+        if (!$str) {
+            throw [ScoopException] "'$URL' does not contain valid manifest" # TerminatingError thrown
+        }
+
+        Confirm-DirectoryExistence -Directory $SHOVEL_GENERAL_MANIFESTS_DIRECTORY | Out-Null
+
+        # Parse name and extension from URL
+        $name = Split-Path $URL -Leaf
+        $extension = ($name -split '\.')[-1]
+        $name = $name -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$"
+
+        if ($URL -match $_archivedManifestRegex) {
+            $name = $Matches['manifestName']
+            $extension = $Matches['manifestExtension']
+        }
+
+        $rand = "$_localAdditionalSeed$(Get-Random)-$(Get-Random)"
+        $outName = "$name-$rand.$extension"
+        $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY $outName
+
+        # This use case should never happen. The probability should be really low.
+        if (Test-Path $manifestFile) {
+            # TODO: Consider while loop when it could be considered as real issue
+            $new = "$name-$rand-$(Get-Random)"
+            $manifestFile = Join-Path $SHOVEL_GENERAL_MANIFESTS_DIRECTORY "$new.$extension"
+
+            Write-UserMessage -Message "Downloaded manifest file with name '$outName' already exists. Using '$new.$extension'." -Warning
+        }
+
+        Out-UTF8File -Path $manifestFile -Content $str
+        $manifest = ConvertFrom-Manifest -Path $manifestFile
+
+        return @{
+            'Name'     = $name
+            'Manifest' = $manifest
+            'Path'     = Get-Item -LiteralPath $manifestFile
+        }
+    }
+}
+#endregion Resolve Helpers
+
+function Resolve-ManifestInformation {
+    <#
+    .SYNOPSIS
+        Find and parse manifest file according to search query. Return universal object with all relevant information about manifest.
+    .PARAMETER ApplicationQuery
+        Specifies the string used for looking for manifest.
+    .EXAMPLE
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'pwsh@7.2.0'
+
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh'
+        Resolve-ManifestInformation -ApplicationQuery 'Ash258/pwsh@6.1.3'
+
+        Resolve-ManifestInformation -ApplicationQuery '.\bucket\old\cosi\7.1.0.yaml'
+        Resolve-ManifestInformation -ApplicationQuery '.\cosi.yaml'
+
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/alfa.yaml'
+        Resolve-ManifestInformation -ApplicationQuery 'https://raw.githubusercontent.com/Ash258/GithubActionsBucketForTesting/main/bucket/old/alfa/0.0.15-12060.yaml'
+    #>
+    [CmdletBinding()]
+    [OutputType([PSCustomObject])]
+    param([Parameter(Mandatory, ValueFromPipeline)] [String] $ApplicationQuery)
+
+    process {
+        $manifest = $applicationName = $applicationVersion = $bucket = $localPath = $url = $calcBucket = $calcURL = $null
+
+        if (Test-Path -LiteralPath $ApplicationQuery) {
+            $res = Get-LocalManifest -Query $ApplicationQuery
+            $applicationName = $res.Name
+            $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
+            $localPath = $res.Path
+        } elseif ($ApplicationQuery -match '^https?://') {
+            $res = Get-RemoteManifest -URL $ApplicationQuery
+            $applicationName = $res.Name
+            $applicationVersion = $res.Manifest.version
+            $manifest = $res.Manifest
+            $localPath = $res.Path
+            $url = $ApplicationQuery
+        } else {
+            throw 'Not supported way how to provide manifest'
+        }
+
+        debug $res
+
+        # TODO: Validate manifest object
+        if ($null -eq $manifest.version) {
+            debug $manifest
+            throw [ScoopException] 'Not a valid manifest' # TerminatingError thrown
+        }
+
+        return [Ordered] @{
+            'ApplicationName'  = $applicationName
+            'Version'          = $applicationVersion
+            'Bucket'           = $bucket
+            'ManifestObject'   = $manifest
+            'Url'              = $url
+            'LocalPath'        = $localPath
+            'CalculatedUrl'    = $calcURL
+            'CalculatedBucket' = $calcBucket
+        }
+    }
+}
+
+function appname_from_url($url) { return (Split-Path $url -Leaf) -replace "\.($ALLOWED_MANIFEST_EXTENSION_REGEX)$" }
+
+function manifest_path($app, $bucket, $version = $null) {
     $name = sanitary_path $app
     $buc = Find-BucketDirectory -Bucket $bucket
     $path = $file = $null
+
     try {
         $file = Get-ChildItem -LiteralPath $buc -Filter "$name.*" -ErrorAction 'Stop'
     } catch {
@@ -110,6 +338,22 @@ function manifest_path($app, $bucket) {
     if ($file) {
         if ($file.Count -gt 1) { $file = $file[0] }
         $path = $file.FullName
+
+        # Look for archived version only if manifest exists
+        if ($version) {
+            $path = $null
+            $versions = @()
+
+            try {
+                $versions = Get-ChildItem -LiteralPath "$buc\old\$name" -Filter "$version.*" -ErrorAction 'Stop'
+            } catch {
+                throw [ScoopException] "Bucket '$bucket' does not contain archived version '$version' for '$app'"
+            }
+
+            if ($versions.Count -gt 1) { $versions = $versions[0] }
+
+            $path = $versions.FullName
+        }
     }
 
     return $path
