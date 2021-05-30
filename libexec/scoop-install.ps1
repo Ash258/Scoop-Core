@@ -8,7 +8,8 @@
 #   scoop install https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/runat.json
 #
 # To install an application from a manifest on your computer:
-#   scoop install \path\to\app.json
+#   scoop install D:\path\to\app.json
+#   scoop install ./install/pwsh.json
 #
 # Options:
 #   -h, --help                Show help for this command.
@@ -68,13 +69,8 @@ $global = $opt.g -or $opt.global
 $check_hash = !($opt.s -or $opt.skip)
 $independent = $opt.i -or $opt.independent
 $use_cache = !($opt.k -or $opt.'no-cache')
-$architecture = default_architecture
+$architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
 
-try {
-    $architecture = ensure_architecture ($opt.a + $opt.arch)
-} catch {
-    Stop-ScoopExecution -Message "$_" -ExitCode 2
-}
 if (!$apps) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 if ($global -and !(is_admin)) { Stop-ScoopExecution -Message 'Admin privileges are required to manipulate with globally installed applications' -ExitCode 4 }
 
