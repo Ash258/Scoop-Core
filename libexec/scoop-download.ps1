@@ -25,12 +25,9 @@ $utility = $opt.u, $opt.utility, 'native' | Where-Object { -not [String]::IsNull
 if (!$application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' }
 if (($utility -eq 'aria2') -and (!(Test-HelperInstalled -Helper Aria2))) { Stop-ScoopExecution -Message 'Aria2 is not installed' }
 
-try {
-    $architecture = ensure_architecture ($opt.a + $opt.arch)
-} catch {
-    Stop-ScoopExecution -Message "$_" -ExitCode 2
-}
-# Add all architectures
+$architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
+
+# Add all supported architectures
 if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit', 'arm64' }
 #endregion Parameter validation
 

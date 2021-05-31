@@ -18,19 +18,7 @@ if ($_err) { Stop-ScoopExecution -Message "scoop info: $_err" -ExitCode 2 }
 if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
 
 $Application = $Application[0]
-$Architecture = default_architecture
-
-if ($Options.a -or $Options.arch) {
-    foreach ($a in @($Options.a, $Options.arch)) {
-        if ($null -eq $a) { continue }
-
-        try {
-            $Architecture = ensure_architecture $a
-        } catch {
-            Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
-        }
-    }
-}
+$Architecture = Resolve-ArchitectureParameter -Architecture $Options.a, $Options.arch
 
 # TODO: Adopt Resolve-ManifestInformation
 if ($Application -match '^(ht|f)tps?://|\\\\') {

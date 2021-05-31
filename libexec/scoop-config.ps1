@@ -50,7 +50,7 @@
 #
 # NO_JUNCTIONS: $true|$false
 #   The 'current' version alias will not be used.
-#   Shims and shortcuts will point to specific version instead.
+#   Shims, shortcuts and environment variables will point to specific version instead.
 #
 # debug: $true|$false
 #   Additional output will be shown to identify possible source of problems.
@@ -101,11 +101,7 @@
 #   Array of additional aria2 options.
 #   See: 'https://aria2.github.io/manual/en/html/aria2c.html#options'
 
-param($name, $value)
-
-# TODO: getopt adoption
-
-'core', 'help' | ForEach-Object {
+'core', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -113,25 +109,30 @@ param($name, $value)
 
 Reset-Alias
 
-if (!$name) { $name = 'show' }
+$ExitCode = 0
+$null, $Config, $_err = getopt $args
 
-# TODO: Config refactor
+if ($_err) { Stop-ScoopExecution -Message "scoop config: $_err" -ExitCode 2 }
+if (!$Config) { $Config = @('show') }
 
-if ($name -eq 'rm') {
-    if (!$value) { Stop-ScoopExecution -Message 'Parameter <NAME> is required for ''rm'' subcommand' -Usage (my_usage) }
+$Name = $Config[0]
+$Value = $Config[1]
 
-    set_config $value $null | Out-Null
-    Write-UserMessage -Message "'$value' has been removed"
-} elseif ($name -eq 'show') {
+if ($Name -eq 'rm') {
+    if (!$Value) { Stop-ScoopExecution -Message 'Parameter <NAME> is required for ''rm'' subcommand' -ExitCode 2 }
+
+    set_config $Value $null | Out-Null
+    Write-UserMessage -Message "'$Value' has been removed"
+} elseif ($Name -eq 'show') {
     Get-Content $SCOOP_CONFIGURATION_FILE -Raw
-} elseif ($null -ne $value) {
-    set_config $name $value | Out-Null
-    Write-UserMessage -Message "'$name' has been set to '$value'"
+} elseif ($null -ne $Value) {
+    set_config $Name $Value | Out-Null
+    Write-UserMessage -Message "'$Name' has been set to '$Value'"
 } else {
-    $value = get_config $name
-    $mes = if ($null -eq $value) { "'$name' is not set" } else { $value }
+    $mes = get_config $Name "'$Name' is not set"
+    # TODO: Convert result to json if it is not string
 
     Write-UserMessage -Message $mes -Output
 }
 
-exit 0
+exit $ExitCode

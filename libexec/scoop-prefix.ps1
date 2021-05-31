@@ -4,7 +4,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'help', 'Helpers', 'getopt', 'manifest', 'buckets' | ForEach-Object {
+'core', 'buckets', 'getopt', 'help', 'Helpers', 'manifest' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -19,7 +19,7 @@ if (!$Application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usa
 # TODO: Test if application is installed first
 #       Same flow as for hold/unhold
 # TODO: Add --global
-# TODO: Respect NO_JUNCTION
+# TODO: Respect NO_JUNCTIONS
 $Application = $Application[0]
 $ApplicationPath = versiondir $Application 'current' $false
 

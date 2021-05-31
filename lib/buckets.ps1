@@ -39,8 +39,19 @@ function Get-LocalBucket {
     .SYNOPSIS
         List all local bucket names.
     #>
+    [CmdletBinding()]
+    param()
 
-    return (Get-ChildItem -Directory $SCOOP_BUCKETS_DIRECTORY).Name
+    process {
+        $bucs = @()
+        try {
+            $bucs += (Get-ChildItem -LiteralPath $SCOOP_BUCKETS_DIRECTORY -ErrorAction 'Stop' -Directory).Name
+        } catch {
+            $bucs = @() # Edge case which should never happen as there will always be main bucket, but it will prevent possible issues
+        }
+
+        return $bucs
+    }
 }
 
 function known_bucket_repos {

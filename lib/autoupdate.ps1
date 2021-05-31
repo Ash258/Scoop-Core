@@ -113,6 +113,8 @@ function find_hash_in_xml([String] $url, [Hashtable] $substitutions, [String] $x
     # Replace placeholders
     if ($substitutions) { $xpath = Invoke-VariableSubstitution -Entity $xpath -Substitutes $substitutions }
 
+    debug $xpath
+
     # Find all `significant namespace declarations` from the XML file
     $nsList = $xml.SelectNodes('//namespace::*[not(. = ../../namespace::*)]')
     # Then add them into the NamespaceManager

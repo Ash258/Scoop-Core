@@ -4,7 +4,7 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'help', 'commands', 'getopt' | ForEach-Object {
+'core', 'commands', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
@@ -16,6 +16,7 @@ $Options, $Command, $_err = getopt $args
 if ($_err) { Stop-ScoopExecution -Message "scoop which: $_err" -ExitCode 2 }
 if (!$Command) { Stop-ScoopExecution -Message 'Parameter <COMMAND> missing' -Usage (my_usage) }
 
+$gcm = $null
 try {
     $gcm = Get-Command -Name $Command -ErrorAction 'Stop'
 } catch {
@@ -48,7 +49,7 @@ if ($gcm.Path -and $gcm.Path.EndsWith('.ps1') -and (($gcm.Path -like "$userShims
             $ExitCode = $LASTEXITCODE
         }
         default {
-            Write-UserMessage -Message 'Not a scoop shim'
+            Write-UserMessage -Message 'Not a scoop shim' -Output
             $FinalPath = $gcm.Path
             $ExitCode = 3
         }

@@ -253,9 +253,9 @@ function debug($obj) {
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
         $msg | Where-Object { ![String]::IsNullOrWhiteSpace($_) } |
             Select-Object -Skip 2 | # Skip headers
-                ForEach-Object {
-                    Write-Host "$prefix $param.$($_)" -ForegroundColor 'DarkCyan'
-                }
+            ForEach-Object {
+                Write-Host "$prefix $param.$($_)" -ForegroundColor 'DarkCyan'
+            }
     } else {
         Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor 'DarkCyan' -NoNewline
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
@@ -327,7 +327,7 @@ function Get-AppFilePath {
         [String] $File
     )
 
-    # TODO: Support NO_JUNCTION
+    # TODO: Support NO_JUNCTIONS
     # Normal path to file
     $path = versiondir $App 'current' $false | Join-Path -ChildPath $File
     if (Test-Path $path) { return $path }
@@ -460,9 +460,6 @@ function app_status($app, $global) {
 
     return $status
 }
-
-# TODO: YAML
-function appname_from_url($url) { return (Split-Path $url -Leaf) -replace '\.json$' }
 
 # paths
 function fname($path) { return Split-Path $path -Leaf }
@@ -955,9 +952,7 @@ function show_app($app, $bucket, $version) {
 
 function last_scoop_update() {
     # TODO: Config refactor
-    # TODO: getopt adoption
-    # $lastUpdate = Invoke-ScoopCommand 'config' @('lastupdate')
-    $lastUpdate = Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate' }
+    $lastUpdate = Invoke-ScoopCommand 'config' @('lastupdate')
 
     if ($null -ne $lastUpdate) {
         try {
@@ -978,10 +973,7 @@ function is_scoop_outdated() {
 
     if ($null -eq $lastUp) {
         # TODO: Config refactor
-        # TODO: getopt adotion
-        # Invoke-ScoopCommand 'config' @('lastupdate', ($now.ToString($UPDATE_DATE_FORMAT))) | Out-Null
-
-        Invoke-ScoopCommand 'config' @{ 'name' = 'lastupdate'; 'value' = ($now.ToString($UPDATE_DATE_FORMAT)) } | Out-Null
+        Invoke-ScoopCommand 'config' @('lastupdate', ($now.ToString($UPDATE_DATE_FORMAT))) | Out-Null
     } else {
         $res = $lastUp.AddHours(3) -lt $now.ToLocalTime()
     }
@@ -1019,7 +1011,7 @@ function Invoke-VariableSubstitution {
         if ($null -ne $newEntity) {
             switch ($newEntity.GetType().Name) {
                 'String' {
-                    $Substitutes.GetEnumerator() | ForEach-Object {
+                    $Substitutes.GetEnumerator() | Sort-Object { $_.Name.Length } -Descending | ForEach-Object {
                         $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
                         $curly = '${' + $_.Name.TrimStart('$') + '}'
 
@@ -1129,6 +1121,27 @@ function handle_special_urls($url) {
     return $url
 }
 
+function Resolve-ArchitectureParameter {
+    [CmdletBinding()]
+    param([String[]] $Architecture)
+
+    process {
+        $arch = default_architecture
+
+        foreach ($a in $Architecture) {
+            if ($null -eq $a) { continue }
+
+            try {
+                $arch = ensure_architecture $a
+            } catch {
+                Write-UserMessage -Warning -Message "'$a' is not a valid architecture. Detecting default system architecture"
+            }
+        }
+
+        return $arch
+    }
+}
+
 #region Deprecated
 function reset_aliases() {
     Show-DeprecatedWarning $MyInvocation 'Reset-Alias'
@@ -1185,6 +1198,9 @@ $SCOOP_GLOBAL_ROOT_DIRECTORY = $env:SCOOP_GLOBAL, "$env:ProgramData\scoop" | Whe
 #       multiple users write and access cached files at the same time.
 #       Use at your own risk.
 $SCOOP_CACHE_DIRECTORY = $env:SCOOP_CACHE, "$SCOOP_ROOT_DIRECTORY\cache" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
+
+# Directory for downloaded manifests (mainly)
+$SHOVEL_GENERAL_MANIFESTS_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'manifests'
 
 # Load Scoop config
 $configHome = $env:XDG_CONFIG_HOME, "$env:USERPROFILE\.config" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
