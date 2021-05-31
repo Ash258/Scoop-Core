@@ -28,7 +28,7 @@ if (($utility -eq 'aria2') -and (!(Test-HelperInstalled -Helper Aria2))) { Stop-
 $architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
 
 # Add all supported architectures
-if ($opt.b -or $opt.'all-architectures') { $architecture = '32bit', '64bit' }
+if ($opt.b -or $opt.'all-architectures') { $architecture = $SHOVEL_SUPPORTED_ARCHITECTURES }
 #endregion Parameter validation
 
 $exitCode = 0

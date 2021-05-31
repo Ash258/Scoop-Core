@@ -87,28 +87,30 @@ foreach ($cmd in $SCOOP_COMMANDS) {
     }
 }
 
+$script:supportedArchitectures = '64bit 32bit arm64'
+$script:downloadUtilities = 'native aria2'
 $script:SCOOP_PARAMETER_VALUES = @{
     'install'    = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
     'depends'    = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
     'info'       = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
     'download'   = @{
-        'a'       = '32bit 64bit'
-        'arch'    = '32bit 64bit'
-        'u'       = 'native aria2'
-        'utility' = 'native aria2'
+        'a'       = $supportedArchitectures
+        'arch'    = $supportedArchitectures
+        'u'       = $downloadUtilities
+        'utility' = $downloadUtilities
     }
     'virustotal' = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
 }
 

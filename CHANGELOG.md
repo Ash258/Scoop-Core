@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.5](https://github.com/Ash258/Scoop-Core/milestone/5)
+
+- **Schema**:
+    - Initial support for `arm64` architecture
+    - Allow `$schema` property
+
 ## [0.6](https://github.com/Ash258/Scoop-Core/milestone/4)
 
 ### 0.6-pre4

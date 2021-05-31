@@ -21,6 +21,10 @@ Describe 'ensure_architecture' -Tag 'Scoop' {
         ensure_architecture 'AMD64' | Should -be '64bit'
         ensure_architecture 'x86_64' | Should -be '64bit'
         ensure_architecture 'x86-64' | Should -be '64bit'
+
+        ensure_architecture 'arm64' | Should -be 'arm64'
+        ensure_architecture 'aarch64' | Should -be 'arm64'
+        ensure_architecture 'armv8' | Should -be 'arm64'
     }
 
     It 'should fallback to the default architecture on empty input' {

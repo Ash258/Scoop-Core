@@ -793,6 +793,7 @@ function ensure_architecture($architecture_opt) {
     switch ($architecture_opt) {
         { @('64bit', '64', 'x64', 'amd64', 'x86_64', 'x86-64') -contains $_ } { return '64bit' }
         { @('32bit', '32', 'x86', 'i386', '386', 'i686') -contains $_ } { return '32bit' }
+        { @('arm64', 'aarch64', 'armv8') -contains $_ } { return 'arm64' }
         default { throw [System.ArgumentException] "Invalid architecture: '$architecture_opt'" }
     }
 }
@@ -1155,6 +1156,9 @@ if ($c) {
     Write-UserMessage -Message 'Configuration option ''rootPath'' is deprecated. Configure ''SCOOP'' environment variable instead' -Err
     if (!$env:SCOOP) { $env:SCOOP = $c }
 }
+
+# All supported architectures
+$SHOVEL_SUPPORTED_ARCHITECTURES = @('64bit', '32bit', 'arm64')
 
 # Path gluing has to remain in these global variables to not fail in case user do not have some environment configured (most likely linux case)
 # Scoop root directory

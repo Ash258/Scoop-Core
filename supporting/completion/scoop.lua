@@ -12,7 +12,7 @@ end
 
 -- region Helpers
 local booleanParser = parser({'true', 'false'})
-local architectureParser = parser({'32bit', '64bit'})
+local architectureParser = parser({'32bit', '64bit', 'arm64'})
 local utilityParser = parser({'native', 'aria2'})
 local configOptions = parser({
     '7ZIPEXTRACT_USE_EXTERNAL' .. booleanParser,

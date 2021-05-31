@@ -424,6 +424,10 @@
                         "32bit": {
                             "description": "Specifies to update properties for i386 architecture.",
                             "$ref": "#/definitions/autoupdateArchitecture"
+                        },
+                        "arm64": {
+                            "description": "Specifies to update properties for arm64 (aarch64) architecture.",
+                            "$ref": "#/definitions/autoupdateArchitecture"
                         }
                     }
                 },
@@ -448,6 +452,10 @@
         }
     },
     "properties": {
+        "$schema": {
+            "description": "Specifies which schema file should be used for intellisense/code-completion in text editor.",
+            "type": "string"
+        },
         "##": {
             "description": "Specifies a comment/additional information for other contributors.",
             "$ref": "#/definitions/stringOrArrayOfStrings"
@@ -534,6 +542,10 @@
                 },
                 "32bit": {
                     "description": "Specifies properties required for installation on i386 architecture.",
+                    "$ref": "#/definitions/architecture"
+                },
+                "arm64": {
+                    "description": "Specifies properties required for installation on arm64 (aarch64) architecture.",
                     "$ref": "#/definitions/architecture"
                 }
             }

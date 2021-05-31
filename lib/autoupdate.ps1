@@ -321,7 +321,7 @@ function update_manifest_prop([String] $prop, $json, [Hashtable] $substitutions)
 
     # check if there are architecture specific variants
     if ($json.architecture -and $json.autoupdate.architecture) {
-        $json.architecture | Get-Member -MemberType NoteProperty | ForEach-Object {
+        $json.architecture | Get-Member -MemberType 'NoteProperty' | ForEach-Object {
             $architecture = $_.Name
             if ($json.architecture.$architecture.$prop -and $json.autoupdate.architecture.$architecture.$prop) {
                 $json.architecture.$architecture.$prop = Invoke-VariableSubstitution -Entity (arch_specific $prop $json.autoupdate $architecture) -Substitutes $substitutions
@@ -393,7 +393,7 @@ function Invoke-Autoupdate ([String] $app, $dir, $json, [String] $version, [Hash
             throw "Could not update $app"
         }
     } else {
-        $json.architecture | Get-Member -MemberType NoteProperty | ForEach-Object {
+        $json.architecture | Get-Member -MemberType 'NoteProperty' | ForEach-Object {
             $valid = $true
             $architecture = $_.Name
 
