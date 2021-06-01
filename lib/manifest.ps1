@@ -328,7 +328,12 @@ function Get-ManifestFromLookup {
         }
 
         $name = $requestedName
-        $manifest = ConvertFrom-Manifest -LiteralPath $manifestPath
+        $manifest = $null
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $manifestPath
+        } catch {
+            throw [ScoopException] "'$manifestPath': Invalid manifest ($($_.Exception.Message))"
+        }
 
         return @{
             'Name'     = $name
