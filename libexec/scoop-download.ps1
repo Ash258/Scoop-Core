@@ -46,6 +46,8 @@ foreach ($app in $application) {
         Write-UserMessage -Message $body -Err
         debug $_.InvocationInfo
         if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $appName -Bucket $bucket -Title $title -Body $body }
+
+        continue
     }
 
     debug $resolved
