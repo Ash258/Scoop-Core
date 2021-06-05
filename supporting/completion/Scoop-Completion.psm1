@@ -42,6 +42,7 @@ $script:SCOOP_SUB_COMMANDS = @{
     'utils'  = 'auto-pr checkhashes checkurls checkver describe format missing-checkver'
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
+    'cat'        = 'f'
     'cleanup'    = 'g k'
     'depends'    = 'a'
     'download'   = 's u a b'
@@ -57,6 +58,7 @@ $script:SCOOP_SHORT_PARAMETERS = @{
     'virustotal' = 'a s n'
 }
 $script:SCOOP_LONG_PARAMETERS = @{
+    'cat'        = 'format'
     'cleanup'    = 'global cache'
     'depends'    = 'arch'
     'download'   = 'skip utility arch all-architectures'
@@ -87,28 +89,35 @@ foreach ($cmd in $SCOOP_COMMANDS) {
     }
 }
 
+$script:downloadUtilities = 'native aria2'
+$script:supportedArchitectures = '64bit 32bit'
+$script:supportedManifestFormats = 'json yaml yml'
 $script:SCOOP_PARAMETER_VALUES = @{
-    'install'    = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+    'cat'        = @{
+        'f'      = $supportedManifestFormats
+        'format' = $supportedManifestFormats
     }
     'depends'    = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
-    }
-    'info'       = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
     'download'   = @{
-        'a'       = '32bit 64bit'
-        'arch'    = '32bit 64bit'
-        'u'       = 'native aria2'
-        'utility' = 'native aria2'
+        'a'       = $supportedArchitectures
+        'arch'    = $supportedArchitectures
+        'u'       = $downloadUtilities
+        'utility' = $downloadUtilities
+    }
+    'info'       = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
+    }
+    'install'    = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
     'virustotal' = @{
-        'a'    = '32bit 64bit'
-        'arch' = '32bit 64bit'
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
     }
 }
 
