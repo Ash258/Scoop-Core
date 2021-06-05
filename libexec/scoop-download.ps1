@@ -62,7 +62,7 @@ foreach ($app in $application) {
         $checkHash = $false
     }
 
-    Write-UserMessage "Starting download for '$app'" -Color 'Green'
+    Write-UserMessage "Starting download for '$app'" -Color 'Green' # TODO: Add better text with parsed appname, version, url/bucket
 
     $registered = $false
     # TODO: Rework with proper wrappers after #3149
