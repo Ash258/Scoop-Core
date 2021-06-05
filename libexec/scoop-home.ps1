@@ -35,7 +35,7 @@ try {
 
 debug $resolved
 
-if ($ExitCode -ne 3) {
+if ($ExitCode -eq 0) {
     if ([String]::IsNullOrEmpty($resolved.ManifestObject.homepage)) {
         Write-UserMessage -Message 'Manifest does not contain homepage property' -Err
         $ExitCode = 3
