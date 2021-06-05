@@ -53,7 +53,7 @@ foreach ($app in $application) {
     debug $resolved
 
     # TODO: Remove not neeeded variables. Keep them for now just for less changes
-    $appName = $resolved.Name
+    $appName = $resolved.ApplicationName
     $manifest = $resolved.ManifestObject
     $bucket = $resolved.Bucket
     $version = $manifest.version
