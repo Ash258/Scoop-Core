@@ -4,6 +4,7 @@
 
 - **scoop-cat**: Add `-f`, `--format` options
 - Adopt new resolve function for parameter passing
+    - **scoop-home**
     - **scoop-cat**
     - **scoop-download**
 
