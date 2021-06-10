@@ -139,7 +139,7 @@ function dl_with_cache($app, $version, $url, $to, $cookies = $null, $use_cache =
     $cached = cache_path $app $version $url
 
     if (!(Test-Path $cached) -or !$use_cache) {
-        ensure $cachedir | Out-Null
+        Confirm-DirectoryExistence $SCOOP_CACHE_DIRECTORY | Out-Null
         do_dl $url "$cached.download" $cookies
         Move-Item "$cached.download" $cached -Force
     } else { Write-UserMessage -Message "Loading $(url_remote_filename $url) from cache" }
@@ -294,7 +294,7 @@ function dl_with_cache_aria2($app, $version, $manifest, $architecture, $dir, $co
             if (($url -notlike '*sourceforge.net*') -and ($url -notlike '*portableapps.com*')) {
                 $urlstxt_content += "    referer=$(strip_filename $url)`n"
             }
-            $urlstxt_content += "    dir=$cachedir`n"
+            $urlstxt_content += "    dir=$SCOOP_CACHE_DIRECTORY`n"
             $urlstxt_content += "    out=$($data.$url.cachename)`n"
         } else {
             Write-Host 'Loading ' -NoNewline
