@@ -54,23 +54,22 @@ Describe -Tag 'Manifests' 'manifest-validation' {
                 $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
                 $changed_manifests = (Get-GitChangedFile -Include '*.json' -Commit $commit)
             }
-            $manifest_files = Get-ChildItem $bucketdir *.json
+            # TODO: YAMl
+            $manifest_files = Get-ChildItem $bucketdir '*.json' -Recurse
             $validator = New-Object Scoop.Validator($schema, $true)
         }
 
         $quota_exceeded = $false
 
-        $manifest_files | ForEach-Object {
-            $skip_manifest = ($changed_manifests -inotcontains $_.FullName)
-            if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') {
-                $skip_manifest = $false
-            }
-            It "$_" -Skip:$skip_manifest {
-                $file = $_ # exception handling may overwrite $_
+        foreach ($file in $manifest_files) {
+            $skip_manifest = ($changed_manifests -inotcontains $file.FullName)
+            if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') { $skip_manifest = $false }
 
-                if (!($quota_exceeded)) {
+            It "$file" -Skip:$skip_manifest {
+                # Skip yml for now for schema validation
+                if (!($quota_exceeded) -or ($file.Extension -match '\.ya?ml')) {
                     try {
-                        $validator.Validate($file.fullname)
+                        $validator.Validate($file.FullName)
 
                         if ($validator.Errors.Count -gt 0) {
                             Write-Host -f red "      [-] $_ has $($validator.Errors.Count) Error$(If($validator.Errors.Count -gt 1) { 's' })!"
@@ -87,12 +86,12 @@ Describe -Tag 'Manifests' 'manifest-validation' {
                     }
                 }
 
-                $manifest = parse_json $file.fullname
+                $manifest = ConvertFrom-Manifest -LiteralPath $file.FullName
                 $url = arch_specific 'url' $manifest '32bit'
                 $url64 = arch_specific 'url' $manifest '64bit'
-                if (!$url) {
-                    $url = $url64
-                }
+
+                if (!$url) { $url = $url64 }
+
                 $url | Should -Not -BeNullOrEmpty
             }
         }
