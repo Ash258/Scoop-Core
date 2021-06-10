@@ -210,6 +210,7 @@ local scoopParser = parser({
     ):loop(1),
     'search' .. parser({
         '-h', '--help',
+        '-a', '--api'
         '-r', '--remote'
     }),
     'status' .. parser({'-h', '--help'}),

@@ -207,3 +207,14 @@ function Search-LocalBucket {
 
     end { return $result }
 }
+
+function Search-RemoteAPI {
+    [CmdletBinding()]
+    param([String] $Query)
+
+    process {
+        $res = Invoke-RestMethod -Uri "https://api.shovel.ash258.com/api/v1/?query=$Query&size=10000&page=0"
+
+        return $res.content
+    }
+}
