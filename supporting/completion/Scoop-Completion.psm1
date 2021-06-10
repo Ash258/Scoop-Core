@@ -42,6 +42,7 @@ $script:SCOOP_SUB_COMMANDS = @{
     'utils'  = 'auto-pr checkhashes checkurls checkver describe format missing-checkver'
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
+    'cat'        = 'f'
     'cleanup'    = 'g k'
     'depends'    = 'a'
     'download'   = 's u a b'
@@ -57,6 +58,7 @@ $script:SCOOP_SHORT_PARAMETERS = @{
     'virustotal' = 'a s n'
 }
 $script:SCOOP_LONG_PARAMETERS = @{
+    'cat'        = 'format'
     'cleanup'    = 'global cache'
     'depends'    = 'arch'
     'download'   = 'skip utility arch all-architectures'
@@ -87,18 +89,15 @@ foreach ($cmd in $SCOOP_COMMANDS) {
     }
 }
 
-$script:supportedArchitectures = '64bit 32bit arm64'
 $script:downloadUtilities = 'native aria2'
+$script:supportedArchitectures = '64bit 32bit arm64'
+$script:supportedManifestFormats = 'json yaml yml'
 $script:SCOOP_PARAMETER_VALUES = @{
-    'install'    = @{
-        'a'    = $supportedArchitectures
-        'arch' = $supportedArchitectures
+    'cat'        = @{
+        'f'      = $supportedManifestFormats
+        'format' = $supportedManifestFormats
     }
     'depends'    = @{
-        'a'    = $supportedArchitectures
-        'arch' = $supportedArchitectures
-    }
-    'info'       = @{
         'a'    = $supportedArchitectures
         'arch' = $supportedArchitectures
     }
@@ -108,12 +107,21 @@ $script:SCOOP_PARAMETER_VALUES = @{
         'u'       = $downloadUtilities
         'utility' = $downloadUtilities
     }
+    'info'       = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
+    }
+    'install'    = @{
+        'a'    = $supportedArchitectures
+        'arch' = $supportedArchitectures
+    }
     'virustotal' = @{
         'a'    = $supportedArchitectures
         'arch' = $supportedArchitectures
     }
 }
 
+# Build up regexes of all parameters
 $script:REGEX_SHORT_PARAMETERS = $SCOOP_SHORT_PARAMETERS.Keys -join '|'
 $script:REGEX_LONG_PARAMETERS = $SCOOP_LONG_PARAMETERS.Keys -join '|'
 $script:REGEX_PARAMETERS_VALUES = $SCOOP_PARAMETER_VALUES.Keys -join '|'

@@ -1,0 +1,24 @@
+{
+    "name": "Shovel Debian dev-container",
+    "image": "shovelinstaller/shovel-dev:container-latest",
+    "settings": {
+        "terminal.integrated.defaultProfile.linux": "pwsh"
+    },
+    "postAttachCommand": "mv /root/shovel/apps/scoop/current /root/shovel/apps/scoop/original && chmod 600 ~/.ssh/config && ln -s /workspaces/Core/ /root/shovel/apps/scoop/current", // TODO: Remove hardcoded workspace
+    "mounts": [
+        "source=${localEnv:HOME}${localEnv:USERPROFILE}/.ssh,target=/root/.ssh,type=bind,consistency=cached",
+    ],
+    "containerUser": "root",
+    "remoteUser": "root",
+    "extensions": [
+        "CoenraadS.bracket-pair-colorizer-2",
+        "DavidAnson.vscode-markdownlint",
+        "EditorConfig.EditorConfig",
+        "fabiospampinato.vscode-terminals",
+        "k--kato.intellij-idea-keybindings",
+        "ms-vscode.powershell-preview",
+        "redhat.vscode-yaml",
+        "usernamehw.errorlens",
+        "yzhang.markdown-all-in-one",
+    ],
+}

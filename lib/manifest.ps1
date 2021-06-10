@@ -306,7 +306,7 @@ function Get-ManifestFromLookup {
         # Select versioned manifest or generate it
         if ($requestedVersion) {
             try {
-                $path = manifest_path -app $requestedName -bucket $requestedBucket -version $requestedVersion
+                $path = manifest_path -app $requestedName -bucket $manifestBucket -version $requestedVersion
                 if ($null -eq $path) { throw 'trigger' }
                 $manifestPath = $path
             } catch {
@@ -328,7 +328,12 @@ function Get-ManifestFromLookup {
         }
 
         $name = $requestedName
-        $manifest = ConvertFrom-Manifest -LiteralPath $manifestPath
+        $manifest = $null
+        try {
+            $manifest = ConvertFrom-Manifest -LiteralPath $manifestPath
+        } catch {
+            throw [ScoopException] "'$manifestPath': Invalid manifest ($($_.Exception.Message))"
+        }
 
         return @{
             'Name'     = $name

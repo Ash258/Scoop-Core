@@ -25,7 +25,7 @@ $utility = $opt.u, $opt.utility, 'native' | Where-Object { -not [String]::IsNull
 if (!$application) { Stop-ScoopExecution -Message 'Parameter <APP> missing' }
 if (($utility -eq 'aria2') -and (!(Test-HelperInstalled -Helper Aria2))) { Stop-ScoopExecution -Message 'Aria2 is not installed' }
 
-$architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
+$Architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
 
 # Add all supported architectures
 if ($opt.b -or $opt.'all-architectures') { $architecture = $SHOVEL_SUPPORTED_ARCHITECTURES }
@@ -33,60 +33,43 @@ if ($opt.b -or $opt.'all-architectures') { $architecture = $SHOVEL_SUPPORTED_ARC
 
 $exitCode = 0
 $problems = 0
+
 foreach ($app in $application) {
-    # Prevent leaking variables from previous iteration
-    $cleanAppName = $bucket = $version = $appName = $manifest = $foundBucket = $url = $null
-
-    # TODO: Adopt Resolve-ManifestInformation
-    $cleanAppName, $bucket, $version = parse_app $app
-    $appName, $manifest, $foundBucket, $url = Find-Manifest $cleanAppName $bucket
-    if ($null -eq $bucket) { $bucket = $foundBucket }
-
-    # Handle potential use case, which should not appear, but just in case
-    # If parsed name/bucket is not same as the provided one
-    if ((-not $url) -and (($cleanAppName -ne $appName) -or ($bucket -ne $foundBucket))) {
-        debug $bucket
-        debug $cleanAppName
-        debug $foundBucket
-        debug $appName
-
-        Write-UserMessage -Message 'Found application name or bucket is not same as requested' -Err
+    $resolved = $null
+    try {
+        $resolved = Resolve-ManifestInformation -ApplicationQuery $app
+    } catch {
         ++$problems
+
+        $title, $body = $_.Exception.Message -split '\|-'
+        if (!$body) { $body = $title }
+        Write-UserMessage -Message $body -Err
+        debug $_.InvocationInfo
 
         continue
     }
 
-    # Generate manifest if there is different version in manifest
-    if (($null -ne $version) -and ($manifest.version -ne $version)) {
-        try {
-            $generated = generate_user_manifest $appName $bucket $version
-            if ($null -eq $generated) {
-                throw [ScoopException] ''
-            }
-        } catch {
-            Write-UserMessage -Message 'Archived manifest does not exist and version specific manifest cannot be generated with provided version' -Err
-            ++$problems
+    debug $resolved
 
-            continue
-        }
-        $manifest = parse_json $generated
-    }
-
-    if (-not $version) { $version = $manifest.version }
+    # TODO: Remove not neeeded variables. Keep them for now just for less changes
+    $appName = $resolved.ApplicationName
+    $manifest = $resolved.ManifestObject
+    $bucket = $resolved.Bucket
+    $version = $manifest.version
     if ($version -eq 'nightly') {
         $version = nightly_version (Get-Date)
         $checkHash = $false
     }
 
-    Write-UserMessage "Starting download for $app" -Color 'Green'
+    Write-UserMessage "Starting download for '$app'" -Color 'Green' # TODO: Add better text with parsed appname, version, url/bucket
 
     $registered = $false
     # TODO: Rework with proper wrappers after #3149
     switch ($utility) {
         'aria2' {
-            foreach ($arch in $architecture) {
+            foreach ($arch in $Architecture) {
                 try {
-                    dl_with_cache_aria2 $appName $version $manifest $arch $cachedir $manifest.cookie $true $checkHash
+                    dl_with_cache_aria2 $appName $version $manifest $arch $SCOOP_CACHE_DIRECTORY $manifest.cookie $true $checkHash
                 } catch {
                     # Do not count specific architectures or URLs
                     if (!$registered) {
@@ -106,7 +89,7 @@ foreach ($app in $application) {
         }
 
         'native' {
-            foreach ($arch in $architecture) {
+            foreach ($arch in $Architecture) {
                 foreach ($url in (url $manifest $arch)) {
                     try {
                         dl_with_cache $appName $version $url $null $manifest.cookie $true

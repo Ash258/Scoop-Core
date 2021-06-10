@@ -52,11 +52,11 @@ Describe 'config' -Tag 'Scoop' {
 
     <#
     It "set_config should create a new PSObject and ensure existing directory" {
-        $scoopConfig = $null
-        $configFile = "$PSScriptRoot\.scoop"
+        $SCOOP_CONFIGURATION = $null
+        $SCOOP_CONFIGURATION_FILE = "$PSScriptRoot\.scoop"
 
-        Mock ensure { $PSScriptRoot } -Verifiable -ParameterFilter { $dir -eq (Split-Path -Path $configFile) }
-        Mock Set-Content { } -Verifiable -ParameterFilter { $Path -eq $configFile }
+        Mock ensure { $PSScriptRoot } -Verifiable -ParameterFilter { $dir -eq (Split-Path -Path $SCOOP_CONFIGURATION_FILE) }
+        Mock Set-Content { } -Verifiable -ParameterFilter { $Path -eq $SCOOP_CONFIGURATION_FILE }
         Mock ConvertTo-Json { '' } -Verifiable -ParameterFilter { $InputObject -is [System.Management.Automation.PSObject] }
 
         set_config 'does_not_exist' 'default'
@@ -65,17 +65,17 @@ Describe 'config' -Tag 'Scoop' {
     }
 
     It "set_config should remove a value if set to `$null" {
-        $scoopConfig = New-Object PSObject
-        $scoopConfig | Add-Member -MemberType NoteProperty -Name 'should_be_removed' -Value 'a_value'
-        $scoopConfig | Add-Member -MemberType NoteProperty -Name 'should_stay' -Value 'another_value'
-        $configFile = "$PSScriptRoot\.scoop"
+        $SCOOP_CONFIGURATION = New-Object PSObject
+        $SCOOP_CONFIGURATION | Add-Member -MemberType NoteProperty -Name 'should_be_removed' -Value 'a_value'
+        $SCOOP_CONFIGURATION | Add-Member -MemberType NoteProperty -Name 'should_stay' -Value 'another_value'
+        $SCOOP_CONFIGURATION_FILE = "$PSScriptRoot\.scoop"
 
-        Mock Set-Content { } -Verifiable -ParameterFilter { $Path -eq $configFile }
+        Mock Set-Content { } -Verifiable -ParameterFilter { $Path -eq $SCOOP_CONFIGURATION_FILE }
         Mock ConvertTo-Json { '' } -Verifiable -ParameterFilter { $InputObject -is [System.Management.Automation.PSObject] }
 
-        $scoopConfig = set_config 'should_be_removed' $null
-        $scoopConfig.should_be_removed | Should -BeNullOrEmpty
-        $scoopConfig.should_stay | Should -Be 'another_value'
+        $SCOOP_CONFIGURATION = set_config 'should_be_removed' $null
+        $SCOOP_CONFIGURATION.should_be_removed | Should -BeNullOrEmpty
+        $SCOOP_CONFIGURATION.should_stay | Should -Be 'another_value'
 
         Assert-VerifiableMock
     }
