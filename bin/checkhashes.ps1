@@ -187,7 +187,6 @@ foreach ($current in $MANIFESTS) {
                 $start = $max
                 $max = $max + $64bit_count
                 $current.manifest.architecture.'64bit'.hash = $actuals[$start..($max - 1)]
-
             }
             if ($platforms.Contains('32bit')) {
                 $32bit_count = $current.manifest.architecture.'32bit'.hash.Count
