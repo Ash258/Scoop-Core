@@ -20,6 +20,7 @@ Describe -Tag 'Manifests' 'manifest-validation' {
     Context 'parse_json function' {
         It 'fails with invalid json' {
             { parse_json "$working_dir\broken_wget.json" } | Should -Throw
+            { ConvertFrom-Manifest "$working_dir\broken_wget.json" } | Should -Throw
         }
     }
 
@@ -52,10 +53,13 @@ Describe -Tag 'Manifests' 'manifest-validation' {
             $changed_manifests = @()
             if ($env:CI -eq $true) {
                 $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
+                # TODO: Better multiple format handling
                 $changed_manifests = (Get-GitChangedFile -Include '*.json' -Commit $commit)
+                $changed_manifests += (Get-GitChangedFile -Include '*.y*ml' -Commit $commit)
             }
-            # TODO: YAMl
+            # TODO: Better multiple format handling
             $manifest_files = Get-ChildItem $bucketdir '*.json' -Recurse
+            $manifest_files += Get-ChildItem $bucketdir '*.y*ml' -Recurse
             $validator = New-Object Scoop.Validator($schema, $true)
         }
 
@@ -66,8 +70,8 @@ Describe -Tag 'Manifests' 'manifest-validation' {
             if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') { $skip_manifest = $false }
 
             It "$file" -Skip:$skip_manifest {
-                # Skip yml for now for schema validation
-                if (!($quota_exceeded) -or ($file.Extension -match '\.ya?ml')) {
+                # TODO: Skip yml for now for schema validation
+                if (!$quota_exceeded -and ($file.Extension -notmatch '\.ya?ml$')) {
                     try {
                         $validator.Validate($file.FullName)
 
