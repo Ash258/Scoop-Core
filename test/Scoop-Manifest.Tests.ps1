@@ -28,21 +28,21 @@ Describe -Tag 'Manifests' 'manifest-validation' {
         It 'fails with broken schema' {
             $validator = New-Object Scoop.Validator("$working_dir/broken_schema.json", $true)
             $validator.Validate("$working_dir/wget.json") | Should -BeFalse
-            $validator.Errors.Count | Should -be 1
-            $validator.Errors | Select-Object -First 1 | Should -match 'broken_schema.*(line 6).*(position 4)'
+            $validator.Errors.Count | Should -Be 1
+            $validator.Errors | Select-Object -First 1 | Should -Match 'broken_schema.*(line 6).*(position 4)'
         }
         It 'fails with broken manifest' {
             $validator = New-Object Scoop.Validator($schema, $true)
             $validator.Validate("$working_dir/broken_wget.json") | Should -BeFalse
-            $validator.Errors.Count | Should -be 1
-            $validator.Errors | Select-Object -First 1 | Should -match 'broken_wget.*(line 5).*(position 4)'
+            $validator.Errors.Count | Should -Be 1
+            $validator.Errors | Select-Object -First 1 | Should -Match 'broken_wget.*(line 5).*(position 4)'
         }
         It 'fails with invalid manifest' {
             $validator = New-Object Scoop.Validator($schema, $true)
             $validator.Validate("$working_dir/invalid_wget.json") | Should -BeFalse
-            $validator.Errors.Count | Should -be 16
-            $validator.Errors | Select-Object -First 1 | Should -match "Property 'randomproperty' has not been defined and the schema does not allow additional properties\."
-            $validator.Errors | Select-Object -Last 1 | Should -match 'Required properties are missing from object: version, description\.'
+            $validator.Errors.Count | Should -Be 16
+            $validator.Errors | Select-Object -First 1 | Should -Match "Property 'randomproperty' has not been defined and the schema does not allow additional properties\."
+            $validator.Errors | Select-Object -Last 1 | Should -Match 'Required properties are missing from object: version, description\.'
         }
     }
 
@@ -67,7 +67,7 @@ Describe -Tag 'Manifests' 'manifest-validation' {
 
         foreach ($file in $manifest_files) {
             $skip_manifest = ($changed_manifests -inotcontains $file.FullName)
-            if ($env:CI -ne $true -or $changed_manifests -imatch 'schema.json') { $skip_manifest = $false }
+            if (($env:CI -ne $true) -or ($changed_manifests -imatch 'schema.json')) { $skip_manifest = $false }
 
             It "$file" -Skip:$skip_manifest {
                 # TODO: Skip yml for now for schema validation
