@@ -50,16 +50,28 @@ Describe -Tag 'Manifests' 'manifest-validation' {
         BeforeAll {
             if ($null -eq $bucketdir) { $bucketdir = "$PSScriptRoot\..\bucket\" }
             if (!(Test-Path $bucketdir)) { New-Item $bucketdir -ItemType 'Directory' -Force }
+
             $changed_manifests = @()
+            $manifest_files = @()
+            $allFiles = Get-ChildItem $bucketdir -Recurse
+
             if ($env:CI -eq $true) {
                 $commit = if ($env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT) { $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT } else { $env:APPVEYOR_REPO_COMMIT }
-                # TODO: Better multiple format handling
-                $changed_manifests = (Get-GitChangedFile -Include '*.json' -Commit $commit)
-                $changed_manifests += (Get-GitChangedFile -Include '*.y*ml' -Commit $commit)
+                if ($commit) {
+                    $allChanged = Get-GitChangedFile -Commit $commit
+
+                    # Filter out valid manifests
+                    foreach ($ext in $ALLOWED_MANIFEST_EXTENSION) {
+                        $changed_manifests += $allChanged | Where-Object { $_ -like "*.$ext" }
+                    }
+                }
             }
-            # TODO: Better multiple format handling
-            $manifest_files = Get-ChildItem $bucketdir '*.json' -Recurse
-            $manifest_files += Get-ChildItem $bucketdir '*.y*ml' -Recurse
+
+            # Filter out valid manifests
+            foreach ($ext in $ALLOWED_MANIFEST_EXTENSION) {
+                $manifest_files += $allFiles | Where-Object { $_ -like "*.$ext" }
+            }
+
             $validator = New-Object Scoop.Validator($schema, $true)
         }
 
