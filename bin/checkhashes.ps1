@@ -182,6 +182,7 @@ foreach ($current in $MANIFESTS) {
             $max = 0
 
             if ($platforms.Contains('64bit')) {
+                # 64bit processed first
                 $64bit_count = $current.manifest.architecture.'64bit'.hash.Count
                 $start = $max
                 $max = $max + $64bit_count

@@ -253,9 +253,9 @@ function debug($obj) {
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
         $msg | Where-Object { ![String]::IsNullOrWhiteSpace($_) } |
             Select-Object -Skip 2 | # Skip headers
-            ForEach-Object {
-                Write-Host "$prefix $param.$($_)" -ForegroundColor 'DarkCyan'
-            }
+                ForEach-Object {
+                    Write-Host "$prefix $param.$($_)" -ForegroundColor 'DarkCyan'
+                }
     } else {
         Write-Host "$prefix $param = $($msg.Trim())" -ForegroundColor 'DarkCyan' -NoNewline
         Write-Host " -> $($MyInvocation.PSCommandPath):$($MyInvocation.ScriptLineNumber):$($MyInvocation.OffsetInLine)" -ForegroundColor 'DarkGray'
@@ -1180,7 +1180,7 @@ if ($c) {
 }
 
 # Main shovel version
-$SHOVEL_VERSION = '0.6-pre3'
+$SHOVEL_VERSION = '0.6.5'
 
 # All supported architectures
 $SHOVEL_SUPPORTED_ARCHITECTURES = @('64bit', '32bit', 'arm64')

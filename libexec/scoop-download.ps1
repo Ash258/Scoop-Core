@@ -29,6 +29,10 @@ $Architecture = Resolve-ArchitectureParameter -Architecture $opt.a, $opt.arch
 
 # Add all supported architectures
 if ($opt.b -or $opt.'all-architectures') { $Architecture = $SHOVEL_SUPPORTED_ARCHITECTURES }
+#endregion Parameter validation
+
+$exitCode = 0
+$problems = 0
 
 foreach ($app in $application) {
     $resolved = $null
