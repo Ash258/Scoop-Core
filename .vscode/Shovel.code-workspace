@@ -118,6 +118,7 @@
             },
         ],
         "task.autoDetect": "off",
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
         "terminal.integrated.profiles.windows": {
             "PowerShell": {
                 "path": "powershell.exe",
