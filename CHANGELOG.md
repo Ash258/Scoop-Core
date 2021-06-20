@@ -2,6 +2,7 @@
 
 ## [0.6.5](https://github.com/Ash258/Scoop-Core/milestone/5)
 
+- Initial support for `arm64` based manifests added
 - **Schema**:
     - Initial support for `arm64` architecture
     - Allow `$schema` property
@@ -25,7 +26,6 @@
 
 ### 0.6-pre3
 
-- Initial support for `arm64` based manifests added
 - Unify help entries of executables
 - **scoop-info**:
     - Support passing `--arch` and `-a` options
