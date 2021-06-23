@@ -39,12 +39,18 @@ function Optimize-SecurityProtocol {
     }
 }
 
+# Shovel/1.0 (+https://shovel.ash258.com) PowerShell/7.2 (Windows NT 10.0; Win64; x64; Core)
 function Get-UserAgent {
-    # TODO: ARM rework completely
-    $shovel = "Shovel/$SHOVEL_VERSION (+https://shovel.ash258.com)"
+    $shovel = 'Shovel/1.0 (+https://shovel.ash258.com)'
     $powershellVersion = "PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+    $edition = $PSEdition
 
-    return "$shovel $powershellVersion (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor); $(if($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'){'Win64; x64; '})$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})$PSEdition)"
+    # TODO: Multiplatform/arm
+    $system = "Windows NT $([System.Environment]::OSVersion.Version)"
+    $arch = "$(if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'Win64; x64;' })"
+    $archarch = "$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})"
+
+    return "$shovel $powershellVersion ($system; $arch $archarch$edition)"
 }
 
 function Show-DeprecatedWarning {
