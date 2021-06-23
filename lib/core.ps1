@@ -78,7 +78,11 @@ function Test-IsArmArchitecture {
     param()
 
     process {
-        return $false
+        if (Test-IsUnix) {
+            return (Invoke-SystemComSpecCommand -Unix 'uname -m') -like 'aarch*'
+        } else {
+            return $env:PROCESSOR_IDENTIFIER -like 'ARMv*'
+        }
     }
 }
 
@@ -107,9 +111,7 @@ function Invoke-SystemComSpecCommand {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
         [String] $Windows,
-        [Parameter(Mandatory)]
         [String] $Unix
     )
 
@@ -121,6 +123,8 @@ function Invoke-SystemComSpecCommand {
             $shell = $env:ComSpec
             $parameters = @('/d', '/c', $Windows)
         }
+
+        if (!$Windows -or !$Unix) { throw 'No command provided' }
 
         $debugShell = "& ""$shell"" $($parameters -join ' ')"
         debug $debugShell
@@ -637,6 +641,7 @@ function dl($url, $to) {
     $wc.downloadFile($url, $to)
 }
 
+# TODO: Unix
 function env($name, $global, $val = '__get') {
     $target = if ($global) { 'Machine' } else { 'User' }
     if ($val -eq '__get') {
@@ -803,6 +808,7 @@ function search_in_path($target) {
     }
 }
 
+# TODO: Unix
 function ensure_in_path($dir, $global) {
     $path = env 'PATH' $global
     if ($path -notmatch [System.Text.RegularExpressions.Regex]::Escape($dir)) {
@@ -1184,9 +1190,6 @@ if ($c) {
     Write-UserMessage -Message 'Configuration option ''rootPath'' is deprecated. Configure ''SCOOP'' environment variable instead' -Err
     if (!$env:SCOOP) { $env:SCOOP = $c }
 }
-
-# Main shovel version
-$SHOVEL_VERSION = '0.6.5'
 
 # All supported architectures
 $SHOVEL_SUPPORTED_ARCHITECTURES = @('64bit', '32bit', 'arm64')

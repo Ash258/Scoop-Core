@@ -557,7 +557,6 @@ function default_architecture {
     $arch = get_config 'default-architecture'
     $system = if ([System.IntPtr]::Size -eq 8) { '64bit' } else { '32bit' }
 
-    # TODO: ARM limit just to native powershell arm binary
     if (Test-IsArmArchitecture) { $arch = 'arm' + ($system -replace 'bit') }
 
     if ($null -eq $arch) {
