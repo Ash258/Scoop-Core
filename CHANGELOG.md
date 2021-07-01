@@ -2,6 +2,7 @@
 
 ## [0.6.5](https://github.com/Ash258/Scoop-Core/milestone/5)
 
+- **scoop-install**, **scoop-update**: Report failed installations/updates at the end of execution
 - **Schema**:
     - Initial support for `arm64` architecture
     - Allow `$schema` property
