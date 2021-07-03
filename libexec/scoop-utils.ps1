@@ -51,6 +51,7 @@ $VALID_UTILITIES = @(
     'describe'
     'format'
     'missing-checkver'
+    'verify'
 )
 
 if (!$Utility) { Stop-ScoopExecution -Message 'Parameter <UTILITY> missing' -ExitCode 1 -Usage (my_usage) }

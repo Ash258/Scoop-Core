@@ -231,7 +231,7 @@ local scoopParser = parser({
         '-q', '--quiet',
         '-h', '--help'
     ):loop(1),
-    'utils' .. parser({'auto-pr', 'checkhashes', 'checkurls', 'checkver', 'describe', 'format', 'missing-checkver'},
+    'utils' .. parser({'auto-pr', 'checkhashes', 'checkurls', 'checkver', 'describe', 'format', 'missing-checkver', 'verify'},
         '--additional-options',
         '-b', '--bucketdir',
         '-h', '--help'

@@ -39,7 +39,7 @@ $script:SCOOP_SUB_COMMANDS = @{
     'bucket' = 'add known list rm'
     'cache'  = 'rm show'
     'config' = 'rm show'
-    'utils'  = 'auto-pr checkhashes checkurls checkver describe format missing-checkver'
+    'utils'  = 'auto-pr checkhashes checkurls checkver describe format missing-checkver verify'
 }
 $script:SCOOP_SHORT_PARAMETERS = @{
     'cat'        = 'f'
