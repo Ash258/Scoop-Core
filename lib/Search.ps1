@@ -152,9 +152,15 @@ function Search-LocalBucket {
 
     process {
         foreach ($app in apps_in_bucket (Find-BucketDirectory -Name $Bucket)) {
-            $manifest = manifest $app $Bucket
+            $resolved = $null
+            try {
+                $resolved = Resolve-ManifestInformation -ApplicationQuery "$Bucket/$app"
+            } catch {
+                continue
+            }
+            $manifest = $resolved.ManifestObject
             $apps += @{
-                'name'              = $app
+                'name'              = $resolved.ApplicationName
                 'version'           = $manifest.version
                 'description'       = $manifest.description
                 'bin'               = @(arch_specific 'bin' $manifest $architecture)
