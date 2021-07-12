@@ -420,6 +420,7 @@ function app_status($app, $global) {
 
     $manifest = manifest $app $install_info.bucket $install_info.url
     $status.bucket = $install_info.bucket
+    $status.url = $install_info.url
     $status.removed = (!$manifest)
     if ($manifest.version) {
         $status.latest_version = $manifest.version
