@@ -190,8 +190,15 @@ foreach ($app in $apps) {
 
 show_suggestions $suggested
 
-if ($failedApplications) { Write-UserMessage -Message "These applications failed to install: $($failedApplications -join ', ')" -Err }
-if ($failedDependencies) { Write-UserMessage -Message "These dependencies failed to install: $($failedDependencies -join ', ')" -Err }
+if ($failedApplications) {
+    $pl = pluralize $failedApplications.Count 'This application' 'These applications'
+    Write-UserMessage -Message "$pl failed to install: $($failedApplications -join ', ')" -Err
+}
+
+if ($failedDependencies) {
+    $pl = pluralize $failedDependencies.Count 'This dependency' 'These dependencies'
+    Write-UserMessage -Message "$pl failed to install: $($failedDependencies -join ', ')" -Err
+}
 
 if ($problems -gt 0) { $exitCode = 10 + $problems }
 

@@ -240,15 +240,13 @@ function Update-App {
 
     # TODO: Could this ever happen?
     if (!$Force -and ($oldVersion -eq $version)) {
-        if (!$quiet) { Write-UserMessage -Message "The Latest version of '$App' ($version) is already installed." -Warning }
-        return
+        throw [ScoopException] "The Latest version of '$App' ($version) is already installed." # TerminatingError thrown
     }
 
     # TODO:???
     # TODO: Case when bucket no longer have this application?
     if (!$version) {
-        Write-UserMessage -Message "No manifest available for '$App'" -Err
-        return
+        throw [ScoopException] "No manifest available for '$App'" # TerminatingError thrown
     }
 
     $manifest = manifest $App $bucket $url
@@ -291,7 +289,7 @@ function Update-App {
     #endregion Workaround of #2220
 
     $result = Uninstall-ScoopApplication -App $App -Global:$Global
-    if ($result -eq $false) { return }
+    if ($result -eq $false) { throw [ScoopException] 'Ignore' }
 
     # Rename current version to .old if same version is installed
     if ($Force -and ($oldVersion -eq $version)) {
@@ -307,6 +305,7 @@ function Update-App {
         }
     }
 
+    # TODO: Adopt Resolve-ManifestInformation???
     $toUpdate = if ($install.url) { $install.url } else { "$bucket/$App" }
 
     # Error catching should be handled on upper scope

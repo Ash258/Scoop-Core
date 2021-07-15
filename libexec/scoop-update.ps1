@@ -101,7 +101,10 @@ if (!$Applications) {
     }
 }
 
-if ($failedApplications) { Write-UserMessage -Message "These applications failed to update: $($failedApplications -join ', ')" -Err }
+if ($failedApplications) {
+    $pl = pluralize $failedApplications.Count 'This application' 'These applications'
+    Write-UserMessage -Message "$pl failed to update: $($failedApplications -join ', ')" -Err
+}
 
 if ($Problems -gt 0) { $ExitCode = 10 + $Problems }
 
