@@ -87,16 +87,9 @@ if (!$Applications) {
             Update-App -App $out[0] -Global:$out[1] -Suggested @{ } -Quiet:$Quiet -Independent:$Independent -SkipCache:(!$UseCache) -SkipHashCheck:(!$CheckHash)
         } catch {
             ++$Problems
-
             $failedApplications += $out[0]
-
-            $title, $body = $_.Exception.Message -split '\|-'
-            if (!$body) { $body = $title }
-            Write-UserMessage -Message $body -Err
             debug $_.InvocationInfo
-            if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $out[0] -Bucket $out[2] -Title $title -Body $body }
-
-            continue
+            New-IssuePromptFromException -ExceptionMessage $_.Exception.Message -Application $out[0] -Bucket $out[2]
         }
     }
 }
