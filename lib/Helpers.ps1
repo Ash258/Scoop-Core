@@ -359,12 +359,18 @@ function New-IssuePrompt {
 }
 
 function New-IssuePromptFromException {
+    <#
+    .SYNOPSIS
+        Wrapper for handling <Title>|-<Body> exception messages with support for promping user with according link to create a new issue.
+    #>
     param(
         [String] $ExceptionMessage,
+        [AllowNull()]
         [String] $Application,
         [AllowNull()]
         [String] $Bucket
     )
+
     process {
         $title, $body = $ExceptionMessage -split '\|-'
         if (!$body) { $body = $title }

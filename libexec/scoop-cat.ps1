@@ -25,11 +25,8 @@ foreach ($app in $Applications) {
         $resolved = Resolve-ManifestInformation -ApplicationQuery $app
     } catch {
         ++$Problems
-
-        $title, $body = $_.Exception.Message -split '\|-'
-        if (!$body) { $body = $title }
-        Write-UserMessage -Message $body -Err
         debug $_.InvocationInfo
+        New-IssuePromptFromException -ExceptionMessage $_.Exception.Message
 
         continue
     }

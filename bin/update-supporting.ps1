@@ -48,11 +48,8 @@ foreach ($sup in $Sups) {
         Invoke-ManifestScript -Manifest $manifest -ScriptName 'pre_install' -Architecture $architecture
     } catch {
         ++$problems
-
-        $title, $body = $_.Exception.Message -split '\|-'
-        if (!$body) { $body = $title }
-        Write-UserMessage -Message $body -Err
         debug $_.InvocationInfo
+        New-IssuePromptFromException -ExceptionMessage $_.Exception.Message
 
         continue
     }
