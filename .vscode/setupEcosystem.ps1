@@ -4,7 +4,7 @@ param($Folder, [Switch] $Https)
 $REPOSITORIES = @(
     @('Ash258/Scoop-Core', 'CORE'),
     @('Ash258/GenericBucket', 'GenericBucket'),
-    @('Ash258/Scoop-GithubActions', 'GithubActions'),
+    @('shovel-org/GithubActions', 'GithubActions'),
     @('Ash258/Scoop-Dockers', 'Dockers'),
     @('Ash258/Scoop-Vagrants', 'Vagrants'),
     @('Ash258/Scoop-Ash258.git', 'Ash258'),

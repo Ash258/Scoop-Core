@@ -44,6 +44,7 @@ if (!$Applications) {
     if (is_scoop_outdated) { Update-Scoop }
 
     $outdatedApplications = @()
+    $failedApplications = @()
     $applicationsParam = $Applications # Original users request
 
     if ($applicationsParam -eq '*') {
@@ -87,6 +88,8 @@ if (!$Applications) {
         } catch {
             ++$Problems
 
+            $failedApplications += $out[0]
+
             $title, $body = $_.Exception.Message -split '\|-'
             if (!$body) { $body = $title }
             Write-UserMessage -Message $body -Err
@@ -97,6 +100,8 @@ if (!$Applications) {
         }
     }
 }
+
+if ($failedApplications) { Write-UserMessage -Message "These applications failed to update: $($failedApplications -join ', ')" -Err }
 
 if ($Problems -gt 0) { $ExitCode = 10 + $Problems }
 

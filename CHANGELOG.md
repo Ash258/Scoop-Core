@@ -2,7 +2,11 @@
 
 ## [0.6.5](https://github.com/Ash258/Scoop-Core/milestone/5)
 
-- Initial support for `arm64` based manifests added
+- Initial support for manipulation with `arm64` based manifests
+- **scoop-search**:
+    - Do not fail when parsing invalid local manifest
+    - Support `githubToken` config and `GITHUB_TOKEN` environment variable for Github API calls
+- **scoop-install**, **scoop-update**: Report failed installations/updates at the end of execution
 - **Schema**:
     - Initial support for `arm64` architecture
     - Allow `$schema` property
@@ -11,6 +15,7 @@
     - Support validation of all archived manifests
 - **scoop-cat**: Add `-f`, `--format` options
 - Adopt new resolve function for parameter passing
+    - **scoop-search**
     - **scoop-home**
     - **scoop-cat**
     - **scoop-download**

@@ -11,9 +11,9 @@ Scriptable, user-friendly command line installation of applications with a minim
     - Use [winget][winget] for interactive installations
 - Do not pollute `PATH`
 - Skip unexpected side-effects from installing and uninstalling programs
-    - Applications installed by scoop usually do not execute application specific installers
+    - Applications installed by Shovel usually do not execute application specific installers
         - If you are looking for command line tool for executing application specific installers, refer to [winget][winget] or [chocolatey][choco]
-- Dependencies resolving for other scoop installed applications
+- Dependencies resolving for other Shovel installed applications
 
 ```powershell
 shovel install gsudo
@@ -57,9 +57,9 @@ shovel install aria2
 
 Refer to `shovel help config` how to adjust aria2 specific configuration.
 
-## Applications installed by scoop
+## Applications installed by Shovel
 
-The applications that install best with Scoop are commonly called "portable" applications: i.e. compressed program files that run stand-alone when extracted and do not have side-effects like changing the registry or putting files outside the program directory.
+The applications that install best with Shovel are commonly called "portable" applications: i.e. compressed program files that run stand-alone when extracted and do not have side-effects like changing the registry or putting files outside the program directory.
 
 Since installers are common, Shovel supports them too (and their uninstallers).
 

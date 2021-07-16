@@ -3,6 +3,8 @@
 }
 
 $_breachedRateLimit = $false
+$_token = get_config 'githubToken'
+if (!$_token -and $env:GITHUB_TOKEN) { $_token = $env:GITHUB_TOKEN }
 
 function Test-GithubApiRateLimitBreached {
     <#
@@ -18,7 +20,9 @@ function Test-GithubApiRateLimitBreached {
     if ($Breach) { $script:_breachedRateLimit = $true }
 
     if (!$script:_breachedRateLimit) {
-        $githubRateLimit = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit').resources.core
+        $h = @{}
+        if ($null -ne $script:_token) { $h = @{ 'Headers' = @{ 'Authorization' = "token $($script:_token)" } } }
+        $githubRateLimit = (Invoke-RestMethod -Uri 'https://api.github.com/rate_limit' @h ).resources.core
         debug $githubRateLimit.remaining
         if ($githubRateLimit.remaining -eq 0) {
             $script:_breachedRateLimit = $true
@@ -65,10 +69,9 @@ function Search-RemoteBucket {
             $repoName = $Matches[2]
             $params = @{
                 'Uri' = "https://api.github.com/repos/$user/$repoName/git/trees/HEAD?recursive=1"
-                # 'Headers' = @{
-                #     'Authorization' = 'token $ghToken'
-                # }
             }
+
+            if ($null -ne $script:_token) { $params.Add('Headers', @{ 'Authorization' = "token $($script:_token)" }) }
             if ((Get-Command 'Invoke-RestMethod').Parameters.ContainsKey('ResponseHeadersVariable')) { $params.Add('ResponseHeadersVariable', 'headers') }
 
             try {
@@ -149,9 +152,15 @@ function Search-LocalBucket {
 
     process {
         foreach ($app in apps_in_bucket (Find-BucketDirectory -Name $Bucket)) {
-            $manifest = manifest $app $Bucket
+            $resolved = $null
+            try {
+                $resolved = Resolve-ManifestInformation -ApplicationQuery "$Bucket/$app"
+            } catch {
+                continue
+            }
+            $manifest = $resolved.ManifestObject
             $apps += @{
-                'name'              = $app
+                'name'              = $resolved.ApplicationName
                 'version'           = $manifest.version
                 'description'       = $manifest.description
                 'bin'               = @(arch_specific 'bin' $manifest $architecture)
@@ -171,8 +180,8 @@ function Search-LocalBucket {
             if (($a.description -match $Query) -and ($result -notcontains $a)) { $result += $a }
 
             # Binary matching
-            $a.bin | ForEach-Object {
-                $executable, $shimName, $argument = shim_def $_
+            foreach ($b in $a.bin) {
+                $executable, $shimName, $argument = shim_def $b
                 if (($shimName -match $Query) -or ($executable -match $Query)) {
                     $bin = @{ 'exe' = $executable; 'name' = $shimName }
                     if ($result -contains $a) {

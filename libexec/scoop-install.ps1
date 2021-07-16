@@ -142,6 +142,7 @@ $skip | Where-Object { $explicit_apps -contains $_ } | ForEach-Object {
 
 $suggested = @{ }
 $failedDependencies = @()
+$failedApplications = @()
 
 foreach ($app in $apps) {
     $bucket = $cleanApp = $null
@@ -175,7 +176,7 @@ foreach ($app in $apps) {
         ++$problems
 
         # Register failed dependencies
-        if ($explicit_apps -notcontains $app) { $failedDependencies += $app }
+        if ($explicit_apps -notcontains $app) { $failedDependencies += $app } else { $failedApplications += $app }
 
         $title, $body = $_.Exception.Message -split '\|-'
         if (!$body) { $body = $title }
@@ -188,6 +189,9 @@ foreach ($app in $apps) {
 }
 
 show_suggestions $suggested
+
+if ($failedApplications) { Write-UserMessage -Message "These applications failed to install: $($failedApplications -join ', ')" -Err }
+if ($failedDependencies) { Write-UserMessage -Message "These dependencies failed to install: $($failedDependencies -join ', ')" -Err }
 
 if ($problems -gt 0) { $exitCode = 10 + $problems }
 
