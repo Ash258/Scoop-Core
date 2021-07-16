@@ -36,7 +36,7 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
     }
 
     # TODO: Arm32??
-    if ((Test-IsArmArchitecture) -and !($manifest.'architecture'.'arm64')) {
+    if ((Test-IsArmArchitecture) -and ($architecture -eq 'arm64') -and !($manifest.'architecture'.'arm64')) {
         # TODO: Polish message
         throw [ScoopException] "Manifest does not explicitly support 'arm64' architecture. Try to install with '--arch 32bit' or '--arch 64bit' to use Windows arm emulation."
     }
