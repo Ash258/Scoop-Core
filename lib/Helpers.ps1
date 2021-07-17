@@ -202,6 +202,66 @@ function Out-UTF8Content {
     process { Out-UTF8File -File $File -Content $Content }
 }
 
+function Invoke-VariableSubstitution {
+    <#
+    .SYNOPSIS
+        Substitute (find and replace) provided parameters in provided entity.
+    .PARAMETER Entity
+        Specifies the entity to be substituted (searched in).
+    .PARAMETER Substitutes
+        Specifies the hashtable providing name and value pairs for "find and replace".
+        Hashtable keys should start with $ (dollar sign). Curly bracket variable syntax will be substituted automatically.
+    .PARAMETER EscapeRegularExpression
+        Specifies to escape regular expressions before replacing values.
+    #>
+    [CmdletBinding()]
+    param(
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        $Entity,
+        [Parameter(Mandatory)]
+        [Alias('Parameters')]
+        [HashTable] $Substitutes,
+        [Switch] $EscapeRegularExpression
+    )
+
+    process {
+        $EscapeRegularExpression | Out-Null # PowerShell/PSScriptAnalyzer#1472
+        $newEntity = $Entity
+
+        if ($null -ne $newEntity) {
+            switch ($newEntity.GetType().Name) {
+                'String' {
+                    $Substitutes.GetEnumerator() | Sort-Object { $_.Name.Length } -Descending | ForEach-Object {
+                        $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
+                        $curly = '${' + $_.Name.TrimStart('$') + '}'
+
+                        $newEntity = $newEntity.Replace($curly, $value)
+                        $newEntity = $newEntity.Replace($_.Name, $value)
+                    }
+                }
+                'Object[]' {
+                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                'PSCustomObject' {
+                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                default {
+                    # This is not needed, but to cover all possible use cases explicitly
+                    $newEntity = $newEntity
+                }
+            }
+        }
+
+        return $newEntity
+    }
+}
+
+# TODO: Deprecate
+function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
+    return Invoke-VariableSubstitution -Entity $entity -Substitutes $params -EscapeRegularExpression:$regexEscape
+}
+
 function Get-MagicByte {
     <#
     .SYNOPSIS
