@@ -58,6 +58,7 @@ function Get-UserAgent {
         $arch = "$arch;"
     }
 
+    debug "$shovel $powershellVersion ($system; $arch)"
     return "$shovel $powershellVersion ($system; $arch)"
 }
 
