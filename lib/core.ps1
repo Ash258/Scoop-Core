@@ -41,16 +41,24 @@ function Optimize-SecurityProtocol {
 
 # Shovel/1.0 (+https://shovel.ash258.com) PowerShell/7.2 (Windows NT 10.0; Win64; x64; Core)
 function Get-UserAgent {
+    # TODO: Multiplatform. Keep it 1:1 with Edge browser
     $shovel = 'Shovel/1.0 (+https://shovel.ash258.com)'
     $powershellVersion = "PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
-    $edition = $PSEdition
-
-    # TODO: Multiplatform/arm
     $system = "Windows NT $([System.Environment]::OSVersion.Version)"
-    $arch = "$(if ($env:PROCESSOR_ARCHITECTURE -eq 'AMD64') { 'Win64; x64;' })"
-    $archarch = "$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})"
 
-    return "$shovel $powershellVersion ($system; $arch $archarch$edition)"
+    switch ($env:PROCESSOR_ARCHITECTURE) {
+        'AMD64' { $arch = 'Win64; x64;' }
+        'ARM64' { $arch = '' }
+        default { $arch = '' }
+    }
+
+    if (Test-IsUnix) {
+        $system = Invoke-SystemComSpecCommand -Unix 'uname -s'
+        $arch = Invoke-SystemComSpecCommand -Unix 'uname -srv'
+        $arch = "$arch;"
+    }
+
+    return "$shovel $powershellVersion ($system; $arch)"
 }
 
 function Show-DeprecatedWarning {
