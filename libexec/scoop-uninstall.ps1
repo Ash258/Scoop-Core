@@ -44,12 +44,8 @@ foreach ($explode in $Applications) {
         $result = Uninstall-ScoopApplication -App $app -Global:$gl -Purge:$Purge -Older
     } catch {
         ++$Problems
-
-        $title, $body = $_.Exception.Message -split '\|-'
-        if (!$body) { $body = $title }
-        Write-UserMessage -Message $body -Err
         debug $_.InvocationInfo
-        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $app -Bucket $bucket -Title $title -Body $body }
+        New-IssuePromptFromException -ExceptionMessage $_.Exception.Message -Application $app -Bucket $bucket
 
         continue
     }

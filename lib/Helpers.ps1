@@ -318,6 +318,7 @@ function New-IssuePrompt {
     param([String] $Application, [String] $Bucket, [String] $Title, [String[]] $Body)
 
     $Bucket = $Bucket.Trim()
+    # TODO: Adopt-ManifestResolveInformation
     $app, $manifest, $Bucket, $url = Find-Manifest $Application $Bucket
     $url = known_bucket_repo $Bucket
     $bucketPath = Join-Path $SCOOP_BUCKETS_DIRECTORY $Bucket
@@ -355,6 +356,27 @@ function New-IssuePrompt {
     }
 
     Write-UserMessage -Message "$msg`n$url" -Color 'DarkRed'
+}
+
+function New-IssuePromptFromException {
+    <#
+    .SYNOPSIS
+        Wrapper for handling <Title>|-<Body> exception messages with support for promping user with according link to create a new issue.
+    #>
+    param(
+        [String] $ExceptionMessage,
+        [AllowNull()]
+        [String] $Application,
+        [AllowNull()]
+        [String] $Bucket
+    )
+
+    process {
+        $title, $body = $ExceptionMessage -split '\|-'
+        if (!$body) { $body = $title }
+        if ($body -ne 'Ignore') { Write-UserMessage -Message $body -Err }
+        if ($title -ne 'Ignore' -and ($title -ne $body)) { New-IssuePrompt -Application $Application -Bucket $Bucket -Title $title -Body $body }
+    }
 }
 
 function Get-NotePropertyEnumerator {
