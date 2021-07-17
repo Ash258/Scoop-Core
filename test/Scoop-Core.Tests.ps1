@@ -256,10 +256,6 @@ Describe 'ensure_robocopy_in_path' -Tag 'Scoop' {
     $shimdir = shimdir $false
     Mock versiondir { $repo_dir }
 
-    BeforeAll {
-        Reset-Alias
-    }
-
     Context 'robocopy is not in path' {
         It 'shims robocopy when not on path' {
             Mock Test-CommandAvailable { $false }

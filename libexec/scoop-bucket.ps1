@@ -30,8 +30,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $Options, $Bucket, $_err = Resolve-GetOpt $args
 

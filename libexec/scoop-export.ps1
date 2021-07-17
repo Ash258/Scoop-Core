@@ -46,8 +46,6 @@ TODO: Export:
 }
 #>
 
-Reset-Alias
-
 $ExitCode = 0
 $Options, $null, $_err = Resolve-GetOpt $args
 

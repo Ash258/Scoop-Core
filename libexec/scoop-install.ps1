@@ -23,8 +23,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 # TODO: Export
 # TODO: Cleanup
 function is_installed($app, $global, $version) {

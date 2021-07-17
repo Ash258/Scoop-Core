@@ -14,8 +14,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $Failed = @()
 $Outdated = @()

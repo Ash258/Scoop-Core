@@ -21,8 +21,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $Problems = 0
 $Options, $Cache, $_err = Resolve-GetOpt $args

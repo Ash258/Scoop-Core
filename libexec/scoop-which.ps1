@@ -8,8 +8,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $Options, $Command, $_err = Resolve-GetOpt $args
 

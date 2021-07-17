@@ -1121,11 +1121,6 @@ function Resolve-ArchitectureParameter {
 }
 
 #region Deprecated
-function reset_aliases() {
-    Show-DeprecatedWarning $MyInvocation 'Reset-Alias'
-    Reset-Alias
-}
-
 function file_path($app, $file) {
     Show-DeprecatedWarning $MyInvocation 'Get-AppFilePath'
     return Get-AppFilePath -App $app -File $file

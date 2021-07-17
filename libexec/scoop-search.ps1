@@ -13,8 +13,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $LocalResults = @()
 $Options, $Query, $_err = Resolve-GetOpt $args 'r' 'remote'
