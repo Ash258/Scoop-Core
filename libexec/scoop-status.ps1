@@ -10,8 +10,20 @@
 # Options:
 #   -h, --help      Show help for this command.
 
-'core', 'buckets', 'depends', 'getopt', 'Git', 'Helpers', 'manifest', 'Versions' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('getopt', 'Resolve-GetOpt'),
+    @('help', 'scoop_help'),
+    @('Helpers', 'New-IssuePrompt'),
+    @('buckets', 'Get-KnownBucket'),
+    @('depends', 'script_deps'),
+    @('Git', 'Invoke-GitCmd'),
+    @('manifest', 'Resolve-ManifestInformation'),
+    @('Versions', 'Clear-InstalledVersion')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "..\lib\$($_[0]).ps1")    }
 }
 
 $ExitCode = 0

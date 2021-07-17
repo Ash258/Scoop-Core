@@ -1,8 +1,18 @@
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('Helpers', 'New-IssuePrompt')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "$($_[0]).ps1")
+    }
+}
+
 function command_files {
     $libExec = Join-Path $PSScriptRoot '..\libexec'
     $shims = Join-Path $SCOOP_ROOT_DIRECTORY 'shims'
 
-    return Get-ChildItem $libExec, $shims | Where-Object -Property Name -Match -Value 'scoop-.*?\.ps1$'
+    return Get-ChildItem $libExec, $shims | Where-Object -Property 'Name' -Match -Value 'scoop-.*?\.ps1$'
 }
 
 function command_name($filename) {

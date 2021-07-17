@@ -9,8 +9,17 @@
 #                   Remote search does not utilize advanced search methods (descriptions, binary, shortcuts, ... matching).
 #                   It only uses manifest name to search.
 
-'core', 'Helpers', 'getopt', 'buckets', 'Search' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('getopt', 'Resolve-GetOpt'),
+    @('help', 'scoop_help'),
+    @('Helpers', 'New-IssuePrompt'),
+    @('buckets', 'Get-KnownBucket'),
+    @('Search', 'Search-RemoteBucket')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "..\lib\$($_[0]).ps1")    }
 }
 
 $ExitCode = 0

@@ -1,7 +1,14 @@
-'Helpers', 'install', 'decompress' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('Helpers', 'New-IssuePrompt'),
+    @('decompress', 'Expand-7zipArchive'),
+    @('install', 'install_app')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "$($_[0]).ps1")
+    }
 }
-
 
 # Resolve dependencies for the supplied apps, and sort into the correct order
 function install_order($apps, $arch) {

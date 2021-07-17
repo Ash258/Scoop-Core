@@ -1,5 +1,11 @@
-'Helpers', 'commands' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "$_.ps1")
+@(
+    @('Helpers', 'New-IssuePrompt'),
+    @('Helpers', 'New-IssuePrompt')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "$($_[0]).ps1")
+    }
 }
 
 # Such format is need to prevent automatic conversion of JSON date https://github.com/Ash258/Scoop-Core/issues/26
@@ -1071,12 +1077,19 @@ $SCOOP_ROOT_DIRECTORY = $env:SCOOP, "$env:USERPROFILE\scoop" | Where-Object { -n
 # Scoop global apps directory
 $SCOOP_GLOBAL_ROOT_DIRECTORY = $env:SCOOP_GLOBAL, "$env:ProgramData\scoop" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
 
+# Directory for local buckets
+$SCOOP_BUCKETS_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'buckets'
+
 # Scoop cache directory
 # Note: Setting the SCOOP_CACHE environment variable to use a shared directory
 #       is experimental and untested. There may be concurrency issues when
 #       multiple users write and access cached files at the same time.
 #       Use at your own risk.
 $SCOOP_CACHE_DIRECTORY = $env:SCOOP_CACHE, "$SCOOP_ROOT_DIRECTORY\cache" | Where-Object { -not [String]::IsNullOrEmpty($_) } | Select-Object -First 1
+
+# Scoop directory for powershell modules installtation
+$SCOOP_MODULE_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'modules'
+$SCOOP_GLOBAL_MODULE_DIRECTORY = Join-Path $SCOOP_GLOBAL_ROOT_DIRECTORY 'modules'
 
 # Directory for downloaded manifests (mainly)
 $SHOVEL_GENERAL_MANIFESTS_DIRECTORY = Join-Path $SCOOP_ROOT_DIRECTORY 'manifests'
@@ -1092,6 +1105,8 @@ $globaldir = $SCOOP_GLOBAL_ROOT_DIRECTORY
 $cachedir = $SCOOP_CACHE_DIRECTORY
 $scoopConfig = $SCOOP_CONFIGURATION
 $configFile = $SCOOP_CONFIGURATION_FILE
+$modulesdir = $SCOOP_MODULE_DIRECTORY
+$bucketsdir = $SCOOP_BUCKETS_DIRECTORY
 
 # Do not use the new native command parsing PowerShell/PowerShell#15239, Ash258/Scoop-Core#142
 $PSNativeCommandArgumentPassing = 'Legacy'

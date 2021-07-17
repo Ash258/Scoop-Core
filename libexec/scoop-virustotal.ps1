@@ -28,8 +28,17 @@
 #   -n, --no-depends          By default, all dependencies are checked, too. This flag allows
 #                             to avoid it.
 
-'core', 'depends', 'getopt', 'help', 'Helpers', 'VirusTotal' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('getopt', 'Resolve-GetOpt'),
+    @('help', 'scoop_help'),
+    @('Helpers', 'New-IssuePrompt'),
+    @('depends', 'script_deps'),
+    @('VirusTotal', 'Search-VirusTotal')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "..\lib\$($_[0]).ps1")    }
 }
 
 # TODO: --no-depends => --independent

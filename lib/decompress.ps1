@@ -1,6 +1,11 @@
-# TODO: Core import is messing up with download progress
-'Helpers' | ForEach-Object { #, 'core' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('Helpers', 'New-IssuePrompt')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "$($_[0]).ps1")
+    }
 }
 
 #region helpers
@@ -82,7 +87,7 @@ function Test-ZstdRequirement {
 }
 
 function _decompressErrorPrompt($path, $log) {
-    return @("Decompress error|-Failed to extract files from $path.", "Log file:", "  $(friendly_path $log)") -join "`n"
+    return @("Decompress error|-Failed to extract files from $path.", 'Log file:', "  $(friendly_path $log)") -join "`n"
 }
 #endregion helpers
 

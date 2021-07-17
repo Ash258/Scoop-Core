@@ -19,8 +19,24 @@
 #   -k, --no-cache            Do not use the download cache.
 #   -s, --skip                Skip hash validation (use with caution!).
 
-'core', 'buckets', 'decompress', 'depends', 'getopt', 'help', 'Helpers', 'manifest', 'shortcuts', 'psmodules', 'Update', 'Versions', 'install' | ForEach-Object {
-    . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
+@(
+    @('core', 'Test-ScoopDebugEnabled'),
+    @('getopt', 'Resolve-GetOpt'),
+    @('help', 'scoop_help'),
+    @('Helpers', 'New-IssuePrompt'),
+    @('buckets', 'Get-KnownBucket'),
+    @('decompress', 'Expand-7zipArchive'),
+    @('depends', 'script_deps'),
+    @('install', 'install_app'),
+    @('manifest', 'Resolve-ManifestInformation'),
+    @('psmodules', 'install_psmodule'),
+    @('shortcuts', 'rm_startmenu_shortcuts'),
+    @('Update', 'Update-ScoopCoreClone'),
+    @('Versions', 'Clear-InstalledVersion')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "..\lib\$($_[0]).ps1")    }
 }
 
 # TODO: Export

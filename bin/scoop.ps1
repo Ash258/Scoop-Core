@@ -11,6 +11,7 @@ Upgrade PowerShell: 'https://docs.microsoft.com/en-us/powershell/scripting/insta
     exit 1
 }
 
+# This simple import is fine as for the command this is entry. It is also desired to refresh all the variables/functions
 'core', 'buckets', 'Helpers', 'commands', 'Git' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }

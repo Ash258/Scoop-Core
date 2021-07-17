@@ -1,3 +1,13 @@
+@(
+    @('Helpers', 'New-IssuePrompt'),
+    @('Helpers', 'New-IssuePrompt')
+) | ForEach-Object {
+    if (!([bool] (Get-Command $_[1] -ErrorAction 'Ignore'))) {
+        Write-Verbose "Import of lib '$($_[0])' initiated from '$PSCommandPath'"
+        . (Join-Path $PSScriptRoot "$($_[0]).ps1")
+    }
+}
+
 # Convert objects to pretty json
 # Only needed until PowerShell ConvertTo-Json will be improved https://github.com/PowerShell/PowerShell/issues/2736
 # https://github.com/PowerShell/PowerShell/issues/2736 was fixed in pwsh
