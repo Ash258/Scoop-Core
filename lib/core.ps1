@@ -68,24 +68,6 @@ function Show-DeprecatedWarning {
     Write-UserMessage -Message "      -> $($Invocation.PSCommandPath):$($Invocation.ScriptLineNumber):$($Invocation.OffsetInLine)" -Color 'DarkGray'
 }
 
-function Test-IsArmArchitecture {
-    <#
-    .SYNOPSIS
-        Custom check to identify arm based devices.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param()
-
-    process {
-        if (Test-IsUnix) {
-            return (Invoke-SystemComSpecCommand -Unix 'uname -m') -like 'aarch*'
-        } else {
-            return $env:PROCESSOR_IDENTIFIER -like 'ARMv*'
-        }
-    }
-}
-
 function Test-IsUnix {
     <#
     .SYNOPSIS
@@ -130,6 +112,24 @@ function Invoke-SystemComSpecCommand {
         debug $debugShell
 
         & "$shell" @parameters
+    }
+}
+
+function Test-IsArmArchitecture {
+    <#
+    .SYNOPSIS
+        Custom check to identify arm based devices.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process {
+        if (Test-IsUnix) {
+            return (Invoke-SystemComSpecCommand -Unix 'uname -m') -like 'aarch*'
+        } else {
+            return $env:PROCESSOR_IDENTIFIER -like 'ARMv*'
+        }
     }
 }
 

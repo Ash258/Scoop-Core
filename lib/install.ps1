@@ -35,10 +35,12 @@ function install_app($app, $architecture, $global, $suggested, $use_cache = $tru
         throw [ScoopException] "'$app' does not support $architecture architecture" # TerminatingError thrown
     }
 
-    # TODO: Arm32??
-    if ((Test-IsArmArchitecture) -and ($architecture -eq 'arm64') -and !($manifest.'architecture'.'arm64')) {
-        # TODO: Polish message
-        throw [ScoopException] "Manifest does not explicitly support 'arm64' architecture. Try to install with '--arch 32bit' or '--arch 64bit' to use Windows arm emulation."
+    if (Test-IsArmArchitecture) {
+        if (($architecture -eq 'arm64') -and !($manifest.'architecture'.'arm64')) {
+            throw [ScoopException] "Manifest does not explicitly support 'arm64' architecture. Try to install with '--arch 32bit' or '--arch 64bit' to use Windows arm emulation."
+        }
+    } else {
+        if ($architecture -eq 'arm64') { throw [ScoopException] "Installation of 'arm64' version is not supported on x86 based system" }
     }
 
     $buc = if ($bucket) { " [$bucket]" } else { '' }
