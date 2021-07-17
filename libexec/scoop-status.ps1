@@ -22,7 +22,7 @@ $Outdated = @()
 $Removed = @()
 $MissingDependencies = @()
 $Onhold = @()
-$null, $null, $_err = getopt $args
+$null, $null, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop status: $_err" -ExitCode 2 }
 

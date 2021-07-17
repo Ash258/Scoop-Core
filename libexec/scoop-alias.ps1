@@ -40,7 +40,7 @@
 # TODO: Add --global - Ash258/Scoop-Core#5
 
 $ExitCode = 0
-$Options, $Alias, $_err = getopt $args 'v' 'verbose'
+$Options, $Alias, $_err = Resolve-GetOpt $args 'v' 'verbose'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop alias: $_err" -ExitCode 2 }
 

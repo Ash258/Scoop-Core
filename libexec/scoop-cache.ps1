@@ -25,7 +25,7 @@ Reset-Alias
 
 $ExitCode = 0
 $Problems = 0
-$Options, $Cache, $_err = getopt $args
+$Options, $Cache, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop cache: $_err" -ExitCode 2 }
 

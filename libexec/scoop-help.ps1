@@ -11,7 +11,7 @@
 Reset-Alias
 
 $ExitCode = 0
-$Options, $Command, $_err = getopt $args
+$Options, $Command, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop help: $_err" -ExitCode 2 }
 

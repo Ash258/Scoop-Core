@@ -110,7 +110,7 @@
 Reset-Alias
 
 $ExitCode = 0
-$null, $Config, $_err = getopt $args
+$null, $Config, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop config: $_err" -ExitCode 2 }
 if (!$Config) { $Config = @('show') }

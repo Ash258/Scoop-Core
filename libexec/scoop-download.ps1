@@ -16,7 +16,7 @@
 Reset-Alias
 
 #region Parameter validation
-$opt, $application, $err = getopt $args 'sba:u:' 'skip', 'all-architectures', 'arch=', 'utility='
+$opt, $application, $err = Resolve-GetOpt $args 'sba:u:' 'skip', 'all-architectures', 'arch=', 'utility='
 if ($err) { Stop-ScoopExecution -Message "scoop download: $err" -ExitCode 2 }
 
 $checkHash = -not ($opt.s -or $opt.skip)

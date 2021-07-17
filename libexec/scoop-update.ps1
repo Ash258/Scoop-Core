@@ -22,7 +22,7 @@ Reset-Alias
 
 $ExitCode = 0
 $Problems = 0
-$Options, $Applications, $_err = getopt $args 'gfiksq' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
+$Options, $Applications, $_err = Resolve-GetOpt $args 'gfiksq' 'global', 'force', 'independent', 'no-cache', 'skip', 'quiet'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop update: $_err" -ExitCode 2 }
 

@@ -17,7 +17,7 @@ Reset-Alias
 
 $ExitCode = 0
 $Problems = 0
-$Options, $Applications, $_err = getopt $args 'gk' 'global', 'cache'
+$Options, $Applications, $_err = Resolve-GetOpt $args 'gk' 'global', 'cache'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop cleanup: $_err" -ExitCode 2 }
 

@@ -17,7 +17,7 @@ Reset-Alias
 
 $ExitCode = 0
 $LocalResults = @()
-$Options, $Query, $_err = getopt $args 'r' 'remote'
+$Options, $Query, $_err = Resolve-GetOpt $args 'r' 'remote'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop search: $_err" -ExitCode 2 }
 
