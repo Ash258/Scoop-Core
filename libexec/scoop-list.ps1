@@ -13,10 +13,8 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
-$Options, $Query, $_err = getopt $args 'iur' 'installed', 'updated', 'reverse'
+$Options, $Query, $_err = Resolve-GetOpt $args 'iur' 'installed', 'updated', 'reverse'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop list: $_err" -ExitCode 2 }
 

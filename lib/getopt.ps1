@@ -8,7 +8,7 @@
 #    array of strings that are long-form options. options that take
 #    a parameter should end with '='
 # returns @(opts hash, remaining_args array, error string)
-function getopt($argv, $shortopts, $longopts) {
+function Resolve-GetOpt($argv, $shortopts, $longopts) {
     $opts = @{ }
     $rem = @()
 

@@ -9,10 +9,8 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
-$Options, $Applications, $_err = getopt $args 'a:' 'arch='
+$Options, $Applications, $_err = Resolve-GetOpt $args 'a:' 'arch='
 
 if ($_err) { Stop-ScoopExecution -Message "scoop depends: $_err" -ExitCode 2 }
 

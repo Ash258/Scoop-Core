@@ -30,10 +30,8 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
-$Options, $Bucket, $_err = getopt $args
+$Options, $Bucket, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop bucket: $_err" -ExitCode 2 }
 

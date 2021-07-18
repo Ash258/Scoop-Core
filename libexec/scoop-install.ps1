@@ -23,8 +23,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 # TODO: Export
 # TODO: Cleanup
 function is_installed($app, $global, $version) {
@@ -60,7 +58,7 @@ function is_installed($app, $global, $version) {
     return $false
 }
 
-$opt, $apps, $err = getopt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
+$opt, $apps, $err = Resolve-GetOpt $args 'gfiksa:' 'global', 'force', 'independent', 'no-cache', 'skip', 'arch='
 if ($err) { Stop-ScoopExecution -Message "scoop install: $err" -ExitCode 2 }
 
 $exitCode = 0

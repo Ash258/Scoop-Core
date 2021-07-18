@@ -23,8 +23,6 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $getopt = $args
 $AdditionalArgs = @()
 
@@ -37,7 +35,7 @@ if ($args -contains '--additional-options') {
 
 #region Parameter handling/validation
 $ExitCode = 0
-$Options, $Rem, $_err = getopt $getopt 'b:' 'bucketdir='
+$Options, $Rem, $_err = Resolve-GetOpt $getopt 'b:' 'bucketdir='
 
 if ($_err) { Stop-ScoopExecution -Message "scoop utils: $_err" -ExitCode 2 }
 

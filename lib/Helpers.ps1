@@ -202,6 +202,66 @@ function Out-UTF8Content {
     process { Out-UTF8File -File $File -Content $Content }
 }
 
+function Invoke-VariableSubstitution {
+    <#
+    .SYNOPSIS
+        Substitute (find and replace) provided parameters in provided entity.
+    .PARAMETER Entity
+        Specifies the entity to be substituted (searched in).
+    .PARAMETER Substitutes
+        Specifies the hashtable providing name and value pairs for "find and replace".
+        Hashtable keys should start with $ (dollar sign). Curly bracket variable syntax will be substituted automatically.
+    .PARAMETER EscapeRegularExpression
+        Specifies to escape regular expressions before replacing values.
+    #>
+    [CmdletBinding()]
+    param(
+        [AllowEmptyCollection()]
+        [AllowNull()]
+        $Entity,
+        [Parameter(Mandatory)]
+        [Alias('Parameters')]
+        [HashTable] $Substitutes,
+        [Switch] $EscapeRegularExpression
+    )
+
+    process {
+        $EscapeRegularExpression | Out-Null # PowerShell/PSScriptAnalyzer#1472
+        $newEntity = $Entity
+
+        if ($null -ne $newEntity) {
+            switch ($newEntity.GetType().Name) {
+                'String' {
+                    $Substitutes.GetEnumerator() | Sort-Object { $_.Name.Length } -Descending | ForEach-Object {
+                        $value = if (($EscapeRegularExpression -eq $false) -or ($null -eq $_.Value)) { $_.Value } else { [Regex]::Escape($_.Value) }
+                        $curly = '${' + $_.Name.TrimStart('$') + '}'
+
+                        $newEntity = $newEntity.Replace($curly, $value)
+                        $newEntity = $newEntity.Replace($_.Name, $value)
+                    }
+                }
+                'Object[]' {
+                    $newEntity = $newEntity | ForEach-Object { Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                'PSCustomObject' {
+                    $newentity.PSObject.Properties | ForEach-Object { $_.Value = Invoke-VariableSubstitution -Entity $_ -Substitutes $Substitutes -EscapeRegularExpression:$regexEscape }
+                }
+                default {
+                    # This is not needed, but to cover all possible use cases explicitly
+                    $newEntity = $newEntity
+                }
+            }
+        }
+
+        return $newEntity
+    }
+}
+
+# TODO: Deprecate
+function substitute($entity, [Hashtable] $params, [Bool]$regexEscape = $false) {
+    return Invoke-VariableSubstitution -Entity $entity -Substitutes $params -EscapeRegularExpression:$regexEscape
+}
+
 function Get-MagicByte {
     <#
     .SYNOPSIS
@@ -244,61 +304,6 @@ function Get-MagicByte {
 
         return $cont.ToUpper()
     }
-}
-
-function _resetAlias($name, $value) {
-    $existing = Get-Alias $name -ErrorAction 'Ignore'
-
-    if ($existing -and ($existing | Where-Object -Property 'Options' -Match 'readonly')) {
-        if ($existing.Definition -ne $value) {
-            Write-UserMessage "Alias $name is read-only; cannot reset it." -Warning
-        }
-
-        # Already set
-        return
-    }
-
-    if ($value -is [ScriptBlock]) {
-        if (!(Test-Path "Function:script:$name")) {
-            New-Item -Path Function: -Name "script:$name" -Value $value | Out-Null
-        }
-
-        return
-    }
-
-    Set-Alias $name $value -Scope 'Script' -Option 'AllScope'
-}
-
-function Reset-Alias {
-    # For aliases where there's a local function, re-alias so the function takes precedence
-    $aliases = Get-Alias | Where-Object -Property 'Options' -NotMatch 'readonly|allscope' | Select-Object -ExpandProperty 'Name'
-    Get-ChildItem Function: | ForEach-Object {
-        $fn = $_.Name
-        if ($fn -in $aliases) {
-            Set-Alias $fn Local:$fn -Scope 'Script'
-        }
-    }
-
-    # User aliases
-    $defautlAliases = @{
-        'cp'     = 'Copy-Item'
-        'echo'   = 'Write-Output'
-        'gc'     = 'Get-Content'
-        'gci'    = 'Get-ChildItem'
-        'gcm'    = 'Get-Command'
-        'gm'     = 'Get-Member'
-        'iex'    = 'Invoke-Expression'
-        'ls'     = 'Get-ChildItem'
-        'mkdir'  = { New-Item -Type 'Directory' @args }
-        'mv'     = 'Move-Item'
-        'rm'     = 'Remove-Item'
-        'sc'     = 'Set-Content'
-        'select' = 'Select-Object'
-        'sls'    = 'Select-String'
-    }
-
-    # Set default aliases
-    $defautlAliases.Keys | ForEach-Object { _resetAlias $_ $defautlAliases[$_] }
 }
 
 function New-IssuePrompt {

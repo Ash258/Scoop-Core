@@ -46,10 +46,8 @@ TODO: Export:
 }
 #>
 
-Reset-Alias
-
 $ExitCode = 0
-$Options, $null, $_err = getopt $args
+$Options, $null, $_err = Resolve-GetOpt $args
 
 if ($_err) { Stop-ScoopExecution -Message "scoop export: $_err" -ExitCode 2 }
 

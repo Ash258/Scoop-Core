@@ -9,11 +9,9 @@
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
 }
 
-Reset-Alias
-
 $ExitCode = 0
 $Problems = 0
-$Options, $Applications, $_err = getopt $args 'g' 'global'
+$Options, $Applications, $_err = Resolve-GetOpt $args 'g' 'global'
 
 if ($_err) { Stop-ScoopExecution -Message "scoop unhold: $_err" -ExitCode 2 }
 if (!$Applications) { Stop-ScoopExecution -Message 'Parameter <APP> missing' -Usage (my_usage) }
