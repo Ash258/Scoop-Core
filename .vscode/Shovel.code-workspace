@@ -118,11 +118,16 @@
             },
         ],
         "task.autoDetect": "off",
-        "terminal.integrated.shell.windows": "powershell.exe",
-        "terminal.integrated.shellArgs.windows": [
-            "-NoLogo",
-            "-NoExit",
-        ],
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "terminal.integrated.profiles.windows": {
+            "PowerShell": {
+                "path": "powershell.exe",
+                "args": [
+                    "-NoLogo",
+                    "-NoExit",
+                ],
+            },
+        },
         "terminal.integrated.windowsEnableConpty": true,
         "terminals.terminals": [
             {

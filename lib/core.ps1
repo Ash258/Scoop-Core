@@ -39,8 +39,27 @@ function Optimize-SecurityProtocol {
     }
 }
 
+# Shovel/1.0 (+https://shovel.ash258.com) PowerShell/7.2 (Windows NT 10.0; Win64; x64; Core)
 function Get-UserAgent {
-    return "Scoop/1.0 (+http://scoop.sh/) PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor) (Windows NT $([System.Environment]::OSVersion.Version.Major).$([System.Environment]::OSVersion.Version.Minor); $(if($env:PROCESSOR_ARCHITECTURE -eq 'AMD64'){'Win64; x64; '})$(if($env:PROCESSOR_ARCHITEW6432 -eq 'AMD64'){'WOW64; '})$PSEdition)"
+    # TODO: Multiplatform. Keep it 1:1 with Edge browser
+    $shovel = 'Shovel/1.0 (+https://shovel.ash258.com)'
+    $powershellVersion = "PowerShell/$($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+    $system = "Windows NT $([System.Environment]::OSVersion.Version)"
+
+    switch ($env:PROCESSOR_ARCHITECTURE) {
+        'AMD64' { $arch = 'Win64; x64;' }
+        'ARM64' { $arch = '' }
+        default { $arch = '' }
+    }
+
+    if (Test-IsUnix) {
+        $system = Invoke-SystemComSpecCommand -Unix 'uname -s'
+        $arch = Invoke-SystemComSpecCommand -Unix 'uname -srv'
+        $arch = "$arch;"
+    }
+
+    debug "$shovel $powershellVersion ($system; $arch)"
+    return "$shovel $powershellVersion ($system; $arch)"
 }
 
 function Show-DeprecatedWarning {
@@ -83,9 +102,7 @@ function Invoke-SystemComSpecCommand {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]
         [String] $Windows,
-        [Parameter(Mandatory)]
         [String] $Unix
     )
 
@@ -98,10 +115,30 @@ function Invoke-SystemComSpecCommand {
             $parameters = @('/d', '/c', $Windows)
         }
 
+        if (!$Windows -or !$Unix) { throw 'No command provided' }
+
         $debugShell = "& ""$shell"" $($parameters -join ' ')"
         debug $debugShell
 
         & "$shell" @parameters
+    }
+}
+
+function Test-IsArmArchitecture {
+    <#
+    .SYNOPSIS
+        Custom check to identify arm based devices.
+    #>
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
+    process {
+        if (Test-IsUnix) {
+            return (Invoke-SystemComSpecCommand -Unix 'uname -m') -like 'aarch*'
+        } else {
+            return $env:PROCESSOR_IDENTIFIER -like 'ARMv*'
+        }
     }
 }
 
@@ -613,6 +650,7 @@ function dl($url, $to) {
     $wc.downloadFile($url, $to)
 }
 
+# TODO: Unix
 function env($name, $global, $val = '__get') {
     $target = if ($global) { 'Machine' } else { 'User' }
     if ($val -eq '__get') {
@@ -736,8 +774,12 @@ function shim($path, $global, $name, $arg) {
 
     if ($path -match '\.(exe|com)$') {
         # for programs with no awareness of any shell
+        $executableName = if (Test-IsArmArchitecture) { 'shim.arm64.exe' } else { 'shim.exe' }
         # TODO: Use relative path from this file
-        versiondir 'scoop' 'current' | Join-Path -ChildPath 'supporting\shimexe\bin\shim.exe' | Copy-Item -Destination "$shim.exe" -Force
+        $shimExePath = versiondir 'scoop' 'current' | Join-Path -ChildPath "supporting\shimexe\bin\$executableName"
+
+        Copy-Item -LiteralPath $shimExePath -Destination "$shim.exe" -Force
+
         $result = @("path = $resolved_path")
         if ($arg) { $result += "args = $arg" }
 
@@ -775,6 +817,7 @@ function search_in_path($target) {
     }
 }
 
+# TODO: Unix
 function ensure_in_path($dir, $global) {
     $path = env 'PATH' $global
     if ($path -notmatch [System.Text.RegularExpressions.Regex]::Escape($dir)) {

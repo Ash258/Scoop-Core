@@ -2,8 +2,8 @@
 # Summary: List dependencies for an application.
 #
 # Options:
-#   -h, --help                  Show help for this command.
-#   -a, --arch <32bit|64bit>    Use the specified architecture, if the application's manifest supports it.
+#   -h, --help                      Show help for this command.
+#   -a, --arch <32bit|64bit|arm64>  Use the specified architecture, if the application's manifest supports it.
 
 'core', 'depends', 'getopt', 'help', 'Helpers' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")

@@ -12,12 +12,12 @@
 #   scoop install ./install/pwsh.json
 #
 # Options:
-#   -h, --help                Show help for this command.
-#   -a, --arch <32bit|64bit>  Use the specified architecture, if the application's manifest supports it.
-#   -g, --global              Install the application(s) globally.
-#   -i, --independent         Do not install dependencies automatically.
-#   -k, --no-cache            Do not use the download cache.
-#   -s, --skip                Skip hash validation (use with caution!).
+#   -h, --help                      Show help for this command.
+#   -a, --arch <32bit|64bit|arm64>  Use the specified architecture, if the application's manifest supports it.
+#   -g, --global                    Install the application(s) globally.
+#   -i, --independent               Do not install dependencies automatically.
+#   -k, --no-cache                  Do not use the download cache.
+#   -s, --skip                      Skip hash validation (use with caution!).
 
 'core', 'buckets', 'decompress', 'depends', 'getopt', 'help', 'Helpers', 'manifest', 'shortcuts', 'psmodules', 'Update', 'Versions', 'install' | ForEach-Object {
     . (Join-Path $PSScriptRoot "..\lib\$_.ps1")
